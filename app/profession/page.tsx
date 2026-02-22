@@ -3,14 +3,13 @@
 import { useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-
-type Profession = '재배' | '채광' | '사냥' | '해양';
+import { Profession } from '@/lib/skillData';
 
 const TABS = [
   { id: '재배', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/50' },
   { id: '채광', color: 'text-stone-400', bg: 'bg-stone-500/10', border: 'border-stone-500/50' },
-  { id: '사냥', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/50' },
-  { id: '해양', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/50' }
+  { id: '해양', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/50' },
+  { id: '사냥', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/50' }
 ] as const;
 
 export default function ProfessionPage() {

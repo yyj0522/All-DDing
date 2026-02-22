@@ -28,48 +28,74 @@ export default function ResourcesPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 mb-16">
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-6 md:p-8 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-            <div className="flex items-center gap-5 flex-1">
-              <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              </div>
-              <div>
-                <div className="flex items-center gap-3 mb-1">
-                  <h2 className="text-xl font-bold text-white">Fabric 타이머 모드</h2>
-                  <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-[10px] font-bold text-cyan-300 tracking-widest border border-cyan-500/30">공식 허가됨</span>
-                </div>
-                <p className="text-gray-500 text-sm leading-relaxed">인게임 제작 시간 및 쿨타임을 직관적으로 표시해주는 편의성 모드입니다.</p>
-              </div>
+        <div className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-6 md:p-8 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-16">
+          <div className="flex items-center gap-5 flex-1">
+            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
-            
-            <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
-              <Link href="/resources/guide" className="w-full sm:w-auto bg-black hover:bg-white/5 text-gray-300 font-bold tracking-widest px-6 py-3.5 rounded-xl transition-all duration-300 border border-white/10 flex justify-center items-center gap-2 whitespace-nowrap">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                사용법 안내
-              </Link>
-              <button className="w-full sm:w-auto bg-white/5 hover:bg-cyan-600 text-white font-bold tracking-widest px-8 py-3.5 rounded-xl transition-all duration-300 border border-white/10 flex justify-center items-center gap-2 whitespace-nowrap group">
-                <svg className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                다운로드
-              </button>
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <h2 className="text-xl font-bold text-white">Fabric 타이머 모드</h2>
+                <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-[10px] font-bold text-cyan-300 tracking-widest border border-cyan-500/30">공식 허가됨</span>
+              </div>
+              <p className="text-gray-500 text-sm leading-relaxed">인게임 제작 시간 및 쿨타임을 직관적으로 표시해주는 편의성 모드입니다.</p>
             </div>
+          </div>
+          
+          <div className="w-full sm:w-auto">
+            <a href="/files/Timer_mod.jar" download="Timer_mod.jar" className="w-full bg-white/5 hover:bg-cyan-600 text-white font-bold tracking-widest px-8 py-3.5 rounded-xl transition-all duration-300 border border-white/10 flex justify-center items-center gap-2 whitespace-nowrap group">
+              <svg className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              다운로드
+            </a>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-[#111] to-[#050505] border border-white/5 rounded-3xl p-8 md:p-10 relative overflow-hidden text-center flex flex-col items-center shadow-2xl">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-gray-400">
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2 relative z-10">유저 제작 자료를 제보해주세요!</h2>
-          <p className="text-gray-400 text-sm max-w-lg leading-relaxed relative z-10 mb-6">
-            개인적으로 개발하신 유용한 스프레드시트, 정보 정리 이미지, 기타 툴 등이 있다면 공유해주세요. 
-            검토 후 작성자의 닉네임과 함께 이 공간에 게시해 드립니다.
-          </p>
-          <div className="bg-black border border-white/10 px-6 py-3 rounded-lg text-sm font-bold text-gray-300 relative z-10 font-mono select-all shadow-inner">
-            제보 및 문의 : alldding_support@example.com
-          </div>
+        <div className="mb-16 text-center border-t border-white/5 pt-16 pb-10">
+          <span className="text-cyan-400 font-bold text-sm tracking-widest uppercase mb-4 block">Tutorial & Guide</span>
+          <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Fabric 타이머 모드 사용법</h2>
+          <p className="text-gray-400">설치부터 인게임 적용까지, 단계별로 쉽고 빠르게 알아봅니다.</p>
         </div>
+
+        <article className="space-y-20">
+          <section className="space-y-6">
+            <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm font-black">1</span>
+              모드 파일 적용하기
+            </h3>
+            <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
+               <span className="text-gray-600 font-black tracking-widest text-xl">IMAGE PLACEHOLDER</span>
+            </div>
+            <p className="text-gray-300 leading-relaxed text-lg">
+              다운로드 받은 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">Timer_mod.jar</code> 파일을 마인크래프트 설치 폴더 내의 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">mods</code> 폴더에 넣어주세요. Fabric api 파일이 정상적으로 설치되어 있어야 작동합니다.
+            </p>
+          </section>
+
+          <section className="space-y-6">
+            <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm font-black">2</span>
+              인게임 설정 창 호출 (F12)
+            </h3>
+            <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
+               <span className="text-gray-600 font-black tracking-widest text-xl">IMAGE PLACEHOLDER</span>
+            </div>
+            <p className="text-gray-300 leading-relaxed text-lg">
+              게임 접속 후 <strong className="text-white">F12 키</strong>를 누르면 제작시간 감소 스킬 설정 창이 나타납니다. 이곳에서 각 스킬의 현재 레벨을 설정하면, 쿨타임 감소가 적용됩니다.
+            </p>
+          </section>
+
+          <section className="space-y-6">
+            <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm font-black">3</span>
+              작동여부 확인
+            </h3>
+            <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
+               <span className="text-gray-600 font-black tracking-widest text-xl">IMAGE PLACEHOLDER</span>
+            </div>
+            <p className="text-gray-300 leading-relaxed text-lg">
+              모드가 정상작동한다면 청사진에서 아이템 가공 시 우측하단에 타이머가 작동하게 됩니다.
+            </p>
+          </section>
+        </article>
       </main>
 
       <Footer />

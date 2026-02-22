@@ -12,8 +12,8 @@ export default function Footer() {
         </div>
         <div className="flex flex-col items-center md:items-end text-sm">
           <span className="text-gray-400 font-bold mb-1">문의 및 오류/제보</span>
-          <a href="mailto:alldding_support@example.com" className="text-gray-300 hover:text-white transition-colors font-mono font-medium">
-            alldding_support@example.com
+          <a href="mailto:projectc029@gmail.com" className="text-gray-300 hover:text-white transition-colors font-mono font-medium">
+            projectc029@gmail.com
           </a>
         </div>
       </div>
