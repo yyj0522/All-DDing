@@ -13,6 +13,11 @@ const FOOD_NAMES = [
 
 const SEEDS = ["토마토 씨앗", "양파 씨앗", "마늘 씨앗"];
 
+// 추가된: 전문가별 변동 시세 아이템 리스트
+const VARIABLE_ITEMS = [
+  "정제된 광석", "단단한 주괴", "스태미나 드링크 I", "맹수의 발톱" // 추후 리스트 확보 시 계속 추가하시면 됩니다.
+];
+
 export default function AdminPage() {
   const [isLocalhost, setIsLocalhost] = useState<boolean | null>(null);
 
@@ -27,7 +32,6 @@ export default function AdminPage() {
   const [noteContent, setNoteContent] = useState('');
 
   useEffect(() => {
-    // 로컬호스트 검증 (배포 환경 접근 차단)
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       setIsLocalhost(true);
@@ -44,6 +48,7 @@ export default function AdminPage() {
       const priceMap: Record<string, number> = {};
       data.forEach(row => {
         let displayPrice = row.price;
+        // 재료이면서 씨앗이 아닌 경우는 64로 나눈 단가 표시
         if (row.category === 'ingredient' && !SEEDS.includes(row.item_name)) {
           displayPrice = Math.round(row.price / 64);
         }
@@ -70,16 +75,23 @@ export default function AdminPage() {
     const updates = Object.entries(prices).map(([name, price]) => {
       const isFood = FOOD_NAMES.includes(name);
       const isSeed = SEEDS.includes(name);
+      const isVariable = VARIABLE_ITEMS.includes(name);
       let dbPrice = price;
+      let category = 'ingredient'; // 기본값
 
-      if (!isFood && !isSeed) {
+      if (isFood) {
+        category = 'food';
+      } else if (isVariable) {
+        category = 'variable'; // 변동 시세 카테고리 지정
+      } else if (!isSeed) {
+        // 일반 재료는 64를 곱해서 1셋 가격으로 DB에 저장
         dbPrice = price * 64;
       }
 
       return {
         item_name: name,
         price: dbPrice,
-        category: isFood ? 'food' : 'ingredient'
+        category: category
       };
     });
 
@@ -90,6 +102,7 @@ export default function AdminPage() {
     else alert('글로벌 시세가 성공적으로 업데이트되었습니다.');
   };
 
+  // ... (기존 패치노트 관련 함수들은 그대로 유지) ...
   const saveReleaseNote = async () => {
     if (!noteVersion || !noteTitle || !noteContent) return alert('모든 칸을 입력해주세요.');
     setIsSaving(true);
@@ -100,62 +113,37 @@ export default function AdminPage() {
         title: noteTitle,
         content: noteContent
       }).eq('id', editingNoteId);
-      
       if (error) alert('노트 수정 실패: ' + error.message);
       else alert('릴리즈 노트가 수정되었습니다.');
     } else {
-      const { error } = await supabase.from('release_notes').insert([
-        { version: noteVersion, title: noteTitle, content: noteContent }
-      ]);
-      
+      const { error } = await supabase.from('release_notes').insert([{ version: noteVersion, title: noteTitle, content: noteContent }]);
       if (error) alert('노트 등록 실패: ' + error.message);
       else alert('릴리즈 노트가 등록되었습니다.');
     }
-
     setIsSaving(false);
-    setEditingNoteId(null);
-    setNoteVersion('');
-    setNoteTitle('');
-    setNoteContent('');
+    setEditingNoteId(null); setNoteVersion(''); setNoteTitle(''); setNoteContent('');
     fetchNotes();
   };
 
   const editNote = (note: any) => {
-    setEditingNoteId(note.id);
-    setNoteVersion(note.version);
-    setNoteTitle(note.title);
-    setNoteContent(note.content);
+    setEditingNoteId(note.id); setNoteVersion(note.version); setNoteTitle(note.title); setNoteContent(note.content);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const deleteNote = async (id: number) => {
     if (!confirm('정말 이 패치노트를 삭제하시겠습니까?')) return;
-    
     const { error } = await supabase.from('release_notes').delete().eq('id', id);
     if (error) alert('삭제 실패: ' + error.message);
     else {
       alert('삭제되었습니다.');
-      if (editingNoteId === id) {
-        setEditingNoteId(null);
-        setNoteVersion('');
-        setNoteTitle('');
-        setNoteContent('');
-      }
+      if (editingNoteId === id) { setEditingNoteId(null); setNoteVersion(''); setNoteTitle(''); setNoteContent(''); }
       fetchNotes();
     }
   };
 
-  const cancelEdit = () => {
-    setEditingNoteId(null);
-    setNoteVersion('');
-    setNoteTitle('');
-    setNoteContent('');
-  };
+  const cancelEdit = () => { setEditingNoteId(null); setNoteVersion(''); setNoteTitle(''); setNoteContent(''); };
 
-  // 클라이언트 렌더링 대기 중
   if (isLocalhost === null) return <div className="min-h-screen bg-[#050505]"></div>;
-
-  // 배포 환경(로컬이 아님)에서 접속 시도 시 차단 화면
   if (isLocalhost === false) {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-4 text-center">
@@ -175,17 +163,15 @@ export default function AdminPage() {
             <p className="text-gray-400 text-sm">글로벌 시세 및 패치노트 관리 시스템 (Localhost 전용)</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setActiveTab('prices')} className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-colors ${activeTab === 'prices' ? 'bg-white text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>
-              서버 시세 관리
-            </button>
-            <button onClick={() => setActiveTab('release')} className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-colors ${activeTab === 'release' ? 'bg-white text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>
-              패치노트 관리
-            </button>
+            <button onClick={() => setActiveTab('prices')} className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-colors ${activeTab === 'prices' ? 'bg-white text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>서버 시세 관리</button>
+            <button onClick={() => setActiveTab('release')} className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-colors ${activeTab === 'release' ? 'bg-white text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>패치노트 관리</button>
           </div>
         </header>
 
         {activeTab === 'prices' && (
           <div className="animate-fade-in-up space-y-12 max-w-5xl mx-auto">
+            
+            {/* 1. 요리 완성품 시세 */}
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white border-l-4 border-indigo-500 pl-3">요리 완성품 시세 (1개 기준)</h2>
@@ -200,9 +186,27 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* 2. 전문가 변동 시세 (새로 추가됨) */}
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
               <div className="flex flex-col mb-6">
-                <h2 className="text-xl font-bold text-white border-l-4 border-emerald-500 pl-3 mb-2">재료 시세 관리</h2>
+                <h2 className="text-xl font-bold text-white border-l-4 border-amber-500 pl-3 mb-2">전문가 변동 시세 (3일 주기)</h2>
+                <p className="text-amber-400 text-xs font-bold pl-4">전문가 페이지의 시세 그래프에 반영될 아이템들의 현재 가격을 입력하세요.</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {VARIABLE_ITEMS.map(name => (
+                  <div key={name} className="flex flex-col gap-1.5 relative">
+                    <label className="text-xs text-gray-400 font-bold">{name}</label>
+                    <input type="number" value={prices[name] === 0 ? '' : prices[name] || ''} onChange={(e) => handlePriceChange(name, e.target.value)} placeholder="0" className="bg-black border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500 pr-8" />
+                    <span className="absolute right-3 top-[26px] text-xs text-gray-600 font-bold">G</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. 재료 시세 */}
+            <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
+              <div className="flex flex-col mb-6">
+                <h2 className="text-xl font-bold text-white border-l-4 border-emerald-500 pl-3 mb-2">기본 재료 시세 관리</h2>
                 <p className="text-emerald-400 text-xs font-bold pl-4">씨앗 3종은 1셋(64개) 가격을, 나머지 재료는 개당 가격을 입력하세요. (DB에는 모두 1셋 가격으로 자동 환산되어 저장됩니다.)</p>
               </div>
               <div className="space-y-8">
@@ -237,6 +241,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* 패치노트 관리 탭 (생략 없이 원본 유지) */}
         {activeTab === 'release' && (
           <div className="animate-fade-in-up flex flex-col xl:flex-row gap-8">
             <div className="flex-[2] bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl h-fit">

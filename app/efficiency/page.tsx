@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import TradeCalculator from '@/components/TradeCalculator';
 import { ITEM_IMAGES } from '@/lib/skillData';
 import { supabase } from '@/lib/supabase';
 
@@ -36,6 +37,7 @@ export default function EfficiencySimulatorPage() {
   const [dbPrices, setDbPrices] = useState<Record<string, number>>({});
   const [profLevels, setProfLevels] = useState<Record<string, number>>({});
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isCalcOpen, setIsCalcOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -158,15 +160,43 @@ export default function EfficiencySimulatorPage() {
 
       <Header />
 
+      {isCalcOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsCalcOpen(false)}
+          ></div>
+          <div className="relative z-10 animate-fade-in-up">
+            <button 
+              onClick={() => setIsCalcOpen(false)} 
+              className="absolute -top-10 right-0 text-gray-400 hover:text-white font-bold text-sm bg-black/50 px-3 py-1.5 rounded-lg border border-white/10"
+            >
+              닫기 ✕
+            </button>
+            <TradeCalculator />
+          </div>
+        </div>
+      )}
+
       <main className="relative z-10 flex-1 max-w-[1400px] w-full mx-auto px-4 pt-32 md:pt-40 pb-20">
         <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/5 pb-8">
           <div>
             <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter">요리 효율 분석</h1>
             <p className="text-gray-400 text-sm mt-3">개인 설정에 입력된 데이터가 연동되어 모든 요리의 순수익을 실시간으로 제공합니다.</p>
           </div>
-          <div className="bg-[#0a0a0a] border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-lg">
-            <span className="text-xs font-bold text-gray-500 tracking-widest uppercase">현재 적용 요리 스킬</span>
-            <span className="text-2xl font-black text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.4)]">Lv.{skillLevel}</span>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <button 
+              onClick={() => setIsCalcOpen(true)}
+              className="bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-400 px-5 py-3 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all shadow-[0_0_15px_rgba(99,102,241,0.15)]"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+              대리 판매 계산기
+            </button>
+            <div className="bg-[#0a0a0a] border border-white/10 px-6 py-3 rounded-2xl flex items-center justify-between sm:justify-start gap-4 shadow-lg">
+              <span className="text-xs font-bold text-gray-500 tracking-widest uppercase">현재 적용 요리 스킬</span>
+              <span className="text-2xl font-black text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.4)]">Lv.{skillLevel}</span>
+            </div>
           </div>
         </div>
 

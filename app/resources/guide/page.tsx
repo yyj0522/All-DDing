@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function GuidePage() {
   return (
@@ -20,46 +21,69 @@ export default function GuidePage() {
         </div>
 
         <article className="space-y-20">
+          {/* 섹션 1 */}
           <section className="space-y-6">
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
               <span className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm font-black">1</span>
               모드 파일 적용하기
             </h2>
-            <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
-               <span className="text-gray-600 font-black tracking-widest text-xl">IMAGE PLACEHOLDER</span>
+            <div className="w-full relative bg-black border border-white/10 rounded-2xl overflow-hidden aspect-video">
+              {/* Next.js 공식 Image 컴포넌트로 교체 */}
+              <Image 
+                src="/guide/guide1.png" 
+                alt="모드 파일 적용 가이드" 
+                fill 
+                className="object-contain p-2"
+                unoptimized
+              />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
               다운로드 받은 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">Timer_mod.jar</code> 파일을 마인크래프트 설치 폴더 내의 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">mods</code> 폴더에 넣어주세요. Fabric api 파일이 정상적으로 설치되어 있어야 작동합니다.
             </p>
           </section>
 
+          {/* 섹션 2 */}
           <section className="space-y-6">
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
               <span className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm font-black">2</span>
               인게임 설정 창 호출 (F12)
             </h2>
-            <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
-               <span className="text-gray-600 font-black tracking-widest text-xl">IMAGE PLACEHOLDER</span>
+            <div className="w-full relative bg-black border border-white/10 rounded-2xl overflow-hidden aspect-video">
+              {/* Next.js 공식 Image 컴포넌트로 교체 */}
+              <Image 
+                src="/guide/guide2.png" 
+                alt="인게임 설정 창 가이드" 
+                fill 
+                className="object-contain p-2"
+                unoptimized
+              />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
               게임 접속 후 <strong className="text-white">F12 키</strong>를 누르면 제작시간 감소 스킬 설정 창이 나타납니다. 이곳에서 각 스킬의 현재 레벨을 설정하면, 쿨타임 감소가 적용됩니다.
             </p>
           </section>
 
+          {/* 섹션 3 */}
           <section className="space-y-6">
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
               <span className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm font-black">3</span>
-              작동여부 확인
+              작동 여부 확인
             </h2>
-            <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
-               <span className="text-gray-600 font-black tracking-widest text-xl">IMAGE PLACEHOLDER</span>
+            <div className="w-full relative bg-black border border-white/10 rounded-2xl overflow-hidden aspect-video">
+              {/* Next.js 공식 Image 컴포넌트로 교체 */}
+              <Image 
+                src="/guide/guide3.png" 
+                alt="작동 여부 확인 가이드" 
+                fill 
+                className="object-contain p-2"
+                unoptimized
+              />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
-              모드가 정상작동한다면 청사진에서 아이템 가공 시 우측하단에 타이머가 작동하게 됩니다.
+              모드가 정상 작동한다면 청사진에서 아이템 가공 시 우측 하단에 타이머가 나타나게 됩니다.
             </p>
           </section>
         </article>
-
       </main>
     </div>
   );

@@ -15,7 +15,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
 
   return (
     <div className="fixed top-4 md:top-6 left-0 right-0 z-50 flex justify-center px-4">
-      <nav className="flex items-center justify-between w-full max-w-5xl px-6 py-4 bg-black/80 border border-white/5 backdrop-blur-xl rounded-2xl md:rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+      <nav className="flex items-center justify-between w-full max-w-6xl px-6 py-4 bg-black/80 border border-white/5 backdrop-blur-xl rounded-2xl md:rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
         <Link href="/" className="flex-shrink-0 md:mr-8 group">
           <span 
             className="text-xl md:text-2xl font-black text-white tracking-widest transition-all duration-500 group-hover:tracking-[0.3em]" 
@@ -25,15 +25,18 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           </span>
         </Link>
         
-        <div className="hidden md:flex items-center gap-8 text-sm font-semibold tracking-wide flex-1 justify-center">
+        <div className="hidden md:flex items-center gap-6 lg:gap-8 text-[13px] lg:text-sm font-semibold tracking-wide flex-1 justify-center whitespace-nowrap">
           <Link href="/efficiency" className={getLinkClass('/efficiency', 'text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]')}>
-            효율 시뮬레이터
-          </Link>
-          <Link href="/map" className={getLinkClass('/map', 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]')}>
-            아일랜드 지도
+            요리 효율
           </Link>
           <Link href="/profession" className={getLinkClass('/profession', 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]')}>
             전문가
+          </Link>
+          <Link href="/gacha" className={getLinkClass('/gacha', 'text-fuchsia-400 drop-shadow-[0_0_8px_rgba(217,70,239,0.5)]')}>
+            확률형 아이템
+          </Link>
+          <Link href="/map" className={getLinkClass('/map', 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]')}>
+            아일랜드 지도
           </Link>
           <Link href="/resources" className={getLinkClass('/resources', 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]')}>
             자료실
