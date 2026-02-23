@@ -5,7 +5,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { SKILL_DATA, Profession } from '@/lib/skillData';
 import { SAGE_TOOLS, TOOL_UPGRADE_COST } from '@/lib/sageData';
-import { supabase } from '@/lib/supabase';
+import { getCachedPrices } from '@/lib/supabase';
 import SkillTreeTab from '@/components/settings/SkillTreeTab';
 import SageToolsTab from '@/components/settings/SageToolsTab';
 import PriceSheetTab from '@/components/settings/PriceSheetTab';
@@ -68,10 +68,12 @@ export default function SettingsPage() {
 
       let initialPrices: Record<string, number> = sPrices ? JSON.parse(sPrices) : {};
       
-      const { data, error } = await supabase.from('item_prices').select('*').eq('category', 'ingredient');
-      if (data && !error) {
+      const allData = await getCachedPrices();
+      const data = allData.filter((d: any) => d.category === 'ingredient');
+      
+      if (data && data.length > 0) {
         const dbPrices: Record<string, number> = {};
-        data.forEach(row => { dbPrices[row.item_name] = row.price; });
+        data.forEach((row: any) => { dbPrices[row.item_name] = row.price; });
         setPrices({ ...dbPrices, ...initialPrices });
       } else {
         if (sPrices) setPrices(initialPrices);

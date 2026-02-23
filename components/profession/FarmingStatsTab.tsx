@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
+import { getCachedPrices } from '@/lib/supabase';
 import { FOOD_NAMES, getImagePath, FOOD_MAX_PRICES } from '@/lib/professionData';
 
 export default function FarmingStatsTab() {
@@ -9,10 +9,12 @@ export default function FarmingStatsTab() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase.from('item_prices').select('*').eq('category', 'food').order('created_at', { ascending: true });
+      const allData = await getCachedPrices();
+      const data = allData.filter((d: any) => d.category === 'food');
+      
       if (data && data.length > 0) {
         setDbData(data);
-        const periods = Array.from(new Set(data.map(d => d.period))).filter(Boolean);
+        const periods = Array.from(new Set(data.map((d: any) => d.period))).filter(Boolean);
         if (periods.length > 0) {
           setLatestPeriod(periods[periods.length - 1] as string);
         }

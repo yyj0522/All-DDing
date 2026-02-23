@@ -14,7 +14,8 @@ interface Props {
 
 export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelChange, resetTree, saveAll, diffCost, activeEffects }: Props) {
   return (
-    <div className="flex flex-col gap-8 animate-fade-in-up w-full max-w-7xl mx-auto">
+    // 최상단 래퍼의 최대 너비를 1400px -> 1500px로 살짝 더 확장
+    <div className="flex flex-col gap-8 animate-fade-in-up w-full max-w-[1500px] mx-auto">
       <div className="flex justify-center gap-2 md:gap-4 mb-4 overflow-x-auto pb-2 custom-scrollbar w-full">
         {(['재배', '채광', '해양', '사냥'] as Profession[]).map((tab) => (
           <button
@@ -32,7 +33,8 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
       </div>
 
       <div className="flex flex-col xl:flex-row gap-8 w-full justify-center">
-        <div className="flex-1 bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 shadow-2xl overflow-hidden flex flex-col w-full xl:max-w-[1100px]">
+        {/* 스킬트리가 렌더링되는 패널의 최대 너비를 1300px -> 1400px로 상향 */}
+        <div className="flex-1 bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 shadow-2xl overflow-hidden flex flex-col w-full xl:max-w-[1400px]">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white">{profTab} 스킬 트리</h2>
             <button onClick={resetTree} className="text-xs text-gray-400 border border-white/10 px-4 py-2 rounded-lg hover:bg-white/5">트리 초기화</button>

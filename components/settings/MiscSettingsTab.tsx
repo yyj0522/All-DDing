@@ -14,6 +14,19 @@ interface Props {
 }
 
 export default function MiscSettingsTab({ townRank, setTownRank, drinkRoutine, addDrinkToRoutine, removeDrinkFromRoutine, saveAll, currentTownEmoji, currentMaxStamina, dailyDrinkRecovery, totalDailyStamina, TOWN_RANKS, STAMINA_DRINKS }: Props) {
+  
+  const getTownImage = (rank: string) => {
+    switch (rank) {
+      case '숲': return '/town_fund_ranking/town_1.png';
+      case '열매': return '/town_fund_ranking/town_2.png';
+      case '꽃': return '/town_fund_ranking/town_3.png';
+      case '새싹': return '/town_fund_ranking/town_4.png';
+      default: return null;
+    }
+  };
+
+  const townImg = getTownImage(townRank);
+
   return (
     <div className="flex flex-col xl:flex-row gap-8 w-full justify-center max-w-7xl mx-auto animate-fade-in-up">
       <div className="flex-1 bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl">
@@ -34,8 +47,12 @@ export default function MiscSettingsTab({ townRank, setTownRank, drinkRoutine, a
               소속 마을 투자 등급
             </h3>
             <div className="bg-black border border-white/5 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center gap-6">
-              <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 relative overflow-hidden text-5xl">
-                {currentTownEmoji}
+              <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                {townImg ? (
+                  <img src={townImg} alt={townRank} className="w-16 h-16 object-contain drop-shadow-md" style={{ imageRendering: 'pixelated' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                ) : (
+                  <svg className="w-10 h-10 text-emerald-500/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                )}
               </div>
               <div className="flex-1 space-y-3">
                 <p className="text-sm text-gray-400">마을의 투자 등급에 따라 최대 스태미나 상한이 증가합니다.</p>

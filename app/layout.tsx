@@ -25,9 +25,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+              window.addEventListener('dragstart', function (e) { e.preventDefault(); });
+              window.addEventListener('keydown', function (e) {
+                if (
+                  e.key === 'F12' || 
+                  (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+                  (e.ctrlKey && e.key === 'U')
+                ) {
+                  e.preventDefault();
+                }
+              });
+            `,
+          }}
+        />
         {children}
         <Analytics />
       </body>

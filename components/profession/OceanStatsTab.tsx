@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
+import { getCachedPrices } from '@/lib/supabase';
 import { CRAFT_NAMES, getImagePath, CRAFT_MAX_PRICES, getCraftingPeriod } from '@/lib/professionData';
 
 export default function OceanStatsTab() {
@@ -9,10 +9,12 @@ export default function OceanStatsTab() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase.from('item_prices').select('*').eq('category', 'craft').order('created_at', { ascending: true });
+      const allData = await getCachedPrices();
+      const data = allData.filter((d: any) => d.category === 'craft');
+      
       if (data && data.length > 0) {
         setDbData(data);
-        const periods = Array.from(new Set(data.map(d => d.period))).filter(Boolean);
+        const periods = Array.from(new Set(data.map((d: any) => d.period))).filter(Boolean);
         if (periods.length > 0) setLatestPeriod(periods[periods.length - 1] as string);
       }
     };

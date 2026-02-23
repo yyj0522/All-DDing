@@ -83,8 +83,21 @@ export const getImagePath = (name: string) => {
     '호박 묶음': '/ingredients/pumpkin_bundle.png',
     '수박 묶음': '/ingredients/watermelon_bundle.png',
     '달콤한 열매 묶음': '/ingredients/sweet_berry_bundle.png',
-    '소금': '/ingredients/salt.png',
+    '요리용 달걀': '/ingredients/cooking_egg.png',
     '요리용 우유': '/ingredients/cooking_milk.png',
+    '소금': '/ingredients/salt.png',
+    '오일': '/ingredients/oil.png',
+    '토마토': '/ingredients/tomato.png',
+    '양파': '/ingredients/onion.png',
+    '마늘': '/ingredients/garlic.png',
+    '비트': '/ingredients/Beetroot.png',
+    '당근': '/ingredients/Carrot.png',
+    '감자': '/ingredients/Potato.png',
+    '호박': '/ingredients/Pumpkin.png',
+    '수박': '/ingredients/Melon.png',
+    '달콤한 열매': '/ingredients/Sweet_Berries.png',
+    '밀': '/ingredients/Wheat.png',
+    '설탕': '/ingredients/Sugar.png',
     '심층암 조약돌 뭉치': '/mining_items/cobbled_deepslate_bundle.png',
     '조약돌 뭉치': '/mining_items/cobblestone_bundle.png',
     '코룸 주괴': '/mining_items/corum_ingot.png',
@@ -104,7 +117,7 @@ export const getImagePath = (name: string) => {
     '그라밋': '/mining_items/gramit.png',
     '에메리오': '/mining_items/emerio.png',
     '샤인플레어': '/mining_items/shineflare.png',
-    '횃불': '/mining_items/Torch.png',
+    '바닐라 횃불': '/mining_items/Torch.png',
     '심층암 조약돌': '/mining_items/Cobbled_Deepslate.png',
     '조약돌': '/mining_items/Cobblestone.png',
     '구리블록': '/mining_items/Block_of_Copper.png',
@@ -119,25 +132,23 @@ export const getImagePath = (name: string) => {
     '자개 손거울': '/crafts/mother_of_pearl_hand_mirror.png',
     '분홍 헤어핀': '/crafts/pink_hairpin.png',
     '자개 부채': '/crafts/mother_of_pearl_fan.png',
-    '흑진주 시계': '/crafts/black_pearl_watch.png',
-    '수박': '/ingredients/melon.png',
+    '흑진주 시계': '/crafts/black_pearl_watch.png'
   };
 
   if (map[name]) return map[name];
-  if (name.includes('심층암 조약돌 뭉치')) return '/mining_items/cobbled_deepslate_bundle.png';
-  if (name.includes('조약돌 뭉치')) return '/mining_items/cobblestone_bundle.png';
-  if (name.includes('코룸 주괴')) return '/mining_items/corum_ingot.png';
-  if (name.includes('리프톤 주괴')) return '/mining_items/leaftone_ingot.png';
-  if (name.includes('세렌트 주괴')) return '/mining_items/serent_ingot.png';
-  if (name.includes('강화 횃불')) return '/mining_items/reinforced_torch.png';
-  if (name.includes('코룸')) return '/mining_items/corum.png';
-  if (name.includes('리프톤')) return '/mining_items/leaftone.png';
-  if (name.includes('세렌트')) return '/mining_items/serent.png';
+
+  const keys = Object.keys(map).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (name.includes(key)) {
+      return map[key];
+    }
+  }
+
   return null;
 };
 
 export const MINE_RECIPES = [
-  { name: '강화 횃불', facility: '채광물 가공 시설', time: '7초', ingredients: ['횃불 4개'], type: '가공' },
+  { name: '강화 횃불', facility: '채광물 가공 시설', time: '7초', ingredients: ['바닐라 횃불 4개'], type: '가공' },
   { name: '코룸 주괴', facility: '채광 제작 시설', time: '20초', ingredients: ['코룸(광석) 16개', '강화 횃불 2개'], type: '제작' },
   { name: '리프톤 주괴', facility: '채광 제작 시설', time: '30초', ingredients: ['리프톤(광석) 16개', '강화 횃불 4개'], type: '제작' },
   { name: '세렌트 주괴', facility: '채광 제작 시설', time: '40초', ingredients: ['세렌트(광석) 16개', '강화 횃불 8개'], type: '제작' },
@@ -155,8 +166,8 @@ export const FARMING_RECIPES = [
   { name: '마늘 베이스', facility: '농작물 가공 시설', time: '15초', ingredients: ['마늘 8개'], type: '가공' },
   { name: '버터 조각', facility: '농작물 가공 시설', time: '15초', ingredients: ['요리용 우유 8개', '소금 4개', '오일 4개'], type: '가공' },
   { name: '치즈 조각', facility: '농작물 가공 시설', time: '15초', ingredients: ['요리용 우유 8개', '소금 8개'], type: '가공' },
-  { name: '요리용 소금', facility: '농작물 가공 시설', time: '15초', ingredients: ['소금 8개'], type: '가공' },
-  { name: '설탕 큐브', facility: '농작물 가공 시설', time: '0초', ingredients: ['설탕 0개'], type: '가공' },
+  { name: '요리용 소금', facility: '농작물 가공 시설', time: '15초', ingredients: ['소금 16개'], type: '가공' },
+  { name: '설탕 큐브', facility: '농작물 가공 시설', time: '3초', ingredients: ['설탕 64개'], type: '가공' },
   { name: '밀가루 반죽', facility: '농작물 가공 시설', time: '15초', ingredients: ['밀 12개', '요리용 달걀 4개'], type: '가공' },
   { name: '비트 묶음', facility: '농작물 가공 시설', time: '3초', ingredients: ['비트 64개'], type: '압축' },
   { name: '당근 묶음', facility: '농작물 가공 시설', time: '3초', ingredients: ['당근 64개'], type: '압축' },

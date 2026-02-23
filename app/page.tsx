@@ -6,7 +6,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import confetti from 'canvas-confetti';
 import { ITEM_IMAGES } from '@/lib/skillData';
-import { supabase } from '@/lib/supabase';
+import { supabase, getCachedPrices } from '@/lib/supabase';
 
 const RECIPES = [
   { id: "c01", name: "토마토 스파게티", maxPrice: 864, isHard: false, ingredients: { "토마토 베이스": 1, "호박 묶음": 1 } },
@@ -56,14 +56,15 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: priceData }, { data: notesData }] = await Promise.all([
-        supabase.from('item_prices').select('*'),
+      const [priceData, { data: notesData }] = await Promise.all([
+        getCachedPrices(),
         supabase.from('release_notes').select('*').order('created_at', { ascending: false }).limit(3)
       ]);
 
-      if (priceData) {
+      if (priceData && priceData.length > 0) {
         const pm: Record<string, number> = {};
-        priceData.forEach(row => { pm[row.item_name] = row.price; });
+        const latestPrices = priceData.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        latestPrices.forEach((row: any) => { pm[row.item_name] = row.price; });
         setDbPrices(pm);
       }
       

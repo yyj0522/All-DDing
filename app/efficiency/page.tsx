@@ -5,7 +5,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import TradeCalculator from '@/components/TradeCalculator';
 import { ITEM_IMAGES } from '@/lib/skillData';
-import { supabase } from '@/lib/supabase';
+import { getCachedPrices } from '@/lib/supabase';
 
 const SKILL_BONUS = [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.1, 0.15, 0.3, 0.5];
 
@@ -49,10 +49,11 @@ export default function EfficiencySimulatorPage() {
       if (savedPrices) setUserPrices(JSON.parse(savedPrices));
       if (savedProf) setProfLevels(JSON.parse(savedProf));
       
-      const { data, error } = await supabase.from('item_prices').select('*');
-      if (data && !error) {
+      const data = await getCachedPrices();
+      if (data && data.length > 0) {
         const pm: Record<string, number> = {};
-        data.forEach(row => { pm[row.item_name] = row.price; });
+        const latestPrices = data.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        latestPrices.forEach((row: any) => { pm[row.item_name] = row.price; });
         setDbPrices(pm);
       }
       setIsLoaded(true);

@@ -95,7 +95,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
         <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl">
           <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2"><svg className="w-6 h-6 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>NPC 주괴 매입가</h3>
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">NPC 주괴 매입가</h3>
             <div className="text-right"><p className="text-[10px] font-bold text-gray-500">[주괴 좀 사주괴] 스킬 적용</p><p className="text-sm font-black text-amber-400">Lv.{userStats.ingotBuffLv}</p></div>
           </div>
           <div className="space-y-3">
@@ -116,7 +116,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
         </div>
         <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl">
           <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2"><svg className="w-6 h-6 text-fuchsia-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>NPC 보석 매입가</h3>
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">NPC 보석 매입가</h3>
             <div className="text-right"><p className="text-[10px] font-bold text-gray-500">[반짝반짝 눈이부셔] 스킬 적용</p><p className="text-sm font-black text-fuchsia-400">Lv.{userStats.gemBuffLv}</p></div>
           </div>
           <div className="space-y-3">
