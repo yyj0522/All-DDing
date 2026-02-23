@@ -32,7 +32,6 @@ export default function RecipeTab({ recipes }: RecipeProps) {
                 </div>
               </div>
             </div>
-            
             <div className="bg-black/50 rounded-xl p-4 border border-white/5 h-full">
               <div className="flex justify-between items-center mb-3">
                 <p className="text-xs font-bold text-gray-500">필요 재료</p>

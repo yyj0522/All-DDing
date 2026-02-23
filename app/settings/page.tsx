@@ -6,8 +6,6 @@ import Footer from '@/components/footer';
 import { SKILL_DATA, Profession } from '@/lib/skillData';
 import { SAGE_TOOLS, TOOL_UPGRADE_COST } from '@/lib/sageData';
 import { supabase } from '@/lib/supabase';
-
-// 분할한 하위 컴포넌트들 Import
 import SkillTreeTab from '@/components/settings/SkillTreeTab';
 import SageToolsTab from '@/components/settings/SageToolsTab';
 import PriceSheetTab from '@/components/settings/PriceSheetTab';
@@ -118,7 +116,6 @@ export default function SettingsPage() {
   const resetTree = () => { if(confirm('스킬 트리를 초기화 하시겠습니까?')) { setLevels({}); setSavedLevels({}); localStorage.removeItem('alldding_profession'); } };
   const resetTools = () => { if(confirm('도구 현황을 초기화 하시겠습니까?')) { setToolLevels({}); setSavedToolLevels({}); localStorage.removeItem('alldding_sage_tools'); } };
 
-  // --- Memos ---
   const diffCost = useMemo(() => {
     let gold = 0, stone = 0, point = 0;
     Object.values(SKILL_DATA[profTab] || {}).forEach(skill => {

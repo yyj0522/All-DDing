@@ -3,33 +3,24 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { INGREDIENTS } from '@/lib/skillData';
-
-const FOOD_NAMES = [
-  "토마토 스파게티", "어니언 링", "갈릭 케이크", "삼겹살 토마토 찌개",
-  "삼색 아이스크림", "마늘 양갈비 핫도그", "달콤 시리얼", "로스트 치킨 파이",
-  "스윗 치킨 햄버거", "토마토 파인애플 피자", "양파 수프", "허브 삼겹살 찜",
-  "토마토 라자냐", "딥 크림 빠네", "트리플 소갈비 꼬치"
-];
+import { FOOD_NAMES, CRAFT_NAMES, getCookingPeriod, getCraftingPeriod } from '@/lib/professionData';
 
 const SEEDS = ["토마토 씨앗", "양파 씨앗", "마늘 씨앗"];
-
-// 추가된: 전문가별 변동 시세 아이템 리스트
-const VARIABLE_ITEMS = [
-  "정제된 광석", "단단한 주괴", "스태미나 드링크 I", "맹수의 발톱" // 추후 리스트 확보 시 계속 추가하시면 됩니다.
-];
+const VARIABLE_ITEMS = ["정제된 광석", "단단한 주괴", "스태미나 드링크 I", "맹수의 발톱"];
 
 export default function AdminPage() {
   const [isLocalhost, setIsLocalhost] = useState<boolean | null>(null);
-
   const [activeTab, setActiveTab] = useState<'prices' | 'release'>('prices');
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
-
   const [notesList, setNotesList] = useState<any[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [noteVersion, setNoteVersion] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
+
+  const currentCookingPeriod = getCookingPeriod();
+  const currentCraftingPeriod = getCraftingPeriod();
 
   useEffect(() => {
     const hostname = window.location.hostname;
@@ -43,12 +34,11 @@ export default function AdminPage() {
   }, []);
 
   const fetchPrices = async () => {
-    const { data, error } = await supabase.from('item_prices').select('*');
+    const { data, error } = await supabase.from('item_prices').select('*').order('created_at', { ascending: true });
     if (data && !error) {
       const priceMap: Record<string, number> = {};
       data.forEach(row => {
         let displayPrice = row.price;
-        // 재료이면서 씨앗이 아닌 경우는 64로 나눈 단가 표시
         if (row.category === 'ingredient' && !SEEDS.includes(row.item_name)) {
           displayPrice = Math.round(row.price / 64);
         }
@@ -60,9 +50,7 @@ export default function AdminPage() {
 
   const fetchNotes = async () => {
     const { data, error } = await supabase.from('release_notes').select('*').order('created_at', { ascending: false });
-    if (data && !error) {
-      setNotesList(data);
-    }
+    if (data && !error) setNotesList(data);
   };
 
   const handlePriceChange = (name: string, value: string) => {
@@ -71,76 +59,58 @@ export default function AdminPage() {
   };
 
   const savePrices = async () => {
+    if (!confirm(`현재 시간 기준 주기로 변동 시세를 저장하시겠습니까?\n요리 주기: ${currentCookingPeriod}\n공예품 주기: ${currentCraftingPeriod}`)) return;
     setIsSaving(true);
     const updates = Object.entries(prices).map(([name, price]) => {
       const isFood = FOOD_NAMES.includes(name);
       const isSeed = SEEDS.includes(name);
-      const isVariable = VARIABLE_ITEMS.includes(name);
+      const isCraft = CRAFT_NAMES.includes(name);
       let dbPrice = price;
-      let category = 'ingredient'; // 기본값
+      let category = 'ingredient';
+      let period = 'current';
 
       if (isFood) {
         category = 'food';
-      } else if (isVariable) {
-        category = 'variable'; // 변동 시세 카테고리 지정
+        period = currentCookingPeriod;
+      } else if (isCraft) {
+        category = 'craft'; 
+        period = currentCraftingPeriod;
       } else if (!isSeed) {
-        // 일반 재료는 64를 곱해서 1셋 가격으로 DB에 저장
         dbPrice = price * 64;
       }
-
-      return {
-        item_name: name,
-        price: dbPrice,
-        category: category
-      };
+      return { item_name: name, price: dbPrice, category: category, period: period };
     });
 
-    const { error } = await supabase.from('item_prices').upsert(updates, { onConflict: 'item_name' });
-    
+    const { error } = await supabase.from('item_prices').upsert(updates, { onConflict: 'item_name, period' });
     setIsSaving(false);
-    if (error) alert('시세 저장 실패: ' + error.message);
-    else alert('글로벌 시세가 성공적으로 업데이트되었습니다.');
+    if (error) alert('저장 실패: ' + error.message);
+    else alert('성공적으로 업데이트되었습니다.');
   };
 
-  // ... (기존 패치노트 관련 함수들은 그대로 유지) ...
   const saveReleaseNote = async () => {
-    if (!noteVersion || !noteTitle || !noteContent) return alert('모든 칸을 입력해주세요.');
+    if (!noteVersion || !noteTitle || !noteContent) return alert('입력해주세요.');
     setIsSaving(true);
-
     if (editingNoteId) {
-      const { error } = await supabase.from('release_notes').update({
-        version: noteVersion,
-        title: noteTitle,
-        content: noteContent
-      }).eq('id', editingNoteId);
-      if (error) alert('노트 수정 실패: ' + error.message);
-      else alert('릴리즈 노트가 수정되었습니다.');
+      const { error } = await supabase.from('release_notes').update({ version: noteVersion, title: noteTitle, content: noteContent }).eq('id', editingNoteId);
+      if (error) alert('수정 실패: ' + error.message);
+      else alert('수정되었습니다.');
     } else {
       const { error } = await supabase.from('release_notes').insert([{ version: noteVersion, title: noteTitle, content: noteContent }]);
-      if (error) alert('노트 등록 실패: ' + error.message);
-      else alert('릴리즈 노트가 등록되었습니다.');
+      if (error) alert('등록 실패: ' + error.message);
+      else alert('등록되었습니다.');
     }
     setIsSaving(false);
-    setEditingNoteId(null); setNoteVersion(''); setNoteTitle(''); setNoteContent('');
+    cancelEdit();
     fetchNotes();
   };
 
-  const editNote = (note: any) => {
-    setEditingNoteId(note.id); setNoteVersion(note.version); setNoteTitle(note.title); setNoteContent(note.content);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
+  const editNote = (note: any) => { setEditingNoteId(note.id); setNoteVersion(note.version); setNoteTitle(note.title); setNoteContent(note.content); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const deleteNote = async (id: number) => {
-    if (!confirm('정말 이 패치노트를 삭제하시겠습니까?')) return;
+    if (!confirm('삭제하시겠습니까?')) return;
     const { error } = await supabase.from('release_notes').delete().eq('id', id);
     if (error) alert('삭제 실패: ' + error.message);
-    else {
-      alert('삭제되었습니다.');
-      if (editingNoteId === id) { setEditingNoteId(null); setNoteVersion(''); setNoteTitle(''); setNoteContent(''); }
-      fetchNotes();
-    }
+    else { alert('삭제되었습니다.'); if (editingNoteId === id) cancelEdit(); fetchNotes(); }
   };
-
   const cancelEdit = () => { setEditingNoteId(null); setNoteVersion(''); setNoteTitle(''); setNoteContent(''); };
 
   if (isLocalhost === null) return <div className="min-h-screen bg-[#050505]"></div>;
@@ -148,7 +118,7 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-4 text-center">
         <h1 className="text-4xl font-black text-rose-500 mb-4">403 FORBIDDEN</h1>
-        <p className="text-gray-400">이 페이지는 관리자 로컬 환경에서만 접근 가능합니다.</p>
+        <p className="text-gray-400">관리자 로컬 환경에서만 접근 가능합니다.</p>
         <a href="/" className="mt-8 text-cyan-400 hover:text-cyan-300 font-bold underline underline-offset-4">메인으로 돌아가기</a>
       </div>
     );
@@ -160,7 +130,7 @@ export default function AdminPage() {
         <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 gap-4">
           <div>
             <h1 className="text-4xl font-black text-rose-500 tracking-tighter mb-2">ALL-DDING ADMIN</h1>
-            <p className="text-gray-400 text-sm">글로벌 시세 및 패치노트 관리 시스템 (Localhost 전용)</p>
+            <p className="text-gray-400 text-sm">글로벌 시세 및 패치노트 관리 시스템</p>
           </div>
           <div className="flex gap-2">
             <button onClick={() => setActiveTab('prices')} className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-colors ${activeTab === 'prices' ? 'bg-white text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>서버 시세 관리</button>
@@ -169,28 +139,44 @@ export default function AdminPage() {
         </header>
 
         {activeTab === 'prices' && (
-          <div className="animate-fade-in-up space-y-12 max-w-5xl mx-auto">
-            
-            {/* 1. 요리 완성품 시세 */}
+          <div className="animate-fade-in-up space-y-12 max-w-5xl mx-auto pb-32">
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white border-l-4 border-indigo-500 pl-3">요리 완성품 시세 (1개 기준)</h2>
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 border-b border-white/5 pb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-white border-l-4 border-indigo-500 pl-3 mb-1">요리 완성품 시세 (3일 변동)</h2>
+                  <p className="text-xs text-gray-500 ml-4">저장 시 현재 시간 기준 주기(<span className="text-indigo-400">{currentCookingPeriod}</span>)로 자동 누적 기록됩니다.</p>
+                </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {FOOD_NAMES.map(name => (
                   <div key={name} className="flex flex-col gap-1.5">
-                    <label className="text-xs text-gray-400 font-bold">{name}</label>
+                    <label className="text-xs text-gray-400 font-bold truncate">{name}</label>
                     <input type="number" value={prices[name] || ''} onChange={(e) => handlePriceChange(name, e.target.value)} placeholder="0" className="bg-black border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500" />
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* 2. 전문가 변동 시세 (새로 추가됨) */}
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
               <div className="flex flex-col mb-6">
-                <h2 className="text-xl font-bold text-white border-l-4 border-amber-500 pl-3 mb-2">전문가 변동 시세 (3일 주기)</h2>
-                <p className="text-amber-400 text-xs font-bold pl-4">전문가 페이지의 시세 그래프에 반영될 아이템들의 현재 가격을 입력하세요.</p>
+                <h2 className="text-xl font-bold text-white border-l-4 border-cyan-500 pl-3 mb-2">공예품 시세 (1일 변동)</h2>
+                <p className="text-cyan-400 text-xs font-bold pl-4">저장 시 현재 시간 기준 주기(<span className="text-cyan-400">{currentCraftingPeriod}</span>)로 자동 누적 기록됩니다.</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {CRAFT_NAMES.map(name => (
+                  <div key={name} className="flex flex-col gap-1.5 relative">
+                    <label className="text-xs text-gray-400 font-bold">{name}</label>
+                    <input type="number" value={prices[name] === 0 ? '' : prices[name] || ''} onChange={(e) => handlePriceChange(name, e.target.value)} placeholder="0" className="bg-black border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 pr-8" />
+                    <span className="absolute right-3 top-[26px] text-xs text-gray-600 font-bold">G</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
+              <div className="flex flex-col mb-6">
+                <h2 className="text-xl font-bold text-white border-l-4 border-amber-500 pl-3 mb-2">전문가 변동 시세</h2>
+                <p className="text-amber-400 text-xs font-bold pl-4">위 변동 주기 없이 'current'로 저장됩니다.</p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {VARIABLE_ITEMS.map(name => (
@@ -203,11 +189,10 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* 3. 재료 시세 */}
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
               <div className="flex flex-col mb-6">
                 <h2 className="text-xl font-bold text-white border-l-4 border-emerald-500 pl-3 mb-2">기본 재료 시세 관리</h2>
-                <p className="text-emerald-400 text-xs font-bold pl-4">씨앗 3종은 1셋(64개) 가격을, 나머지 재료는 개당 가격을 입력하세요. (DB에는 모두 1셋 가격으로 자동 환산되어 저장됩니다.)</p>
+                <p className="text-emerald-400 text-xs font-bold pl-4">이 데이터는 주기 없이 'current'로 현재 글로벌 시세로 덮어씌워집니다.</p>
               </div>
               <div className="space-y-8">
                 {Object.entries(INGREDIENTS).map(([cat, items]) => (
@@ -233,15 +218,14 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="sticky bottom-6 flex justify-end">
-              <button onClick={savePrices} disabled={isSaving} className="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-10 py-4 rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.4)] transition-all">
-                {isSaving ? '저장 중...' : '시세 데이터 서버에 반영하기'}
+            <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#050505] to-transparent flex justify-center z-50 pointer-events-none">
+              <button onClick={savePrices} disabled={isSaving} className="pointer-events-auto bg-indigo-600 hover:bg-indigo-500 text-white font-black px-12 py-4 rounded-full shadow-[0_10px_30px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-1">
+                {isSaving ? '서버 기록 중...' : '자동 주기로 데이터 서버에 반영하기'}
               </button>
             </div>
           </div>
         )}
 
-        {/* 패치노트 관리 탭 (생략 없이 원본 유지) */}
         {activeTab === 'release' && (
           <div className="animate-fade-in-up flex flex-col xl:flex-row gap-8">
             <div className="flex-[2] bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl h-fit">
@@ -253,7 +237,6 @@ export default function AdminPage() {
                   <button onClick={cancelEdit} className="text-xs font-bold text-gray-400 hover:text-white bg-white/5 px-3 py-1.5 rounded-lg">작성 취소</button>
                 )}
               </div>
-              
               <div className="space-y-6">
                 <div className="flex gap-4">
                   <div className="flex-1">
@@ -265,12 +248,10 @@ export default function AdminPage() {
                     <input type="text" value={noteTitle} onChange={(e) => setNoteTitle(e.target.value)} placeholder="직업 스킬트리 밸런스 조정 및 UI 개선" className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-rose-500" />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-gray-400 mb-2">상세 내용 (마크다운 지원)</label>
-                  <textarea value={noteContent} onChange={(e) => setNoteContent(e.target.value)} rows={15} placeholder="- 채광 스킬 3티어 효율 15% 하향&#10;- 메인 화면 렌더링 속도 최적화" className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-rose-500 resize-none leading-relaxed" />
+                  <textarea value={noteContent} onChange={(e) => setNoteContent(e.target.value)} rows={15} placeholder="- 내용" className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-rose-500 resize-none leading-relaxed" />
                 </div>
-
                 <div className="flex justify-end pt-4 border-t border-white/5">
                   <button onClick={saveReleaseNote} disabled={isSaving} className="bg-white text-black hover:bg-gray-200 font-black px-10 py-4 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all">
                     {isSaving ? '처리 중...' : (editingNoteId ? '수정 내용 반영' : '라이브 서버에 즉시 발행')}
@@ -295,18 +276,12 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ))}
-                {notesList.length === 0 && (
-                  <p className="text-gray-600 text-sm text-center py-10">등록된 내역이 없습니다.</p>
-                )}
               </div>
             </div>
           </div>
         )}
       </div>
-      <style dangerouslySetInnerHTML={{__html: `
-        input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type="number"] { -moz-appearance: textfield; }
-      `}} />
+      <style dangerouslySetInnerHTML={{__html: `input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } input[type="number"] { -moz-appearance: textfield; }`}} />
     </div>
   );
 }

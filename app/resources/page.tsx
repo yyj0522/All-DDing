@@ -13,7 +13,7 @@ export default function ResourcesPage() {
         <div className="mb-12 text-center md:text-left">
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-4">자료실</h1>
           <p className="text-gray-400 text-sm md:text-base leading-relaxed tracking-wide">
-            플레이를 돕는 공식 인증 도구 및 유저들이 제작한 꿀팁 시트지를 모아두었습니다.
+            띵타이쿤 플레이를 돕는 모드를 다운로드 받을 수 있는 공간입니다.
           </p>
         </div>
 
@@ -24,7 +24,7 @@ export default function ResourcesPage() {
           </h3>
           <p className="text-gray-300 leading-relaxed ml-7">
             본 자료실에 등록된 <span className="font-bold text-white">타이머 모드</span>는 공식 문의를 거쳐 사용 및 배포 허가를 받은 안전한 파일입니다. <br className="hidden md:block"/>
-            단, <span className="text-rose-300 font-bold">해당 모드를 임의로 수정/변조하여 사용하거나, 본 사이트에서 제공하지 않은 비인가 커스텀 모드를 사용하여 발생하는 모든 게임 내 불이익(정지 등)은 사용자 본인에게 있으며 올띵은 일체 책임지지 않습니다.</span>
+            단, <span className="text-rose-300 font-bold">해당 모드를 임의로 수정/변조하여 사용하거나, 타이머 모드 이외의 비인가 커스텀 모드를 사용하여 발생하는 모든 게임 내 불이익(정지 등)은 사용자 본인에게 있으며 올띵은 일체 책임지지 않습니다. 띵타이쿤의 규정 변경, 타이머 기능의 추가 시 이 페이지는 삭제될 수 있습니다.</span>
           </p>
         </div>
 
@@ -62,8 +62,8 @@ export default function ResourcesPage() {
               <span className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm font-black">1</span>
               모드 파일 적용하기
             </h3>
-            <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
-               <span className="text-gray-600 font-black tracking-widest text-xl">IMAGE PLACEHOLDER</span>
+            <div className="w-full border border-white/10 rounded-2xl overflow-hidden bg-[#0a0a0a]">
+               <img src="/guide/guide1.png" alt="모드 파일 적용 가이드" className="w-full h-auto object-contain block" />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
               다운로드 받은 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">Timer_mod.jar</code> 파일을 마인크래프트 설치 폴더 내의 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">mods</code> 폴더에 넣어주세요. Fabric api 파일이 정상적으로 설치되어 있어야 작동합니다.
@@ -75,8 +75,8 @@ export default function ResourcesPage() {
               <span className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm font-black">2</span>
               인게임 설정 창 호출 (F12)
             </h3>
-            <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
-               <span className="text-gray-600 font-black tracking-widest text-xl">IMAGE PLACEHOLDER</span>
+            <div className="w-full border border-white/10 rounded-2xl overflow-hidden bg-[#0a0a0a]">
+               <img src="/guide/guide2.png" alt="인게임 설정 창 가이드" className="w-full h-auto object-contain block" />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
               게임 접속 후 <strong className="text-white">F12 키</strong>를 누르면 제작시간 감소 스킬 설정 창이 나타납니다. 이곳에서 각 스킬의 현재 레벨을 설정하면, 쿨타임 감소가 적용됩니다.
@@ -88,8 +88,8 @@ export default function ResourcesPage() {
               <span className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm font-black">3</span>
               작동여부 확인
             </h3>
-            <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
-               <span className="text-gray-600 font-black tracking-widest text-xl">IMAGE PLACEHOLDER</span>
+            <div className="w-full border border-white/10 rounded-2xl overflow-hidden bg-[#0a0a0a]">
+               <img src="/guide/guide3.png" alt="작동 여부 확인 가이드" className="w-full h-auto object-contain block" />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
               모드가 정상작동한다면 청사진에서 아이템 가공 시 우측하단에 타이머가 작동하게 됩니다.

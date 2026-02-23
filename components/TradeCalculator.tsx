@@ -4,22 +4,12 @@ import { useState } from 'react';
 
 export default function TradeCalculator() {
   const [soldPrice, setSoldPrice] = useState<string>('');
-
-  // 문자열을 숫자로 변환 (천 단위 콤마 제거)
   const numPrice = parseInt(soldPrice.replace(/,/g, '')) || 0;
-
-  // 상대방에게 딱 맞춰 보내야 할 송금액 (판매 대금 / 1.05)
-  // 수수료는 5% (0.05)로 고정. 소수점은 내림 처리하여 안전하게 보냄.
   const remittanceAmount = Math.floor(numPrice / 1.05);
-
-  // 발생하는 수수료 (보내는 금액의 5%)
   const feeAmount = Math.floor(remittanceAmount * 0.05);
-
-  // 대리 판매자의 이득/손해 (혹시 모를 소수점 오차로 남는 1~2원)
   const leftover = numPrice - (remittanceAmount + feeAmount);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // 숫자만 입력 가능하도록 정규식 처리
     const value = e.target.value.replace(/[^0-9]/g, '');
     setSoldPrice(value);
   };
@@ -36,7 +26,6 @@ export default function TradeCalculator() {
         </div>
       </div>
 
-      {/* 입력 영역 */}
       <div>
         <label className="text-xs font-bold text-gray-400 mb-1.5 block">판매 금액</label>
         <div className="relative">

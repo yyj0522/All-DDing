@@ -6,13 +6,15 @@ import Footer from '@/components/footer';
 import { Profession } from '@/lib/skillData';
 
 import { 
-  TOWN_RANKS, STAMINA_DRINKS, MINE_RECIPES, MINE_FIXED_PRICES,
+  TOWN_RANKS, STAMINA_DRINKS, MINE_RECIPES, FARMING_RECIPES, MINE_FIXED_PRICES,
   PICKAXE_BASE_DROPS, PICKAXE_RELIC_CHANCES, LUCKY_HIT_EFFECTS, 
   GEM_DROP_EFFECTS, FLAMING_PICKAXE_EFFECTS, PRICE_BUFF_EFFECTS, AVG_RELIC_POINTS 
 } from '@/lib/professionData';
 
 import RecipeTab from '@/components/profession/RecipeTab';
 import MiningStatsTab from '@/components/profession/MiningStatsTab';
+import FarmingStatsTab from '@/components/profession/FarmingStatsTab';
+import OceanStatsTab from '@/components/profession/OceanStatsTab';
 
 const TABS = [
   { id: '재배', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/50' },
@@ -82,31 +84,23 @@ export default function ProfessionPage() {
 
   const results = useMemo(() => {
     const totalActions = Math.floor(userStats.stamina / 10);
-    
-    // 1. 광석 기댓값
     const baseDrop = userStats.pickaxeLv > 0 ? PICKAXE_BASE_DROPS[userStats.pickaxeLv - 1] : 1; 
     const luckyHit = LUCKY_HIT_EFFECTS[userStats.luckyHitLv] || { chance: 0, amount: 0 };
     const expectedOrePerAction = baseDrop + (luckyHit.chance * luckyHit.amount);
     const totalOres = totalActions * expectedOrePerAction;
     
-    // 2. 불붙은 곡괭이 기댓값 (직발 주괴) 합산
     const flamingChance = FLAMING_PICKAXE_EFFECTS[userStats.flamingPickLv] || 0;
     const directIngots = totalActions * flamingChance;
-    
-    // 최종 주괴량: (순수 광석을 주괴로 압축) + (직발 주괴)
     const expectedIngots = Math.floor((totalOres / 16) + directIngots);
 
-    // 3. 보석 기댓값
     const gemDrop = GEM_DROP_EFFECTS[userStats.gemDropLv] || { chance: 0, amount: 0 };
     const expectedGemPerAction = userStats.gemDropLv > 0 ? (gemDrop.chance * gemDrop.amount) : 0;
     const expectedGems = totalActions * expectedGemPerAction;
 
-    // 4. 유물 기댓값
     const relicChance = userStats.pickaxeLv > 0 ? PICKAXE_RELIC_CHANCES[userStats.pickaxeLv - 1] : 0;
     const expectedRelics = totalActions * relicChance;
     const expectedRelicPoints = expectedRelics * AVG_RELIC_POINTS;
 
-    // 5. 가격 계산
     const baseIngotPrice = MINE_FIXED_PRICES.ingots.find(i => i.zone === targetZone)?.base || 0;
     const baseGemPrice = MINE_FIXED_PRICES.gems.find(g => g.zone === targetZone)?.base || 0;
 
@@ -139,7 +133,7 @@ export default function ProfessionPage() {
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => { setActiveTab(tab.id as Profession); setSubTab('조합법'); }}
+              onClick={() => { setActiveTab(tab.id as Profession); setSubTab(tab.id === '사냥' ? '시세수익' : '조합법'); }}
               className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all whitespace-nowrap border-2 ${
                 activeTab === tab.id 
                 ? `${tab.bg} ${tab.color} ${tab.border}` 
@@ -155,8 +149,10 @@ export default function ProfessionPage() {
           <button onClick={() => setSubTab('조합법')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '조합법' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>전용 제작 & 조합법</button>
           {(activeTab === '채광' || activeTab === '사냥') ? (
             <button onClick={() => setSubTab('시세수익')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>고정 시세 및 일일 수익</button>
-          ) : (
+          ) : activeTab === '재배' ? (
             <button onClick={() => setSubTab('시세수익')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>3일 주기 변동 시세</button>
+          ) : (
+            <button onClick={() => setSubTab('시세수익')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>공예품 시세 (1일 변동)</button>
           )}
         </div>
 
@@ -164,10 +160,25 @@ export default function ProfessionPage() {
           {activeTab === '채광' && subTab === '조합법' && <RecipeTab recipes={MINE_RECIPES} />}
           {activeTab === '채광' && subTab === '시세수익' && <MiningStatsTab userStats={userStats} targetZone={targetZone} setTargetZone={setTargetZone} results={results} />}
           
-          {activeTab !== '채광' && (
+          {activeTab === '재배' && subTab === '조합법' && <RecipeTab recipes={FARMING_RECIPES} />}
+          {activeTab === '재배' && subTab === '시세수익' && <FarmingStatsTab />}
+
+          {activeTab === '해양' && subTab === '조합법' && (
              <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 md:p-12 min-h-[400px] flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden">
-               <h2 className="relative z-10 text-2xl font-bold text-white mb-2">{activeTab} 도구 준비 중</h2>
-               <p className="relative z-10 text-gray-500 text-sm max-w-md leading-relaxed">개발 중입니다.</p>
+               <h2 className="relative z-10 text-2xl font-bold text-white mb-2">해양 전용 조합법</h2>
+               <p className="text-gray-500 text-sm max-w-md leading-relaxed">데이터 수집 및 업데이트 중입니다.</p>
+             </div>
+          )}
+          {activeTab === '해양' && subTab === '시세수익' && <OceanStatsTab />}
+
+          {activeTab === '사냥' && (
+             <div className="w-full bg-rose-900/10 border border-rose-500/20 rounded-3xl p-8 md:p-12 min-h-[400px] flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden">
+               <svg className="w-12 h-12 text-rose-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+               <h2 className="relative z-10 text-2xl font-bold text-rose-400 mb-2">시스템 안정화 대기 중</h2>
+               <p className="relative z-10 text-rose-300/70 text-sm max-w-md leading-relaxed">
+                 사냥 전문가 콘텐츠는 현재 서버 내 밸런스 패치 및 변경 사항이 잦은 상태입니다. <br/>
+                 시스템이 완전히 안정화된 이후에 데이터가 일괄 업데이트될 예정입니다.
+               </p>
              </div>
           )}
         </div>
