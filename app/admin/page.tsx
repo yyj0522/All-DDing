@@ -13,6 +13,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'prices' | 'release'>('prices');
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isIngredientSaving, setIsIngredientSaving] = useState(false);
   const [notesList, setNotesList] = useState<any[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [noteVersion, setNoteVersion] = useState('');
@@ -85,6 +86,30 @@ export default function AdminPage() {
     setIsSaving(false);
     if (error) alert('저장 실패: ' + error.message);
     else alert('성공적으로 업데이트되었습니다.');
+  };
+
+  const saveIngredientsOnly = async () => {
+    if (!confirm('기본 재료 시세만 현재 글로벌 시세로 업데이트 하시겠습니까?')) return;
+    setIsIngredientSaving(true);
+    
+    const ingredientNames = Object.values(INGREDIENTS).flat();
+    
+    const updates = Object.entries(prices)
+      .filter(([name]) => ingredientNames.includes(name))
+      .map(([name, price]) => {
+        const isSeed = SEEDS.includes(name);
+        let dbPrice = price;
+        if (!isSeed) {
+          dbPrice = price * 64;
+        }
+        return { item_name: name, price: dbPrice, category: 'ingredient', period: 'current' };
+      });
+
+    const { error } = await supabase.from('item_prices').upsert(updates, { onConflict: 'item_name, period' });
+    setIsIngredientSaving(false);
+    
+    if (error) alert('기본 재료 시세 저장 실패: ' + error.message);
+    else alert('기본 재료 시세만 성공적으로 업데이트되었습니다.');
   };
 
   const saveReleaseNote = async () => {
@@ -172,27 +197,20 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
-
+            
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
-              <div className="flex flex-col mb-6">
-                <h2 className="text-xl font-bold text-white border-l-4 border-amber-500 pl-3 mb-2">전문가 변동 시세</h2>
-                <p className="text-amber-400 text-xs font-bold pl-4">위 변동 주기 없이 'current'로 저장됩니다.</p>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {VARIABLE_ITEMS.map(name => (
-                  <div key={name} className="flex flex-col gap-1.5 relative">
-                    <label className="text-xs text-gray-400 font-bold">{name}</label>
-                    <input type="number" value={prices[name] === 0 ? '' : prices[name] || ''} onChange={(e) => handlePriceChange(name, e.target.value)} placeholder="0" className="bg-black border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500 pr-8" />
-                    <span className="absolute right-3 top-[26px] text-xs text-gray-600 font-bold">G</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
-              <div className="flex flex-col mb-6">
-                <h2 className="text-xl font-bold text-white border-l-4 border-emerald-500 pl-3 mb-2">기본 재료 시세 관리</h2>
-                <p className="text-emerald-400 text-xs font-bold pl-4">이 데이터는 주기 없이 'current'로 현재 글로벌 시세로 덮어씌워집니다.</p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-white border-l-4 border-emerald-500 pl-3 mb-2">기본 재료 시세 관리</h2>
+                  <p className="text-emerald-400 text-xs font-bold pl-4">이 데이터는 주기 없이 'current'로 현재 글로벌 시세로 덮어씌워집니다.</p>
+                </div>
+                <button 
+                  onClick={saveIngredientsOnly} 
+                  disabled={isIngredientSaving} 
+                  className="bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/30 text-emerald-400 text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] whitespace-nowrap"
+                >
+                  {isIngredientSaving ? '재료 저장 중...' : '기본 재료 시세만 업데이트하기'}
+                </button>
               </div>
               <div className="space-y-8">
                 {Object.entries(INGREDIENTS).map(([cat, items]) => (
@@ -220,7 +238,7 @@ export default function AdminPage() {
 
             <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#050505] to-transparent flex justify-center z-50 pointer-events-none">
               <button onClick={savePrices} disabled={isSaving} className="pointer-events-auto bg-indigo-600 hover:bg-indigo-500 text-white font-black px-12 py-4 rounded-full shadow-[0_10px_30px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-1">
-                {isSaving ? '서버 기록 중...' : '자동 주기로 데이터 서버에 반영하기'}
+                {isSaving ? '전체 서버 기록 중...' : '자동 주기로 데이터 전체 서버에 반영하기'}
               </button>
             </div>
           </div>

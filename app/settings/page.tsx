@@ -35,6 +35,8 @@ const STAMINA_DRINKS = [
   { name: '스태미나 드링크 V', value: 5, recovery: 1000 },
 ];
 
+const SEEDS = ["토마토 씨앗", "양파 씨앗", "마늘 씨앗"];
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'트리'|'도구'|'단가'|'기타'>('트리');
   const [profTab, setProfTab] = useState<Profession>('재배');
@@ -72,9 +74,22 @@ export default function SettingsPage() {
       const data = allData.filter((d: any) => d.category === 'ingredient');
       
       if (data && data.length > 0) {
-        const dbPrices: Record<string, number> = {};
-        data.forEach((row: any) => { dbPrices[row.item_name] = row.price; });
-        setPrices({ ...dbPrices, ...initialPrices });
+        const finalPrices: Record<string, number> = {};
+        
+        data.forEach((row: any) => { 
+          let displayPrice = row.price;
+          if (!SEEDS.includes(row.item_name)) {
+            displayPrice = Math.round(row.price / 64);
+          }
+
+          if (initialPrices[row.item_name] !== undefined && !isNaN(initialPrices[row.item_name])) {
+            finalPrices[row.item_name] = initialPrices[row.item_name];
+          } else {
+            finalPrices[row.item_name] = displayPrice;
+          }
+        });
+
+        setPrices({ ...initialPrices, ...finalPrices });
       } else {
         if (sPrices) setPrices(initialPrices);
       }
