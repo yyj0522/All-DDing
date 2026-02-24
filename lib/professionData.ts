@@ -418,22 +418,47 @@ export const O14_EFFECTS = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0
 export const O16_EFFECTS = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30];
 export const O17_EFFECTS = [0, 0.01, 0.03, 0.05, 0.07, 0.10, 0.15];
 
+// 완벽한 KST(한국시간) 날짜 추출 헬퍼 (Vercel의 UTC 강제 환경 무시)
+export const getKSTParts = (offsetMs = 0) => {
+  const targetDate = new Date(Date.now() + offsetMs);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const parts = formatter.formatToParts(targetDate);
+  let y = 0, m = 0, d = 0;
+  for (const p of parts) {
+    if (p.type === 'year') y = parseInt(p.value, 10);
+    if (p.type === 'month') m = parseInt(p.value, 10);
+    if (p.type === 'day') d = parseInt(p.value, 10);
+  }
+  return { y, m, d };
+};
+
 export const getCookingPeriod = () => {
-  const now = new Date();
-  const adjustedNow = new Date(now.getTime() - 3 * 60 * 60 * 1000);
-  const baseDate = new Date('2026-02-24T00:00:00');
-  const diffTime = adjustedNow.getTime() - baseDate.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const { y, m, d } = getKSTParts(-3 * 60 * 60 * 1000);
+  
+  const currentUTC = Date.UTC(y, m - 1, d);
+  const baseUTC = Date.UTC(2026, 1, 24);
+  
+  const diffDays = Math.floor((currentUTC - baseUTC) / (1000 * 60 * 60 * 24));
   const cycle = Math.floor(diffDays / 3);
-  const start = new Date(baseDate.getTime() + cycle * 3 * 24 * 60 * 60 * 1000);
-  const end = new Date(start.getTime() + 3 * 24 * 60 * 60 * 1000);
-  const sStr = `${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
-  const eStr = `${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+  
+  const startUTC = baseUTC + cycle * 3 * 24 * 60 * 60 * 1000;
+  const endUTC = startUTC + 3 * 24 * 60 * 60 * 1000;
+  
+  const startDate = new Date(startUTC);
+  const endDate = new Date(endUTC);
+  
+  const sStr = `${String(startDate.getUTCMonth() + 1).padStart(2, '0')}-${String(startDate.getUTCDate()).padStart(2, '0')}`;
+  const eStr = `${String(endDate.getUTCMonth() + 1).padStart(2, '0')}-${String(endDate.getUTCDate()).padStart(2, '0')}`;
+  
   return `${sStr}~${eStr}`;
 };
 
 export const getCraftingPeriod = () => {
-  const now = new Date();
-  const adjustedNow = new Date(now.getTime() - 3 * 60 * 60 * 1000);
-  return `${String(adjustedNow.getMonth() + 1).padStart(2, '0')}-${String(adjustedNow.getDate()).padStart(2, '0')}`;
+  const { m, d } = getKSTParts(-3 * 60 * 60 * 1000);
+  return `${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 };
