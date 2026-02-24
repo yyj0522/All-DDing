@@ -120,7 +120,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-gray-400 max-w-2xl leading-relaxed text-sm md:text-base font-medium tracking-wide mx-auto md:mx-0">
-            올띵은 띵타이쿤 유저들을 위한 비공식/비영리 종합 도구 모음 사이트입니다. <br className="hidden md:block"/> 
+            올띵은 띵타이쿤 유저들을 위한 비공식 종합 도구 모음 사이트입니다. <br className="hidden md:block"/> 
           </p>
         </div>
 
@@ -129,7 +129,7 @@ export default function Home() {
             <div className="w-full md:w-1/3 flex flex-col justify-center pr-4">
               <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">최고가 대비 TOP 3</h2>
               <p className="text-indigo-400 text-xs font-bold mb-2 tracking-widest uppercase">02-24~02-27 요리 가격</p>
-              <p className="text-gray-500 text-sm font-medium mb-6">이번주 요리 가격을 확인해보세요.</p>
+              <p className="text-gray-500 text-sm font-medium mb-6">우측 상단 개인 설정을 통해 나의 상황에 맞는 요리 효율을 확인해보세요.</p>
               <div className="inline-flex items-center gap-2 text-indigo-400 font-bold text-sm group-hover:translate-x-2 transition-transform">
                 나의 음식 효율 보러가기
               </div>

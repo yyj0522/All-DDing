@@ -7,11 +7,11 @@ export default function Footer() {
             올띵
           </span>
           <span className="text-xs font-medium text-gray-500 tracking-wide">
-            띵타이쿤 플레이어를 위한 비영리 팬 메이드 종합 도구 모음
+            띵타이쿤 플레이어를 위한 비공식 종합 도구 모음
           </span>
         </div>
         <div className="flex flex-col items-center md:items-end text-sm">
-          <span className="text-gray-400 font-bold mb-1">문의 및 오류/제보</span>
+          <span className="text-gray-400 font-bold mb-1">문의 및 오류/제보/건의</span>
           <a href="mailto:projectc029@gmail.com" className="text-gray-300 hover:text-white transition-colors font-mono font-medium">
             projectc029@gmail.com
           </a>

@@ -6,7 +6,7 @@ import Footer from '@/components/footer';
 import { Profession } from '@/lib/skillData';
 
 import { 
-  TOWN_RANKS, STAMINA_DRINKS, MINE_RECIPES, FARMING_RECIPES, MINE_FIXED_PRICES,
+  TOWN_RANKS, STAMINA_DRINKS, MINE_RECIPES, FARMING_RECIPES, OCEAN_RECIPES, MINE_FIXED_PRICES,
   PICKAXE_BASE_DROPS, PICKAXE_RELIC_CHANCES, LUCKY_HIT_EFFECTS, 
   GEM_DROP_EFFECTS, FLAMING_PICKAXE_EFFECTS, PRICE_BUFF_EFFECTS, AVG_RELIC_POINTS 
 } from '@/lib/professionData';
@@ -15,6 +15,7 @@ import RecipeTab from '@/components/profession/RecipeTab';
 import MiningStatsTab from '@/components/profession/MiningStatsTab';
 import FarmingStatsTab from '@/components/profession/FarmingStatsTab';
 import OceanStatsTab from '@/components/profession/OceanStatsTab';
+import OceanRevenueTab from '@/components/profession/OceanRevenueTab';
 
 const TABS = [
   { id: '재배', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/50' },
@@ -33,11 +34,12 @@ const SKILL_IDS = {
 
 export default function ProfessionPage() {
   const [activeTab, setActiveTab] = useState<Profession>('채광');
-  const [subTab, setSubTab] = useState<'조합법' | '시세수익'>('조합법');
+  const [subTab, setSubTab] = useState<string>('조합법');
   const [targetZone, setTargetZone] = useState<'코룸' | '리프톤' | '세렌트'>('코룸');
 
   const [userStats, setUserStats] = useState({
-    stamina: 3000, pickaxeLv: 0, luckyHitLv: 0, gemDropLv: 0, flamingPickLv: 0, ingotBuffLv: 0, gemBuffLv: 0
+    stamina: 3000, pickaxeLv: 0, rodLv: 0, luckyHitLv: 0, gemDropLv: 0, flamingPickLv: 0, ingotBuffLv: 0, gemBuffLv: 0,
+    o11Lv: 0, o12Lv: 0, o14Lv: 0, o16Lv: 0, o17Lv: 0
   });
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -48,7 +50,9 @@ export default function ProfessionPage() {
     const sMisc = localStorage.getItem('alldding_misc_settings');
     
     let parsedStamina = 3000;
-    let parsedPickaxe = 0, parsedLuckyHit = 0, parsedGemDrop = 0, parsedFlaming = 0, parsedIngotBuff = 0, parsedGemBuff = 0;
+    let parsedPickaxe = 0, parsedRod = 0;
+    let parsedLuckyHit = 0, parsedGemDrop = 0, parsedFlaming = 0, parsedIngotBuff = 0, parsedGemBuff = 0;
+    let parsedO11 = 0, parsedO12 = 0, parsedO14 = 0, parsedO16 = 0, parsedO17 = 0;
 
     if (sLevels) {
       const p = JSON.parse(sLevels);
@@ -57,11 +61,18 @@ export default function ProfessionPage() {
       parsedFlaming = p[SKILL_IDS.flamingPick] || 0; 
       parsedIngotBuff = p[SKILL_IDS.ingotBuff] || 0; 
       parsedGemBuff = p[SKILL_IDS.gemBuff] || 0; 
+
+      parsedO11 = p['o11'] || 0;
+      parsedO12 = p['o12'] || 0;
+      parsedO14 = p['o14'] || 0;
+      parsedO16 = p['o16'] || 0;
+      parsedO17 = p['o17'] || 0;
     }
 
     if (sTools) {
       const t = JSON.parse(sTools);
       parsedPickaxe = t['pickaxe'] || 0;
+      parsedRod = t['rod'] || 0;
     }
     
     if (sMisc) {
@@ -75,8 +86,9 @@ export default function ProfessionPage() {
     }
     
     setUserStats({
-      stamina: parsedStamina, pickaxeLv: parsedPickaxe, luckyHitLv: parsedLuckyHit,
-      gemDropLv: parsedGemDrop, flamingPickLv: parsedFlaming, ingotBuffLv: parsedIngotBuff, gemBuffLv: parsedGemBuff
+      stamina: parsedStamina, pickaxeLv: parsedPickaxe, rodLv: parsedRod,
+      luckyHitLv: parsedLuckyHit, gemDropLv: parsedGemDrop, flamingPickLv: parsedFlaming, ingotBuffLv: parsedIngotBuff, gemBuffLv: parsedGemBuff,
+      o11Lv: parsedO11, o12Lv: parsedO12, o14Lv: parsedO14, o16Lv: parsedO16, o17Lv: parsedO17
     });
 
     setIsLoaded(true);
@@ -147,12 +159,17 @@ export default function ProfessionPage() {
 
         <div className="flex justify-center gap-8 w-full mb-8 border-b border-white/10">
           <button onClick={() => setSubTab('조합법')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '조합법' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>전용 제작 & 조합법</button>
-          {(activeTab === '채광' || activeTab === '사냥') ? (
-            <button onClick={() => setSubTab('시세수익')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>고정 시세 및 일일 수익</button>
-          ) : activeTab === '재배' ? (
-            <button onClick={() => setSubTab('시세수익')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>3일 주기 변동 시세</button>
-          ) : (
-            <button onClick={() => setSubTab('시세수익')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>공예품 시세 (1일 변동)</button>
+          
+          {(activeTab === '채광' || activeTab === '사냥' || activeTab === '해양') && (
+            <button onClick={() => setSubTab('시세수익')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>예상 일일 수익</button>
+          )}
+
+          {activeTab === '재배' && (
+            <button onClick={() => setSubTab('변동시세')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>3일 주기 변동 시세</button>
+          )}
+
+          {activeTab === '해양' && (
+            <button onClick={() => setSubTab('변동시세')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>공예품 시세 (1일 변동)</button>
           )}
         </div>
 
@@ -161,15 +178,11 @@ export default function ProfessionPage() {
           {activeTab === '채광' && subTab === '시세수익' && <MiningStatsTab userStats={userStats} targetZone={targetZone} setTargetZone={setTargetZone} results={results} />}
           
           {activeTab === '재배' && subTab === '조합법' && <RecipeTab recipes={FARMING_RECIPES} />}
-          {activeTab === '재배' && subTab === '시세수익' && <FarmingStatsTab />}
+          {activeTab === '재배' && subTab === '변동시세' && <FarmingStatsTab />}
 
-          {activeTab === '해양' && subTab === '조합법' && (
-             <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 md:p-12 min-h-[400px] flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden">
-               <h2 className="relative z-10 text-2xl font-bold text-white mb-2">해양 전용 조합법</h2>
-               <p className="text-gray-500 text-sm max-w-md leading-relaxed">데이터 수집 및 업데이트 중입니다.</p>
-             </div>
-          )}
-          {activeTab === '해양' && subTab === '시세수익' && <OceanStatsTab />}
+          {activeTab === '해양' && subTab === '조합법' && <RecipeTab recipes={OCEAN_RECIPES} />}
+          {activeTab === '해양' && subTab === '시세수익' && <OceanRevenueTab userStats={userStats} />}
+          {activeTab === '해양' && subTab === '변동시세' && <OceanStatsTab />}
 
           {activeTab === '사냥' && (
              <div className="w-full bg-rose-900/10 border border-rose-500/20 rounded-3xl p-8 md:p-12 min-h-[400px] flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden">

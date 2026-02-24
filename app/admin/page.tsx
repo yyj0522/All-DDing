@@ -12,8 +12,13 @@ export default function AdminPage() {
   const [isLocalhost, setIsLocalhost] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<'prices' | 'release'>('prices');
   const [prices, setPrices] = useState<Record<string, number>>({});
-  const [isSaving, setIsSaving] = useState(false);
+  
+  const [isFoodSaving, setIsFoodSaving] = useState(false);
+  const [isCraftSaving, setIsCraftSaving] = useState(false);
+  const [isVariableSaving, setIsVariableSaving] = useState(false);
   const [isIngredientSaving, setIsIngredientSaving] = useState(false);
+  const [isReleaseSaving, setIsReleaseSaving] = useState(false);
+  
   const [notesList, setNotesList] = useState<any[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [noteVersion, setNoteVersion] = useState('');
@@ -59,33 +64,46 @@ export default function AdminPage() {
     setPrices(prev => ({ ...prev, [name]: isNaN(num) ? 0 : num }));
   };
 
-  const savePrices = async () => {
-    if (!confirm(`현재 시간 기준 주기로 변동 시세를 저장하시겠습니까?\n요리 주기: ${currentCookingPeriod}\n공예품 주기: ${currentCraftingPeriod}`)) return;
-    setIsSaving(true);
-    const updates = Object.entries(prices).map(([name, price]) => {
-      const isFood = FOOD_NAMES.includes(name);
-      const isSeed = SEEDS.includes(name);
-      const isCraft = CRAFT_NAMES.includes(name);
-      let dbPrice = price;
-      let category = 'ingredient';
-      let period = 'current';
-
-      if (isFood) {
-        category = 'food';
-        period = currentCookingPeriod;
-      } else if (isCraft) {
-        category = 'craft'; 
-        period = currentCraftingPeriod;
-      } else if (!isSeed) {
-        dbPrice = price * 64;
-      }
-      return { item_name: name, price: dbPrice, category: category, period: period };
-    });
+  const saveFoodPrices = async () => {
+    if (!confirm(`현재 시간 기준 주기로 요리 시세를 저장하시겠습니까?\n적용 주기: ${currentCookingPeriod}`)) return;
+    setIsFoodSaving(true);
+    
+    const updates = Object.entries(prices)
+      .filter(([name]) => FOOD_NAMES.includes(name))
+      .map(([name, price]) => ({ item_name: name, price: price, category: 'food', period: currentCookingPeriod }));
 
     const { error } = await supabase.from('item_prices').upsert(updates, { onConflict: 'item_name, period' });
-    setIsSaving(false);
-    if (error) alert('저장 실패: ' + error.message);
-    else alert('성공적으로 업데이트되었습니다.');
+    setIsFoodSaving(false);
+    if (error) alert('요리 시세 저장 실패: ' + error.message);
+    else alert('요리 시세가 성공적으로 업데이트되었습니다.');
+  };
+
+  const saveCraftPrices = async () => {
+    if (!confirm(`현재 시간 기준 주기로 공예품 시세를 저장하시겠습니까?\n적용 주기: ${currentCraftingPeriod}`)) return;
+    setIsCraftSaving(true);
+    
+    const updates = Object.entries(prices)
+      .filter(([name]) => CRAFT_NAMES.includes(name))
+      .map(([name, price]) => ({ item_name: name, price: price, category: 'craft', period: currentCraftingPeriod }));
+
+    const { error } = await supabase.from('item_prices').upsert(updates, { onConflict: 'item_name, period' });
+    setIsCraftSaving(false);
+    if (error) alert('공예품 시세 저장 실패: ' + error.message);
+    else alert('공예품 시세가 성공적으로 업데이트되었습니다.');
+  };
+
+  const saveVariablePrices = async () => {
+    if (!confirm('전문가 변동 시세를 현재 시세로 업데이트 하시겠습니까?')) return;
+    setIsVariableSaving(true);
+    
+    const updates = Object.entries(prices)
+      .filter(([name]) => VARIABLE_ITEMS.includes(name))
+      .map(([name, price]) => ({ item_name: name, price: price, category: 'ingredient', period: 'current' }));
+
+    const { error } = await supabase.from('item_prices').upsert(updates, { onConflict: 'item_name, period' });
+    setIsVariableSaving(false);
+    if (error) alert('전문가 시세 저장 실패: ' + error.message);
+    else alert('전문가 시세가 성공적으로 업데이트되었습니다.');
   };
 
   const saveIngredientsOnly = async () => {
@@ -114,7 +132,7 @@ export default function AdminPage() {
 
   const saveReleaseNote = async () => {
     if (!noteVersion || !noteTitle || !noteContent) return alert('입력해주세요.');
-    setIsSaving(true);
+    setIsReleaseSaving(true);
     if (editingNoteId) {
       const { error } = await supabase.from('release_notes').update({ version: noteVersion, title: noteTitle, content: noteContent }).eq('id', editingNoteId);
       if (error) alert('수정 실패: ' + error.message);
@@ -124,7 +142,7 @@ export default function AdminPage() {
       if (error) alert('등록 실패: ' + error.message);
       else alert('등록되었습니다.');
     }
-    setIsSaving(false);
+    setIsReleaseSaving(false);
     cancelEdit();
     fetchNotes();
   };
@@ -166,11 +184,18 @@ export default function AdminPage() {
         {activeTab === 'prices' && (
           <div className="animate-fade-in-up space-y-12 max-w-5xl mx-auto pb-32">
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 border-b border-white/5 pb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 border-b border-white/5 pb-6">
                 <div>
                   <h2 className="text-xl font-bold text-white border-l-4 border-indigo-500 pl-3 mb-1">요리 완성품 시세 (3일 변동)</h2>
                   <p className="text-xs text-gray-500 ml-4">저장 시 현재 시간 기준 주기(<span className="text-indigo-400">{currentCookingPeriod}</span>)로 자동 누적 기록됩니다.</p>
                 </div>
+                <button 
+                  onClick={saveFoodPrices} 
+                  disabled={isFoodSaving} 
+                  className="bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-400 text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(99,102,241,0.15)] whitespace-nowrap"
+                >
+                  {isFoodSaving ? '저장 중...' : '요리 시세 업데이트'}
+                </button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {FOOD_NAMES.map(name => (
@@ -183,9 +208,18 @@ export default function AdminPage() {
             </div>
 
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
-              <div className="flex flex-col mb-6">
-                <h2 className="text-xl font-bold text-white border-l-4 border-cyan-500 pl-3 mb-2">공예품 시세 (1일 변동)</h2>
-                <p className="text-cyan-400 text-xs font-bold pl-4">저장 시 현재 시간 기준 주기(<span className="text-cyan-400">{currentCraftingPeriod}</span>)로 자동 누적 기록됩니다.</p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-white border-l-4 border-cyan-500 pl-3 mb-2">공예품 시세 (1일 변동)</h2>
+                  <p className="text-cyan-400 text-xs font-bold pl-4">저장 시 현재 시간 기준 주기(<span className="text-cyan-400">{currentCraftingPeriod}</span>)로 자동 누적 기록됩니다.</p>
+                </div>
+                <button 
+                  onClick={saveCraftPrices} 
+                  disabled={isCraftSaving} 
+                  className="bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/30 text-cyan-400 text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(34,211,238,0.15)] whitespace-nowrap"
+                >
+                  {isCraftSaving ? '저장 중...' : '공예품 시세 업데이트'}
+                </button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {CRAFT_NAMES.map(name => (
@@ -209,7 +243,7 @@ export default function AdminPage() {
                   disabled={isIngredientSaving} 
                   className="bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/30 text-emerald-400 text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] whitespace-nowrap"
                 >
-                  {isIngredientSaving ? '재료 저장 중...' : '기본 재료 시세만 업데이트하기'}
+                  {isIngredientSaving ? '재료 저장 중...' : '기본 재료 시세 업데이트'}
                 </button>
               </div>
               <div className="space-y-8">
@@ -234,12 +268,6 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#050505] to-transparent flex justify-center z-50 pointer-events-none">
-              <button onClick={savePrices} disabled={isSaving} className="pointer-events-auto bg-indigo-600 hover:bg-indigo-500 text-white font-black px-12 py-4 rounded-full shadow-[0_10px_30px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-1">
-                {isSaving ? '전체 서버 기록 중...' : '자동 주기로 데이터 전체 서버에 반영하기'}
-              </button>
             </div>
           </div>
         )}
@@ -271,8 +299,8 @@ export default function AdminPage() {
                   <textarea value={noteContent} onChange={(e) => setNoteContent(e.target.value)} rows={15} placeholder="- 내용" className="w-full bg-black border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-rose-500 resize-none leading-relaxed" />
                 </div>
                 <div className="flex justify-end pt-4 border-t border-white/5">
-                  <button onClick={saveReleaseNote} disabled={isSaving} className="bg-white text-black hover:bg-gray-200 font-black px-10 py-4 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all">
-                    {isSaving ? '처리 중...' : (editingNoteId ? '수정 내용 반영' : '라이브 서버에 즉시 발행')}
+                  <button onClick={saveReleaseNote} disabled={isReleaseSaving} className="bg-white text-black hover:bg-gray-200 font-black px-10 py-4 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all">
+                    {isReleaseSaving ? '처리 중...' : (editingNoteId ? '수정 내용 반영' : '라이브 서버에 즉시 발행')}
                   </button>
                 </div>
               </div>
