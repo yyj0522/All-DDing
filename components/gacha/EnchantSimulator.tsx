@@ -13,7 +13,10 @@ export default function EnchantSimulator() {
   const [strip, setStrip] = useState<Reward[]>([]);
   const [offset, setOffset] = useState(0);
   const [wonItem, setWonItem] = useState<Reward | null>(null);
+  
   const trackRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null); // [추가] 폭죽이 터질 정확한 기준점(컨테이너)을 잡기 위한 Ref
+
   const [testResults, setTestResults] = useState<Record<string, number>>({});
   const [testCount, setTestCount] = useState(0);
   const currentRewards = activeBox?.id === 'mythic_special' ? MYTHIC_REWARDS : [];
@@ -23,6 +26,39 @@ export default function EnchantSimulator() {
   const baseSequence = [...books];
   if (piece) baseSequence.push(piece);
 
+  // [수정] 화면 전체 중앙이 아닌, '결과 UI 박스'의 정중앙 좌표를 실시간으로 계산하여 폭죽을 터뜨립니다.
+  const triggerFancyConfetti = () => {
+    let originX = 0.5;
+    let originY = 0.5;
+
+    // containerRef가 존재하면, 해당 DOM 요소의 화면 내 실제 좌표를 계산
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      originX = (rect.left + rect.width / 2) / window.innerWidth;
+      originY = (rect.top + rect.height / 2) / window.innerHeight;
+    }
+
+    const count = 250; 
+    const defaults = {
+      origin: { x: originX, y: originY }, // 계산된 UI 박스의 정중앙 적용
+      colors: ['#ffffff', '#f8fafc', '#e0f2fe', '#7dd3fc', '#3b82f6', '#1e3a8a'], 
+      ticks: 200, 
+      zIndex: 200
+    };
+
+    function fire(particleRatio: number, opts: any) {
+      confetti(Object.assign({}, defaults, opts, {
+        particleCount: Math.floor(count * particleRatio)
+      }));
+    }
+
+    fire(0.25, { spread: 26, startVelocity: 55 });
+    fire(0.2, { spread: 60 });
+    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+    fire(0.1, { spread: 120, startVelocity: 45 });
+  };
+
   const handleOpen = () => {
     if (isSpinning || !activeBox) return;
 
@@ -30,7 +66,7 @@ export default function EnchantSimulator() {
 
     if (!showAnimation) {
       setWonItem(winner);
-      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 100 });
+      triggerFancyConfetti();
       return;
     }
 
@@ -51,7 +87,7 @@ export default function EnchantSimulator() {
     setTimeout(() => {
       const itemWidth = 120;
       const containerWidth = trackRef.current?.parentElement?.offsetWidth || 800;
-      const centerOffset = containerWidth / 2 - 50; 
+      const centerOffset = containerWidth / 2 - 74; 
       const finalOffset = -(targetIndex * itemWidth) + centerOffset;
       
       setIsSpinning(true);
@@ -60,14 +96,7 @@ export default function EnchantSimulator() {
       setTimeout(() => {
         setIsSpinning(false);
         setWonItem(winner);
-        
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.55 },
-          zIndex: 100,
-          colors: ['#d946ef', '#fcd34d', '#3b82f6', '#10b981']
-        });
+        triggerFancyConfetti();
       }, 5500);
     }, 50);
   };
@@ -96,6 +125,7 @@ export default function EnchantSimulator() {
               if (isSpinning) return;
               setActiveBox(box);
               setWonItem(null);
+              setStrip([]);
             }}
             className={`flex flex-col items-center p-4 rounded-2xl border min-w-[120px] transition-all ${
               !box.active ? 'opacity-30 cursor-not-allowed grayscale border-white/5' :
@@ -130,9 +160,11 @@ export default function EnchantSimulator() {
 
       {mode === 'normal' ? (
         <div className="w-full space-y-8">
-          <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 relative overflow-hidden h-72 flex flex-col justify-center shadow-inner w-full">
+          <div ref={containerRef} className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 relative overflow-hidden h-72 flex flex-col justify-center shadow-inner w-full">
             
-            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[116px] h-[116px] border-4 border-red-500 rounded-2xl z-20 shadow-[0_0_20px_rgba(239,68,68,0.5)] pointer-events-none"></div>
+            {(isSpinning || (strip.length > 0 && !wonItem)) && (
+              <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[116px] h-[116px] border-4 border-red-500 rounded-2xl z-20 shadow-[0_0_20px_rgba(239,68,68,0.5)] pointer-events-none"></div>
+            )}
             
             {isSpinning || strip.length > 0 ? (
               <div 

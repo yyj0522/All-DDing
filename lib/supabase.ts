@@ -5,7 +5,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const CACHE_EXPIRE_MS = 24 * 60 * 60 * 1000; 
+const CACHE_EXPIRE_MS = 6 * 60 * 60 * 1000; 
 
 export async function getCachedPrices() {
   if (typeof window === 'undefined') {

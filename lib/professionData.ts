@@ -263,7 +263,17 @@ export const getImagePath = (name: string) => {
     '스태미나 드링크 II': '/ocean_items/stamina_drink_2.png',
     '스태미나 드링크 III': '/ocean_items/stamina_drink_3.png',
     '스태미나 드링크 IV': '/ocean_items/stamina_drink_4.png',
-    '스태미나 드링크 V': '/ocean_items/stamina_drink_5.png'
+    '스태미나 드링크 V': '/ocean_items/stamina_drink_5.png',
+    '새우': '/f1/Ashirmp.png',
+    '도미': '/f1/ASea bream.png',
+    '청어': '/f1/Aherring.png',
+    '금붕어': '/f1/AGoldfish.png',
+    '농어': '/f1/ASea bass.png',
+    '깐 새우': '/f1/shrimp.png',
+    '도미 회': '/f1/Sea bream.png',
+    '청어 회': '/f1/herring.png',
+    '금붕어 회': '/f1/Goldfish.png',
+    '농어 회': '/f1/Sea bass.png'
   };
 
   if (map[name]) return map[name];
@@ -309,16 +319,24 @@ export const FARMING_RECIPES = [
 ];
 
 export const OCEAN_RECIPES = [
+  { name: '깐 새우', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 새우 1개'], note: '1회 2개 제작', type: '가공' },
+  { name: '도미 회', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 도미 1개'], note: '1회 2개 제작', type: '가공' },
+  { name: '청어 회', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 청어 1개'], note: '1회 2개 제작', type: '가공' },
+  { name: '금붕어 회', facility: '대형 제작대', time: '0초', ingredients: ['금붕어 1개'], note: '1회 2개 제작', type: '가공' },
+  { name: '농어 회', facility: '대형 제작대', time: '0초', ingredients: ['농어 1개'], note: '1회 2개 제작', type: '가공' },
+  
   { name: '수호의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['굴(1성) 2개', '점토 2개'], type: '제작' },
   { name: '파동의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['소라(1성) 2개', '모래 4개'], type: '제작' },
   { name: '생명의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['미역(1성) 2개', '자갈 4개'], type: '제작' },
   { name: '부식의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['성게(1성) 2개', '화강암 2개'], type: '제작' },
   { name: '혼란의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['문어(1성) 2개', '흙 8개'], type: '제작' },
-  { name: '물결 수호의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['수호의 정수(1성)', '파동의 정수(1성)', '익히지 않은 새우'], type: '제작' },
-  { name: '파동 오염의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['파동의 정수(1성)', '혼란의 정수(1성)', '익히지 않은 도미'], type: '제작' },
-  { name: '질서 파괴의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['혼란의 정수(1성)', '생명의 정수(1성)', '익히지 않은 청어'], type: '제작' },
-  { name: '활력 붕괴의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['생명의 정수(1성)', '부식의 정수(1성)', '금붕어'], type: '제작' },
-  { name: '침식 방어의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['부식의 정수(1성)', '수호의 정수(1성)', '농어'], type: '제작' },
+  
+  { name: '물결 수호의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['수호의 정수(1성)', '파동의 정수(1성)', '깐 새우'], type: '제작' },
+  { name: '파동 오염의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['파동의 정수(1성)', '혼란의 정수(1성)', '도미 회'], type: '제작' },
+  { name: '질서 파괴의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['혼란의 정수(1성)', '생명의 정수(1성)', '청어 회'], type: '제작' },
+  { name: '활력 붕괴의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['생명의 정수(1성)', '부식의 정수(1성)', '금붕어 회'], type: '제작' },
+  { name: '침식 방어의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['부식의 정수(1성)', '수호의 정수(1성)', '농어 회'], type: '제작' },
+  
   { name: '영생의 아쿠티스', facility: '연금 제작 시설', time: '30초', ingredients: ['물결 수호의 핵', '질서 파괴의 핵', '활력 붕괴의 핵'], type: '제작' },
   { name: '크라켄의 광란체', facility: '연금 제작 시설', time: '30초', ingredients: ['질서 파괴의 핵', '활력 붕괴의 핵', '파동 오염의 핵'], type: '제작' },
   { name: '리바이던의 깃털', facility: '연금 제작 시설', time: '30초', ingredients: ['침식 방어의 핵', '파동 오염의 핵', '물결 수호의 핵'], type: '제작' },
@@ -399,12 +417,21 @@ export const OCEAN_FIXED_PRICES = [
 
 export const PICKAXE_BASE_DROPS = [2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 12];
 export const PICKAXE_RELIC_CHANCES = [0, 0.01, 0.01, 0.01, 0.02, 0.02, 0.02, 0.03, 0.03, 0.03, 0.05, 0.05, 0.05, 0.05, 0.10];
+
 export const LUCKY_HIT_EFFECTS = [
-  { chance: 0, amount: 0 }, { chance: 0.01, amount: 1 }, { chance: 0.02, amount: 1 },
-  { chance: 0.03, amount: 1 }, { chance: 0.04, amount: 1 }, { chance: 0.05, amount: 1 },
-  { chance: 0.06, amount: 1 }, { chance: 0.07, amount: 1 }, { chance: 0.08, amount: 2 },
-  { chance: 0.10, amount: 2 }, { chance: 0.15, amount: 3 }
+  { chance: 0, amount: 0 },
+  { chance: 0.01, amount: 1 }, 
+  { chance: 0.02, amount: 2 },
+  { chance: 0.03, amount: 3 }, 
+  { chance: 0.04, amount: 4 }, 
+  { chance: 0.05, amount: 6 },
+  { chance: 0.06, amount: 8 }, 
+  { chance: 0.07, amount: 10 }, 
+  { chance: 0.08, amount: 12 },
+  { chance: 0.10, amount: 16 }, 
+  { chance: 0.15, amount: 20 }
 ];
+
 export const GEM_DROP_EFFECTS = [
   { chance: 0, amount: 0 }, { chance: 0.03, amount: 1 }, { chance: 0.07, amount: 1 }, { chance: 0.10, amount: 2 }
 ];
@@ -418,7 +445,6 @@ export const O14_EFFECTS = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0
 export const O16_EFFECTS = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30];
 export const O17_EFFECTS = [0, 0.01, 0.03, 0.05, 0.07, 0.10, 0.15];
 
-// 완벽한 KST(한국시간) 날짜 추출 헬퍼 (Vercel의 UTC 강제 환경 무시)
 export const getKSTParts = (offsetMs = 0) => {
   const targetDate = new Date(Date.now() + offsetMs);
   const formatter = new Intl.DateTimeFormat('en-US', {
