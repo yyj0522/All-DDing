@@ -44,7 +44,7 @@ export default function WelcomePopup() {
         <div className="p-6 space-y-5">
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
             <p className="text-red-400 text-sm font-bold leading-relaxed text-center">
-              본 사이트는 띵타이쿤을 사랑하는 유저가 개인적으로 제작한 <br/>
+              본 사이트는 띵타이쿤을 유저가 개인적으로 제작한 <br/>
               <span className="text-red-300 underline underline-offset-4 decoration-red-500/50">비공식 유저 웹사이트</span>이며, 공식 서비스가 아닙니다.
             </p>
           </div>
@@ -76,7 +76,7 @@ export default function WelcomePopup() {
               </div>
               <div>
                 <p className="text-sm font-bold text-gray-200 mb-1">데이터 부족 및 제보 환영</p>
-                <p className="text-xs text-gray-500 leading-relaxed">일부 전문가/콘텐츠의 경우 아직 데이터가 부족할 수 있습니다. 우측 하단 <span className="text-gray-300 font-bold">[문의/오류 제보]</span>를 통해 의견을 남겨주시면 빛의 속도로 반영하겠습니다!</p>
+                <p className="text-xs text-gray-500 leading-relaxed">개인이 제작하다보니 일부 전문가/콘텐츠의 경우 아직 데이터나 이해도가 부족할 수 있습니다. 우측 하단 <span className="text-gray-300 font-bold">[문의/오류 제보]</span>를 통해 의견을 남겨주시면 반영하겠습니다!</p>
               </div>
             </li>
           </ul>
