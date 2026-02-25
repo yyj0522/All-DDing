@@ -62,8 +62,8 @@ export default function Footer() {
               
               <div className="text-sm text-gray-300 leading-relaxed space-y-4 mb-6">
                 <p>
-                  안녕하세요, 올띵을 만든 개발자입니다.
                   개발을 공부하는 학생으로 사이트 프로젝트로 몇 가지 사이트를 만들어서 운영중에 있습니다.
+                  시간이 날 때 제가 만든 다른 사이트들도 방문해주시면 감사하겠습니다.
                 </p>
                 <p className="font-bold text-white pt-2 border-t border-white/10">
                   혹시 이런 서비스도 필요하지 않으신가요? <br/>
@@ -82,7 +82,7 @@ export default function Footer() {
 
                 <a href="https://easypick-ai.com" target="_blank" rel="noopener noreferrer" className="block group bg-[#111] hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/50 p-4 rounded-xl transition-all">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-black text-emerald-400 text-base group-hover:text-emerald-300">픽이지 (EasyPick-AI)</span>
+                    <span className="font-black text-emerald-400 text-base group-hover:text-emerald-300">픽이지 (EasyPick-AI)(베타)</span>
                     <svg className="w-4 h-4 text-gray-500 group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                   </div>
                   <p className="text-xs text-gray-400 font-medium">어려운 PC 조립? AI가 용도에 맞춰 견적을 짜드립니다.</p>
