@@ -23,8 +23,8 @@ export default function ResourcesPage() {
             모드 사용 전 필독
           </h3>
           <p className="text-gray-300 leading-relaxed ml-7">
-            본 자료실에 등록된 <span className="font-bold text-white">타이머 모드</span>는 공식 문의를 거쳐 사용 및 배포 허가를 받은 안전한 파일입니다. <br className="hidden md:block"/>
-            단, <span className="text-rose-300 font-bold">해당 모드를 임의로 수정/변조하여 사용하거나, 타이머 모드 이외의 비인가 커스텀 모드를 사용하여 발생하는 모든 게임 내 불이익(정지 등)은 사용자 본인에게 있으며 올띵은 일체 책임지지 않습니다. 띵타이쿤의 규정,운영정책 변경시 이 페이지는 삭제될 수 있습니다.</span>
+            본 자료실에 등록된 <span className="font-bold text-white">타이머 모드</span>는 개인 유저가 만든 모드로 띵타이쿤에서 공식적으로 제공하는 모드가 아닙니다. 개인이 제작해 문의를 통해 사용 및 배포 허가를 받은 모드입니다. <br className="hidden md:block"/>
+            또한, <span className="text-rose-300 font-bold">해당 모드를 임의로 수정/변조하여 사용하거나, 타이머 모드 이외의 비인가 커스텀 모드를 사용하여 발생하는 모든 게임 내 불이익(정지 등)은 사용자 본인에게 있으며 올띵은 일체 책임지지 않습니다. 띵타이쿤의 규정,운영정책 변경시 이 페이지는 삭제될 수 있습니다.</span>
           </p>
         </div>
 
@@ -66,7 +66,7 @@ export default function ResourcesPage() {
                <img src="/guide/guide1.png" alt="모드 파일 적용 가이드" className="w-full h-auto object-contain block" />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
-              다운로드 받은 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">Timer_mod.jar</code> 파일을 마인크래프트 설치 폴더 내의 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">mods</code> 폴더에 넣어주세요. Fabric api 파일이 정상적으로 설치되어 있어야 작동합니다. Fabric api 파일만 같이 있다면 모든 환경에서 정상작동합니다. 오류나 적용이 안된다면 하단 이메일로 보내주시면 최대한 빠른 답장 드리겠습니다.
+              다운로드 받은 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">Timer_mod.jar</code> 파일을 마인크래프트 설치 폴더 내의 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">mods</code> 폴더에 넣어주세요. <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">Fabric api</code> 파일이 정상적으로 설치되어 있어야 작동합니다. Fabric api 파일만 같이 있다면 모든 환경에서 정상작동합니다. 오류나 적용이 안된다면 하단 의견남기기를 해주시면 최대한 빠른 답장 드리겠습니다.
             </p>
           </section>
 

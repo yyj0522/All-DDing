@@ -41,7 +41,7 @@ export default function WelcomePopup() {
           </h2>
         </div>
         
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
             <p className="text-red-400 text-sm font-bold leading-relaxed text-center">
               본 사이트는 띵타이쿤을 유저가 개인적으로 제작한 <br/>
@@ -50,13 +50,25 @@ export default function WelcomePopup() {
           </div>
 
           <ul className="space-y-3">
+            <li className="flex gap-4 items-start bg-rose-500/5 rounded-xl p-4 border border-rose-500/20">
+              <div className="bg-rose-500/20 text-rose-400 p-2 rounded-lg shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-200 mb-1">정보의 최신성 보장 불가 안내</p>
+                <p className="text-[11px] text-gray-400 leading-relaxed">
+                  본 사이트에서 제공하는 모든 데이터와 텍스트는 <span className="font-bold text-gray-300">최신 정보가 아닐 수 있습니다.</span> 또한 사이트 내 모든 게임 리소스(이미지 등)의 출처와 저작권은 전적으로 <span className="font-bold text-gray-300">'띵타이쿤 온라인'</span>에 있습니다.
+                </p>
+              </div>
+            </li>
+
             <li className="flex gap-4 items-start bg-white/5 rounded-xl p-4 border border-white/5">
               <div className="bg-fuchsia-500/20 text-fuchsia-400 p-2 rounded-lg shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               </div>
               <div>
                 <p className="text-sm font-bold text-gray-200 mb-1">우측 상단 개인설정 필수</p>
-                <p className="text-xs text-gray-500 leading-relaxed">자신의 인게임 스탯과 능력을 설정해야 정확한 시세 및 수익 계산이 이루어집니다.</p>
+                <p className="text-[11px] text-gray-400 leading-relaxed">자신의 인게임 스탯과 능력을 설정해야 정확한 시세 및 수익 계산이 이루어집니다.</p>
               </div>
             </li>
             
@@ -66,7 +78,7 @@ export default function WelcomePopup() {
               </div>
               <div>
                 <p className="text-sm font-bold text-gray-200 mb-1">PC 접속 강력 권장</p>
-                <p className="text-xs text-gray-500 leading-relaxed">수많은 데이터 표와 시뮬레이터가 포함되어 있어, 모바일보다 PC 환경에 최적화되어 있습니다.</p>
+                <p className="text-[11px] text-gray-400 leading-relaxed">수많은 데이터 표와 시뮬레이터가 포함되어 있어, 모바일보다 PC 환경에 최적화되어 있습니다.</p>
               </div>
             </li>
 
@@ -76,7 +88,7 @@ export default function WelcomePopup() {
               </div>
               <div>
                 <p className="text-sm font-bold text-gray-200 mb-1">데이터 부족 및 제보 환영</p>
-                <p className="text-xs text-gray-500 leading-relaxed">개인이 제작하다보니 일부 전문가/콘텐츠의 경우 아직 데이터나 이해도가 부족할 수 있습니다. 우측 하단 <span className="text-gray-300 font-bold">[문의/오류 제보]</span>를 통해 의견을 남겨주시면 반영하겠습니다!</p>
+                <p className="text-[11px] text-gray-400 leading-relaxed">개인이 제작하다보니 일부 전문가/콘텐츠의 경우 아직 데이터나 이해도가 부족할 수 있습니다. 우측 하단 <span className="text-gray-300 font-bold">[문의/오류 제보]</span>를 통해 의견을 남겨주시면 반영하겠습니다!</p>
               </div>
             </li>
           </ul>

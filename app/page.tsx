@@ -120,7 +120,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-gray-400 max-w-2xl leading-relaxed text-sm md:text-base font-medium tracking-wide mx-auto md:mx-0">
-            올띵은 띵타이쿤 유저들을 위한 비공식 종합 도구 모음 사이트입니다. <br className="hidden md:block"/> 
+            올띵은 띵타이쿤 유저들을 위한 <span className="font-bold text-red-400 underline underline-offset-4 decoration-red-500/50">비공식</span> 종합 도구 모음 사이트입니다. <br className="hidden md:block"/> 
           </p>
         </div>
 
