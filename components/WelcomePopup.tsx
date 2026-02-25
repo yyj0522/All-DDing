@@ -44,7 +44,7 @@ export default function WelcomePopup() {
         <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
             <p className="text-red-400 text-sm font-bold leading-relaxed text-center">
-              본 사이트는 띵타이쿤을 유저가 개인적으로 제작한 <br/>
+              본 사이트는 띵타이쿤 유저가 개인적으로 제작한 <br/>
               <span className="text-red-300 underline underline-offset-4 decoration-red-500/50">비공식 유저 웹사이트</span>이며, 공식 서비스가 아닙니다.
             </p>
           </div>
