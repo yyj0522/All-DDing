@@ -201,15 +201,21 @@ export default function Home() {
         </div>
 
         <section className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl">
-          <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
-            <h2 className="text-xl font-bold text-white">올띵 업데이트</h2>
+          <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+            <div className="flex items-center gap-3">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
+              <h2 className="text-xl font-bold text-white">올띵 업데이트</h2>
+            </div>
+            <Link href="/note" className="text-gray-400 hover:text-white transition-colors flex items-center gap-1 text-sm font-medium group">
+              전체보기
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </Link>
           </div>
           <div className="space-y-4">
             {releaseNotes.map(note => (
               <div key={note.id} className="flex flex-col md:flex-row md:items-center gap-4">
                 <span className="text-indigo-400 font-bold text-sm whitespace-nowrap border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 rounded-lg">{note.version}</span>
-                <Link href={`/release/${note.id}`} className="text-gray-300 text-sm hover:text-white transition-colors">{note.title}</Link>
+                <Link href={`/note/${note.id}`} className="text-gray-300 text-sm hover:text-white transition-colors">{note.title}</Link>
                 <span className="text-gray-600 text-xs md:ml-auto font-mono">
                   {new Date(note.created_at).toISOString().split('T')[0]}
                 </span>
