@@ -7,6 +7,7 @@ import Footer from '@/components/footer';
 import confetti from 'canvas-confetti';
 import { ITEM_IMAGES } from '@/lib/skillData';
 import { supabase, getCachedPrices } from '@/lib/supabase';
+import { getCookingPeriod } from '@/lib/professionData';
 
 const RECIPES = [
   { id: "c01", name: "토마토 스파게티", maxPrice: 864, isHard: false, ingredients: { "토마토 베이스": 1, "호박 묶음": 1 } },
@@ -34,6 +35,7 @@ export default function Home() {
   const [dbPrices, setDbPrices] = useState<Record<string, number>>({});
   const [releaseNotes, setReleaseNotes] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [cookingPeriod, setCookingPeriod] = useState('');
 
   const triggerExplosion = () => {
     if (!subtitleRef.current) return;
@@ -55,6 +57,8 @@ export default function Home() {
   };
 
   useEffect(() => {
+    setCookingPeriod(getCookingPeriod());
+
     const fetchData = async () => {
       const [priceData, { data: notesData }] = await Promise.all([
         getCachedPrices(),
@@ -128,7 +132,7 @@ export default function Home() {
           <Link href="/efficiency" className="group col-span-1 md:col-span-3 relative rounded-3xl p-6 md:p-8 bg-gradient-to-br from-[#111] to-[#050505] border border-white/5 hover:border-indigo-500/30 transition-all duration-500 shadow-2xl overflow-hidden flex flex-col md:flex-row gap-8 items-center">
             <div className="w-full md:w-1/3 flex flex-col justify-center pr-4">
               <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-2">최고가 대비 TOP 3</h2>
-              <p className="text-indigo-400 text-xs font-bold mb-2 tracking-widest uppercase">02-24~02-27 요리 가격</p>
+              <p className="text-indigo-400 text-xs font-bold mb-2 tracking-widest uppercase">{cookingPeriod} 요리 가격</p>
               <p className="text-gray-500 text-sm font-medium mb-6">우측 상단 개인 설정을 통해 나의 상황에 맞는 요리 효율을 확인해보세요.</p>
               <div className="inline-flex items-center gap-2 text-indigo-400 font-bold text-sm group-hover:translate-x-2 transition-transform">
                 나의 음식 효율 보러가기
