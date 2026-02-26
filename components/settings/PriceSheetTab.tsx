@@ -17,7 +17,6 @@ export default function PriceSheetTab({ prices, handlePriceChange, saveAll }: Pr
           <h2 className="text-2xl font-bold text-white mb-2">개인 커스텀 재료 단가 시트</h2>
           <div className="bg-amber-400/10 border border-amber-400/20 text-amber-400 px-4 py-3 rounded-xl text-sm font-bold w-fit flex flex-col gap-1">
             <span>입력하시는 모든 재료의 가격은 <span className="text-white text-base">1세트(64개)</span> 기준 가격으로 입력해주세요.</span>
-            <span className="text-amber-500/70 text-xs">※ 씨앗 및 단일 변동 아이템은 1세트(또는 1개) 가격 그대로 입력합니다.</span>
           </div>
         </div>
         <button onClick={saveAll} className="w-full md:w-auto bg-white text-black hover:bg-gray-200 font-black px-8 py-3.5 rounded-xl transition-all shadow-[0_0_15px_rgba(255,255,255,0.3)] whitespace-nowrap h-fit hover:scale-[1.02]">
