@@ -5,12 +5,11 @@ import { supabase } from '@/lib/supabase';
 import { INGREDIENTS } from '@/lib/skillData';
 import { FOOD_NAMES, CRAFT_NAMES, getCookingPeriod, getCraftingPeriod } from '@/lib/professionData';
 
-const SEEDS = ["토마토 씨앗", "양파 씨앗", "마늘 씨앗"];
 const VARIABLE_ITEMS = ["정제된 광석", "단단한 주괴", "스태미나 드링크 I", "맹수의 발톱"];
 
 export default function AdminPage() {
   const [isLocalhost, setIsLocalhost] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'prices' | 'release' | 'feedback'>('prices'); // feedback 탭 추가
+  const [activeTab, setActiveTab] = useState<'prices' | 'release' | 'feedback'>('prices');
   const [prices, setPrices] = useState<Record<string, number>>({});
   
   const [isFoodSaving, setIsFoodSaving] = useState(false);
@@ -25,7 +24,6 @@ export default function AdminPage() {
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
 
-  // 문의 관련 상태
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [feedbackFilter, setFeedbackFilter] = useState<'unread' | 'read'>('unread');
 
@@ -50,8 +48,8 @@ export default function AdminPage() {
       const priceMap: Record<string, number> = {};
       data.forEach(row => {
         let displayPrice = row.price;
-        if (row.category === 'ingredient' && !SEEDS.includes(row.item_name)) {
-          displayPrice = Math.round(row.price / 64);
+        if (row.category === 'ingredient' && !VARIABLE_ITEMS.includes(row.item_name)) {
+          displayPrice = Number((row.price / 64).toFixed(4));
         }
         priceMap[row.item_name] = displayPrice;
       });
@@ -70,7 +68,7 @@ export default function AdminPage() {
   };
 
   const handlePriceChange = (name: string, value: string) => {
-    const num = parseInt(value);
+    const num = parseFloat(value);
     setPrices(prev => ({ ...prev, [name]: isNaN(num) ? 0 : num }));
   };
 
@@ -117,9 +115,10 @@ export default function AdminPage() {
     const updates = Object.entries(prices)
       .filter(([name]) => ingredientNames.includes(name))
       .map(([name, price]) => {
-        const isSeed = SEEDS.includes(name);
         let dbPrice = price;
-        if (!isSeed) dbPrice = price * 64;
+        if (!VARIABLE_ITEMS.includes(name)) {
+          dbPrice = price * 64;
+        }
         return { item_name: name, price: dbPrice, category: 'ingredient', period: 'current' };
       });
     const { error } = await supabase.from('item_prices').upsert(updates, { onConflict: 'item_name, period' });
@@ -154,7 +153,6 @@ export default function AdminPage() {
   };
   const cancelEdit = () => { setEditingNoteId(null); setNoteVersion(''); setNoteTitle(''); setNoteContent(''); };
 
-  // 문의 관리 기능
   const markAsRead = async (id: number) => {
     const { error } = await supabase.from('feedbacks').update({ is_read: true }).eq('id', id);
     if (!error) fetchFeedbacks();
@@ -270,12 +268,11 @@ export default function AdminPage() {
                     <h3 className="text-sm text-gray-500 font-black tracking-widest mb-4 uppercase">{cat}</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {items.map(name => {
-                        const isSeed = SEEDS.includes(name);
                         return (
                           <div key={name} className="flex flex-col gap-1.5 relative">
                             <label className="text-xs text-gray-400 font-bold flex justify-between">
                               {name}
-                              <span className={isSeed ? "text-rose-400" : "text-gray-600"}>{isSeed ? '(1셋)' : '(개당)'}</span>
+                              <span className="text-gray-600">(1개)</span>
                             </label>
                             <input type="number" value={prices[name] === 0 ? '' : prices[name] || ''} onChange={(e) => handlePriceChange(name, e.target.value)} placeholder="0" className="bg-black border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 pr-8" />
                             <span className="absolute right-3 top-[26px] text-xs text-gray-600 font-bold">G</span>
@@ -345,7 +342,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 신규 추가: 사용자 의견 관리 탭 */}
         {activeTab === 'feedback' && (
           <div className="animate-fade-in-up max-w-5xl mx-auto pb-32">
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl min-h-[600px] flex flex-col">

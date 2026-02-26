@@ -66,7 +66,7 @@ export default function EfficiencySimulatorPage() {
 
     const getBaseExpectedCost = (seedName: string, baseYield: number) => {
       const seedPrice = userPrices[seedName] !== undefined ? userPrices[seedName] : (dbPrices[seedName] || 0);
-      const unitSeedCost = seedPrice / 64;
+      const unitSeedCost = seedPrice / 64; 
       
       const f8Lv = profLevels['f8'] || 0;
       const f9Lv = profLevels['f9'] || 0;
@@ -87,7 +87,7 @@ export default function EfficiencySimulatorPage() {
     if (ingName === "양파 베이스") return getBaseExpectedCost("양파 씨앗", 1.5);
     if (ingName === "마늘 베이스") return getBaseExpectedCost("마늘 씨앗", 2.5);
     
-    return (activePrice / 64) * count;
+    return (activePrice / 64) * count; 
   };
 
   const analyzedData = useMemo(() => {
