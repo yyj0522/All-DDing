@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { 
   ENCHANT_BOXES, 
@@ -18,12 +18,16 @@ export default function EnchantSimulator() {
   const [activeBox, setActiveBox] = useState(ENCHANT_BOXES.find(b => b.active));
   const [showAnimation, setShowAnimation] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [mode, setMode] = useState<'normal' | 'test'>('normal');
+  const [mode, setMode] = useState<'normal' | 'test' | 'snipe'>('normal');
   const [showProbModal, setShowProbModal] = useState(false);
   const [strip, setStrip] = useState<Reward[]>([]);
   const [offset, setOffset] = useState(0);
   const [wonItem, setWonItem] = useState<Reward | null>(null);
   
+  const [snipeTargetId, setSnipeTargetId] = useState<string>('');
+  const [snipeResult, setSnipeResult] = useState<{ attempts: number, target: Reward } | null>(null);
+  const [isSniping, setIsSniping] = useState(false);
+
   const trackRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +47,13 @@ export default function EnchantSimulator() {
   };
 
   const currentRewards = getCurrentRewards();
+
+  useEffect(() => {
+    setWonItem(null);
+    setStrip([]);
+    setSnipeTargetId('');
+    setSnipeResult(null);
+  }, [activeBox]);
 
   const triggerFancyConfetti = () => {
     let originX = 0.5;
@@ -82,7 +93,6 @@ export default function EnchantSimulator() {
 
     if (!showAnimation) {
       setWonItem(winner);
-      triggerFancyConfetti();
       return;
     }
 
@@ -129,6 +139,30 @@ export default function EnchantSimulator() {
     setTestCount(10000);
   };
 
+  const handleSnipe = () => {
+    if (!snipeTargetId) {
+      alert("저격할 아이템을 먼저 선택해주세요.");
+      return;
+    }
+
+    setIsSniping(true);
+    setSnipeResult(null);
+
+    setTimeout(() => {
+      let attempts = 0;
+      let pulled: Reward;
+      
+      do {
+        attempts++;
+        pulled = drawReward(currentRewards);
+        if (attempts > 50000) break;
+      } while (pulled.id !== snipeTargetId);
+
+      setSnipeResult({ attempts, target: pulled });
+      setIsSniping(false);
+    }, 100);
+  };
+
   return (
     <div className="w-full space-y-8 relative">
       <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
@@ -137,10 +171,8 @@ export default function EnchantSimulator() {
             key={box.id}
             disabled={!box.active}
             onClick={() => {
-              if (isSpinning) return;
+              if (isSpinning || isSniping) return;
               setActiveBox(box);
-              setWonItem(null);
-              setStrip([]);
             }}
             className={`flex flex-col items-center p-4 rounded-2xl border min-w-[120px] transition-all ${
               !box.active ? 'opacity-30 cursor-not-allowed grayscale border-white/5' :
@@ -154,16 +186,19 @@ export default function EnchantSimulator() {
       </div>
 
       <div className="flex flex-wrap gap-4 items-center justify-between border-b border-white/10 pb-4">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button onClick={() => setMode('normal')} className={`px-4 py-2 text-sm font-bold rounded-lg ${mode === 'normal' ? 'bg-white/10 text-white' : 'text-gray-500'}`}>일반 개봉</button>
           <button onClick={() => setMode('test')} className={`px-4 py-2 text-sm font-bold rounded-lg ${mode === 'test' ? 'bg-white/10 text-white' : 'text-gray-500'}`}>10,000번 확률 검증</button>
+          <button onClick={() => setMode('snipe')} className={`px-4 py-2 text-sm font-bold rounded-lg ${mode === 'snipe' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-gray-500'}`}>특정 아이템 저격</button>
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="anim" checked={showAnimation} onChange={(e) => setShowAnimation(e.target.checked)} className="accent-fuchsia-500 w-4 h-4" />
-            <label htmlFor="anim" className="text-sm font-bold text-gray-300 cursor-pointer select-none hover:text-white transition-colors">룰렛 연출 켜기</label>
-          </div>
+          {mode === 'normal' && (
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="anim" checked={showAnimation} onChange={(e) => setShowAnimation(e.target.checked)} className="accent-fuchsia-500 w-4 h-4" />
+              <label htmlFor="anim" className="text-sm font-bold text-gray-300 cursor-pointer select-none hover:text-white transition-colors">룰렛 연출 켜기</label>
+            </div>
+          )}
           <button 
             onClick={() => setShowProbModal(true)}
             className="px-4 py-2 bg-white/5 hover:bg-white/10 text-fuchsia-400 text-sm font-bold border border-fuchsia-500/30 rounded-lg transition-colors"
@@ -173,8 +208,8 @@ export default function EnchantSimulator() {
         </div>
       </div>
 
-      {mode === 'normal' ? (
-        <div className="w-full space-y-8">
+      {mode === 'normal' && (
+        <div className="w-full space-y-8 animate-fade-in">
           <div ref={containerRef} className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 relative overflow-hidden h-72 flex flex-col justify-center shadow-inner w-full">
             
             {(isSpinning || (strip.length > 0 && !wonItem)) && (
@@ -206,7 +241,7 @@ export default function EnchantSimulator() {
                 <span className="text-fuchsia-400 text-base font-bold mb-3 tracking-widest">획득!</span>
                 <img src={wonItem.image} alt={wonItem.name} className="w-28 h-28 object-contain drop-shadow-[0_0_40px_rgba(255,255,255,0.4)] animate-bounce" />
                 <h3 className="text-3xl font-black text-white mt-6">
-                  {wonItem.id === 'piece' ? '인챈트북 조각!' : `${wonItem.name} 인챈트북!`} 
+                  {wonItem.id === 'piece' ? '인챈트북 조각!' : `${wonItem.name} ${wonItem.name.includes('인챈트북') ? '' : '인챈트북!'}`} 
                   {wonItem.amount > 1 ? ` (x${wonItem.amount})` : ''}
                 </h3>
               </div>
@@ -223,8 +258,10 @@ export default function EnchantSimulator() {
             </button>
           </div>
         </div>
-      ) : (
-        <div className="space-y-6">
+      )}
+
+      {mode === 'test' && (
+        <div className="space-y-6 animate-fade-in">
           <div className="flex justify-between items-center bg-white/5 p-6 rounded-2xl border border-white/10">
             <div>
               <h3 className="text-xl font-black text-white">10,000번 대규모 시뮬레이션</h3>
@@ -271,6 +308,50 @@ export default function EnchantSimulator() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {mode === 'snipe' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="bg-[#0a0a0a] border border-rose-500/20 rounded-2xl p-6 sm:p-8 shadow-[0_0_30px_rgba(244,63,94,0.05)]">
+            <h3 className="text-xl font-black text-rose-400 mb-2">특정 아이템 저격 모드</h3>
+            <p className="text-sm text-gray-400 mb-6">원하는 아이템이 나올 때까지 뒷단에서 캡슐을 무한으로 연속 개봉합니다.</p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <select 
+                value={snipeTargetId} 
+                onChange={(e) => setSnipeTargetId(e.target.value)}
+                className="flex-1 bg-black border border-white/10 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-rose-500"
+              >
+                <option value="">저격할 목표 아이템을 선택하세요</option>
+                {currentRewards.map(r => (
+                  <option key={r.id} value={r.id}>{r.name} {r.amount > 1 ? `(x${r.amount})` : ''} - 확률 {r.prob}%</option>
+                ))}
+              </select>
+              <button 
+                onClick={handleSnipe}
+                disabled={!snipeTargetId || isSniping}
+                className="bg-rose-600 hover:bg-rose-500 text-white font-bold px-8 py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(225,29,72,0.3)] transition-all whitespace-nowrap"
+              >
+                {isSniping ? '저격 진행 중...' : '나올 때까지 개봉'}
+              </button>
+            </div>
+
+            <div ref={containerRef} className="relative w-full">
+              {snipeResult && (
+                <div className="bg-black/50 border border-white/10 rounded-xl p-8 flex flex-col items-center justify-center text-center animate-fade-in-up relative z-10 backdrop-blur-sm">
+                  <span className="text-rose-400 text-sm font-bold tracking-widest mb-4">목표 달성 완료!</span>
+                  <img src={snipeResult.target.image} alt={snipeResult.target.name} className="w-24 h-24 object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.2)] animate-bounce" />
+                  <div className="mt-6 text-2xl font-black text-white">
+                    <span className="text-indigo-400 text-3xl">[{snipeResult.target.name}]</span> 획득 성공!
+                  </div>
+                  <div className="mt-3 text-gray-300 font-medium">
+                    해당 아이템을 뽑기 위해 캡슐을 총 <span className="text-rose-400 font-black text-xl px-1">{snipeResult.attempts.toLocaleString()}</span>번 개봉했습니다.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
