@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { INGREDIENTS } from '@/lib/skillData';
 import { FOOD_NAMES, CRAFT_NAMES, getCookingPeriod, getCraftingPeriod } from '@/lib/professionData';
 
+const SEEDS = ["토마토 씨앗", "양파 씨앗", "마늘 씨앗"];
 const VARIABLE_ITEMS = ["정제된 광석", "단단한 주괴", "스태미나 드링크 I", "맹수의 발톱"];
 
 export default function AdminPage() {
@@ -48,7 +49,8 @@ export default function AdminPage() {
       const priceMap: Record<string, number> = {};
       data.forEach(row => {
         let displayPrice = row.price;
-        if (row.category === 'ingredient' && !VARIABLE_ITEMS.includes(row.item_name)) {
+        // 일반 재료만 DB의 1셋(64) 가격을 1개 가격으로 나누어 보여줌
+        if (row.category === 'ingredient' && !SEEDS.includes(row.item_name) && !VARIABLE_ITEMS.includes(row.item_name)) {
           displayPrice = Number((row.price / 64).toFixed(4));
         }
         priceMap[row.item_name] = displayPrice;
@@ -116,7 +118,8 @@ export default function AdminPage() {
       .filter(([name]) => ingredientNames.includes(name))
       .map(([name, price]) => {
         let dbPrice = price;
-        if (!VARIABLE_ITEMS.includes(name)) {
+        // 일반 재료만 어드민이 적은 1개 가격에 64를 곱해서 1셋 가격으로 DB에 저장
+        if (!SEEDS.includes(name) && !VARIABLE_ITEMS.includes(name)) {
           dbPrice = price * 64;
         }
         return { item_name: name, price: dbPrice, category: 'ingredient', period: 'current' };
@@ -268,11 +271,12 @@ export default function AdminPage() {
                     <h3 className="text-sm text-gray-500 font-black tracking-widest mb-4 uppercase">{cat}</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {items.map(name => {
+                        const isSeed = SEEDS.includes(name);
                         return (
                           <div key={name} className="flex flex-col gap-1.5 relative">
                             <label className="text-xs text-gray-400 font-bold flex justify-between">
                               {name}
-                              <span className="text-gray-600">(1개)</span>
+                              <span className={isSeed ? "text-rose-400" : "text-gray-600"}>{isSeed ? '(1셋)' : '(1개)'}</span>
                             </label>
                             <input type="number" value={prices[name] === 0 ? '' : prices[name] || ''} onChange={(e) => handlePriceChange(name, e.target.value)} placeholder="0" className="bg-black border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 pr-8" />
                             <span className="absolute right-3 top-[26px] text-xs text-gray-600 font-bold">G</span>
