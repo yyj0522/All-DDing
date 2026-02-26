@@ -2,7 +2,17 @@
 
 import { useState, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { ENCHANT_BOXES, MYTHIC_REWARDS, drawMythicReward, Reward } from '@/lib/gachaData';
+import { 
+  ENCHANT_BOXES, 
+  GREEN_REWARDS,
+  BLUE_REWARDS,
+  LOWER_REWARDS,
+  UPPER_REWARDS,
+  LEGENDARY_REWARDS,
+  MYTHIC_REWARDS,
+  drawReward, 
+  Reward 
+} from '@/lib/gachaData';
 
 export default function EnchantSimulator() {
   const [activeBox, setActiveBox] = useState(ENCHANT_BOXES.find(b => b.active));
@@ -15,23 +25,29 @@ export default function EnchantSimulator() {
   const [wonItem, setWonItem] = useState<Reward | null>(null);
   
   const trackRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null); // [추가] 폭죽이 터질 정확한 기준점(컨테이너)을 잡기 위한 Ref
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [testResults, setTestResults] = useState<Record<string, number>>({});
   const [testCount, setTestCount] = useState(0);
-  const currentRewards = activeBox?.id === 'mythic_special' ? MYTHIC_REWARDS : [];
 
-  const books = currentRewards.filter(r => r.id !== 'piece');
-  const piece = currentRewards.find(r => r.id === 'piece');
-  const baseSequence = [...books];
-  if (piece) baseSequence.push(piece);
+  const getCurrentRewards = () => {
+    switch (activeBox?.id) {
+      case 'general_g': return GREEN_REWARDS;
+      case 'general_b': return BLUE_REWARDS;
+      case 'lower_special': return LOWER_REWARDS;
+      case 'upper_special': return UPPER_REWARDS;
+      case 'legendary_special': return LEGENDARY_REWARDS;
+      case 'mythic_special': return MYTHIC_REWARDS;
+      default: return [];
+    }
+  };
 
-  // [수정] 화면 전체 중앙이 아닌, '결과 UI 박스'의 정중앙 좌표를 실시간으로 계산하여 폭죽을 터뜨립니다.
+  const currentRewards = getCurrentRewards();
+
   const triggerFancyConfetti = () => {
     let originX = 0.5;
     let originY = 0.5;
 
-    // containerRef가 존재하면, 해당 DOM 요소의 화면 내 실제 좌표를 계산
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       originX = (rect.left + rect.width / 2) / window.innerWidth;
@@ -40,7 +56,7 @@ export default function EnchantSimulator() {
 
     const count = 250; 
     const defaults = {
-      origin: { x: originX, y: originY }, // 계산된 UI 박스의 정중앙 적용
+      origin: { x: originX, y: originY },
       colors: ['#ffffff', '#f8fafc', '#e0f2fe', '#7dd3fc', '#3b82f6', '#1e3a8a'], 
       ticks: 200, 
       zIndex: 200
@@ -62,7 +78,7 @@ export default function EnchantSimulator() {
   const handleOpen = () => {
     if (isSpinning || !activeBox) return;
 
-    const winner = drawMythicReward();
+    const winner = drawReward(currentRewards);
 
     if (!showAnimation) {
       setWonItem(winner);
@@ -75,14 +91,13 @@ export default function EnchantSimulator() {
     setOffset(0);
 
     const newStrip: Reward[] = [];
-    for (let i = 0; i < 10; i++) {
-      newStrip.push(...baseSequence);
+    for (let i = 0; i < 100; i++) {
+      newStrip.push(drawReward(currentRewards));
     }
+    const targetIndex = 85;
+    newStrip[targetIndex] = winner;
+    
     setStrip(newStrip);
-
-    const targetRepetitionStartIndex = baseSequence.length * 8; 
-    const indexInBase = baseSequence.findIndex(r => r.id === winner.id);
-    const targetIndex = targetRepetitionStartIndex + indexInBase;
 
     setTimeout(() => {
       const itemWidth = 120;
@@ -106,7 +121,7 @@ export default function EnchantSimulator() {
     currentRewards.forEach(r => results[r.id] = 0);
 
     for (let i = 0; i < 10000; i++) {
-      const reward = drawMythicReward();
+      const reward = drawReward(currentRewards);
       results[reward.id]++;
     }
 

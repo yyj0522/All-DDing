@@ -15,8 +15,7 @@ const GACHA_CATEGORIES = [
   '한글 닉네임 변경 캡슐', 
   '대두 치장 캡슐', 
   '야생 겉날개 스킨 캡슐', 
-  '항해 보상', 
-  '램프'
+  '항해 보상'
 ];
 
 export default function GachaPage() {

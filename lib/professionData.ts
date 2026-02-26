@@ -319,11 +319,11 @@ export const FARMING_RECIPES = [
 ];
 
 export const OCEAN_RECIPES = [
-  { name: '깐 새우', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 새우 1개'], note: '1회 2개 제작', type: '가공' },
-  { name: '도미 회', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 도미 1개'], note: '1회 2개 제작', type: '가공' },
-  { name: '청어 회', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 청어 1개'], note: '1회 2개 제작', type: '가공' },
-  { name: '금붕어 회', facility: '대형 제작대', time: '0초', ingredients: ['금붕어 1개'], note: '1회 2개 제작', type: '가공' },
-  { name: '농어 회', facility: '대형 제작대', time: '0초', ingredients: ['농어 1개'], note: '1회 2개 제작', type: '가공' },
+  { name: '깐 새우(2개)', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 새우 1개'], note: '1회 2개 제작', type: '가공' },
+  { name: '도미 회(2개)', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 도미 1개'], note: '1회 2개 제작', type: '가공' },
+  { name: '청어 회(2개)', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 청어 1개'], note: '1회 2개 제작', type: '가공' },
+  { name: '금붕어 회(2개)', facility: '대형 제작대', time: '0초', ingredients: ['금붕어 1개'], note: '1회 2개 제작', type: '가공' },
+  { name: '농어 회(2개)', facility: '대형 제작대', time: '0초', ingredients: ['농어 1개'], note: '1회 2개 제작', type: '가공' },
   
   { name: '수호의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['굴(1성) 2개', '점토 2개'], type: '제작' },
   { name: '파동의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['소라(1성) 2개', '모래 4개'], type: '제작' },
@@ -464,22 +464,28 @@ export const getKSTParts = (offsetMs = 0) => {
 };
 
 export const getCookingPeriod = () => {
-  const { y, m, d } = getKSTParts(-3 * 60 * 60 * 1000);
+  const { y, m, d } = getKSTParts(-3 * 60 * 60 * 1000); 
+  const daysInMonth = new Date(y, m, 0).getDate(); 
   
-  const currentUTC = Date.UTC(y, m - 1, d);
-  const baseUTC = Date.UTC(2026, 1, 24);
+  let start_d;
+  if (y === 2026 && m === 2 && d >= 24) {
+    start_d = d >= 27 ? 27 : 24;
+  } else {
+    const cycleIndex = Math.floor((d - 1) / 3);
+    start_d = 1 + cycleIndex * 3;
+  }
   
-  const diffDays = Math.floor((currentUTC - baseUTC) / (1000 * 60 * 60 * 24));
-  const cycle = Math.floor(diffDays / 3);
+  let end_d = start_d + 3;
+  let end_m = m;
   
-  const startUTC = baseUTC + cycle * 3 * 24 * 60 * 60 * 1000;
-  const endUTC = startUTC + 3 * 24 * 60 * 60 * 1000;
+  if (end_d > daysInMonth) {
+    end_d = 1;
+    end_m = m + 1;
+    if (end_m > 12) end_m = 1; 
+  }
   
-  const startDate = new Date(startUTC);
-  const endDate = new Date(endUTC);
-  
-  const sStr = `${String(startDate.getUTCMonth() + 1).padStart(2, '0')}-${String(startDate.getUTCDate()).padStart(2, '0')}`;
-  const eStr = `${String(endDate.getUTCMonth() + 1).padStart(2, '0')}-${String(endDate.getUTCDate()).padStart(2, '0')}`;
+  const sStr = `${String(m).padStart(2, '0')}-${String(start_d).padStart(2, '0')}`;
+  const eStr = `${String(end_m).padStart(2, '0')}-${String(end_d).padStart(2, '0')}`;
   
   return `${sStr}~${eStr}`;
 };

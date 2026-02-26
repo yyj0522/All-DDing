@@ -5,7 +5,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const CACHE_EXPIRE_MS = 6 * 60 * 60 * 1000; 
+const CACHE_EXPIRE_MS = 3 * 60 * 60 * 1000; 
 
 export async function getCachedPrices() {
   if (typeof window === 'undefined') {
@@ -18,13 +18,24 @@ export async function getCachedPrices() {
   if (cached) {
     try {
       const { data, timestamp } = JSON.parse(cached);
-      const now = new Date().getTime();
+      const now = new Date();
+      const nowMs = now.getTime();
       
-      if (now - timestamp < CACHE_EXPIRE_MS) {
+      const kstMs = nowMs + (9 * 60 * 60 * 1000);
+      const kstDate = new Date(kstMs);
+      const y = kstDate.getUTCFullYear();
+      const m = kstDate.getUTCMonth();
+      const d = kstDate.getUTCDate();
+      const h = kstDate.getUTCHours();
+
+      const recentResetKstMs = Date.UTC(y, m, h < 3 ? d - 1 : d, 3, 0, 0, 0);
+      const recentResetMs = recentResetKstMs - (9 * 60 * 60 * 1000);
+
+      if (nowMs - timestamp < CACHE_EXPIRE_MS && timestamp >= recentResetMs) {
         return data;
       }
     } catch (e) {
-      console.error('캐시 파싱 오류:', e);
+      console.error('Cache parsing error:', e);
     }
   }
 
