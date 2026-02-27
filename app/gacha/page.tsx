@@ -4,26 +4,26 @@ import { useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import EnchantSimulator from '@/components/gacha/EnchantSimulator';
+import SailingSimulator from '@/components/gacha/SailingSimulator';
 
 const GACHA_CATEGORIES = [
   '인챈트 캡슐', 
+  '항해 보상',
   '인챈트북', 
   '세이지 도구 강화', 
   '아일랜드 보물상자', 
   '랜덤 뱃지 보급품', 
   '랜덤 공룡펫 보급품', 
   '한글 닉네임 변경 캡슐', 
-  '대두 치장 캡슐', 
-  '야생 겉날개 스킨 캡슐', 
-  '항해 보상'
+  '대두 치장 캡슐'
 ];
 
 export default function GachaPage() {
   const [activeCategory, setActiveCategory] = useState(GACHA_CATEGORIES[0]);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-fuchsia-500/30 relative flex flex-col overflow-x-hidden">
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-fuchsia-600/10 rounded-full blur-[150px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-blue-500/30 relative flex flex-col overflow-x-hidden">
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[150px] pointer-events-none"></div>
 
       <Header />
 
@@ -45,7 +45,7 @@ export default function GachaPage() {
                   onClick={() => setActiveCategory(cat)}
                   className={`px-5 py-3.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap xl:whitespace-normal text-left ${
                     activeCategory === cat 
-                    ? 'bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.15)]' 
+                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
                     : 'bg-[#0a0a0a] border border-white/5 text-gray-500 hover:bg-white/5 hover:text-gray-300'
                   }`}
                 >
@@ -61,13 +61,15 @@ export default function GachaPage() {
             <div className="relative z-10 w-full h-full flex flex-col">
               {activeCategory === '인챈트 캡슐' ? (
                 <EnchantSimulator />
+              ) : activeCategory === '항해 보상' ? (
+                <SailingSimulator />
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center space-y-4">
-                  <span className="inline-block px-3 py-1 rounded bg-fuchsia-500/20 text-fuchsia-400 font-black text-[10px] tracking-widest border border-fuchsia-500/30 uppercase">
+                  <span className="inline-block px-3 py-1 rounded bg-blue-500/20 text-blue-400 font-black text-[10px] tracking-widest border border-blue-500/30 uppercase">
                     Under Construction
                   </span>
                   <h2 className="text-3xl font-black text-white text-center">
-                    <span className="text-fuchsia-400">[{activeCategory}]</span><br/>데이터 수집 중
+                    <span className="text-blue-400">[{activeCategory}]</span><br/>데이터 수집 중
                   </h2>
                 </div>
               )}
