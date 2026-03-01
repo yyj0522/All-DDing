@@ -1,0 +1,645 @@
+'use client';
+
+import { useState, useRef, useEffect, useMemo } from 'react';
+import confetti from 'canvas-confetti';
+
+interface Reward {
+  id: string;
+  name: string;
+  prob: number;
+  image: string;
+  amount: number;
+  grade: string;
+  effect: string;
+}
+
+const BADGE_REWARDS: Reward[] = [
+  { id: 'badge42', name: '거인의 해골 획득권', prob: 0.625, image: '/badge/random_badge42.png', amount: 1, grade: 'mythic', effect: '거인1' },
+  { id: 'badge33', name: '숲지기의 망토 획득권', prob: 0.625, image: '/badge/random_badge33.png', amount: 1, grade: 'mythic', effect: '비행속도1' },
+  { id: 'badge34', name: '요정의 날개 획득권', prob: 0.625, image: '/badge/random_badge34.png', amount: 1, grade: 'mythic', effect: '비행속도1' },
+  { id: 'badge35', name: '어스름의 날개깃 획득권', prob: 0.625, image: '/badge/random_badge35.png', amount: 1, grade: 'mythic', effect: '비행속도2' },
+  { id: 'badge36', name: '칠흑의 까마귀 획득권', prob: 0.625, image: '/badge/random_badge36.png', amount: 1, grade: 'mythic', effect: '비행속도2' },
+  { id: 'badge37', name: '대지의 석판 획득권', prob: 0.625, image: '/badge/random_badge37.png', amount: 1, grade: 'mythic', effect: '블록설치1' },
+  { id: 'badge38', name: '장인의 설계서 획득권', prob: 0.625, image: '/badge/random_badge38.png', amount: 1, grade: 'mythic', effect: '블록설치1' },
+  { id: 'badge39', name: '정교한 카드 획득권', prob: 0.625, image: '/badge/random_badge39.png', amount: 1, grade: 'mythic', effect: '블록설치2' },
+  { id: 'badge40', name: '봉인된 시공 고서 획득권', prob: 0.625, image: '/badge/random_badge40.png', amount: 1, grade: 'mythic', effect: '블록설치2' },
+  { id: 'badge41', name: '장대한 석상 획득권', prob: 0.625, image: '/badge/random_badge41.png', amount: 1, grade: 'mythic', effect: '거인1' },
+  { id: 'badge43', name: '영광의 금상 획득권', prob: 0.625, image: '/badge/random_badge43.png', amount: 1, grade: 'mythic', effect: '거인2' },
+  { id: 'badge44', name: '태고의 투구 획득권', prob: 0.625, image: '/badge/random_badge44.png', amount: 1, grade: 'mythic', effect: '거인2' },
+  { id: 'badge45', name: '작은 씨앗 획득권', prob: 0.625, image: '/badge/random_badge45.png', amount: 1, grade: 'mythic', effect: '요정1' },
+  { id: 'badge46', name: '숲의 도토리 획득권', prob: 0.625, image: '/badge/random_badge46.png', amount: 1, grade: 'mythic', effect: '요정1' },
+  { id: 'badge47', name: '작은 고슴도치 친구 획득권', prob: 0.625, image: '/badge/random_badge47.png', amount: 1, grade: 'mythic', effect: '요정2' },
+  { id: 'badge48', name: '요정의 꽃핀 획득권', prob: 0.625, image: '/badge/random_badge48.png', amount: 1, grade: 'mythic', effect: '요정2' },
+  { id: 'badge17', name: '날렵한 깃털 획득권', prob: 2.8125, image: '/badge/random_badge17.png', amount: 1, grade: 'rare', effect: '민첩1' },
+  { id: 'badge18', name: '민첩한 벌의 날개 획득권', prob: 2.8125, image: '/badge/random_badge18.png', amount: 1, grade: 'rare', effect: '민첩1' },
+  { id: 'badge19', name: '청풍의 부채 획득권', prob: 2.8125, image: '/badge/random_badge19.png', amount: 1, grade: 'rare', effect: '민첩2' },
+  { id: 'badge20', name: '활강의 가속 망토 획득권', prob: 2.8125, image: '/badge/random_badge20.png', amount: 1, grade: 'rare', effect: '민첩2' },
+  { id: 'badge21', name: '거친 도끼 획득권', prob: 2.8125, image: '/badge/random_badge21.png', amount: 1, grade: 'rare', effect: '파괴력1' },
+  { id: 'badge22', name: '무거운 곡괭이 획득권', prob: 2.8125, image: '/badge/random_badge22.png', amount: 1, grade: 'rare', effect: '파괴력1' },
+  { id: 'badge23', name: '암흑의 낫 획득권', prob: 2.8125, image: '/badge/random_badge23.png', amount: 1, grade: 'rare', effect: '파괴력2' },
+  { id: 'badge24', name: '적황의 곡괭이 획득권', prob: 2.8125, image: '/badge/random_badge24.png', amount: 1, grade: 'rare', effect: '파괴력2' },
+  { id: 'badge7', name: '치유의 고리 획득권', prob: 2.8125, image: '/badge/random_badge7.png', amount: 1, grade: 'rare', effect: '회복력2' },
+  { id: 'badge26', name: '유연한 도마뱀 획득권', prob: 2.8125, image: '/badge/random_badge26.png', amount: 1, grade: 'rare', effect: '낙법1' },
+  { id: 'badge27', name: '완충의 꽃잎 획득권', prob: 2.8125, image: '/badge/random_badge27.png', amount: 1, grade: 'rare', effect: '낙법2' },
+  { id: 'badge28', name: '봄빛의 발찌 획득권', prob: 2.8125, image: '/badge/random_badge28.png', amount: 1, grade: 'rare', effect: '낙법2' },
+  { id: 'badge29', name: '유영의 물약 획득권', prob: 2.8125, image: '/badge/random_badge29.png', amount: 1, grade: 'rare', effect: '수영 속도1' },
+  { id: 'badge30', name: '바다 거북이 등껍질 획득권', prob: 2.8125, image: '/badge/random_badge30.png', amount: 1, grade: 'rare', effect: '수영 속도1' },
+  { id: 'badge31', name: '청해의 반지 획득권', prob: 2.8125, image: '/badge/random_badge31.png', amount: 1, grade: 'rare', effect: '수영 속도2' },
+  { id: 'badge32', name: '해류의 문장 획득권', prob: 2.8125, image: '/badge/random_badge32.png', amount: 1, grade: 'rare', effect: '수영 속도2' },
+  { id: 'badge1', name: '순환의 생명 물약 획득권', prob: 2.8125, image: '/badge/random_badge1.png', amount: 1, grade: 'rare', effect: '체력1' },
+  { id: 'badge2', name: '견고한 바위 획득권', prob: 2.8125, image: '/badge/random_badge2.png', amount: 1, grade: 'rare', effect: '체력1' },
+  { id: 'badge3', name: '생기로운 청과 획득권', prob: 2.8125, image: '/badge/random_badge3.png', amount: 1, grade: 'rare', effect: '체력2' },
+  { id: 'badge4', name: '만개한 꽃병 획득권', prob: 2.8125, image: '/badge/random_badge4.png', amount: 1, grade: 'rare', effect: '체력2' },
+  { id: 'badge5', name: '싱그러운 새싹 획득권', prob: 2.8125, image: '/badge/random_badge5.png', amount: 1, grade: 'rare', effect: '회복력1' },
+  { id: 'badge6', name: '붉은 장미꽃 획득권', prob: 2.8125, image: '/badge/random_badge6.png', amount: 1, grade: 'rare', effect: '회복력1' },
+  { id: 'badge8', name: '무지개빛 생화 획득권', prob: 2.8125, image: '/badge/random_badge8.png', amount: 1, grade: 'rare', effect: '회복력2' },
+  { id: 'badge9', name: '청빛의 결정 획득권', prob: 2.8125, image: '/badge/random_badge9.png', amount: 1, grade: 'rare', effect: '점프력1' },
+  { id: 'badge10', name: '바람의 깃털 획득권', prob: 2.8125, image: '/badge/random_badge10.png', amount: 1, grade: 'rare', effect: '점프력1' },
+  { id: 'badge25', name: '착지의 지팡이 획득권', prob: 2.8125, image: '/badge/random_badge25.png', amount: 1, grade: 'rare', effect: '낙법1' },
+  { id: 'badge11', name: '영롱한 나비 날개 획득권', prob: 2.8125, image: '/badge/random_badge11.png', amount: 1, grade: 'rare', effect: '점프력2' },
+  { id: 'badge12', name: '비상의 상징 획득권', prob: 2.8125, image: '/badge/random_badge12.png', amount: 1, grade: 'rare', effect: '점프력2' },
+  { id: 'badge13', name: '초심의 검 획득권', prob: 2.8125, image: '/badge/random_badge13.png', amount: 1, grade: 'rare', effect: '공격력1' },
+  { id: 'badge14', name: '자연의 검 획득권', prob: 2.8125, image: '/badge/random_badge14.png', amount: 1, grade: 'rare', effect: '공격력1' },
+  { id: 'badge15', name: '찬란한 금검 획득권', prob: 2.8125, image: '/badge/random_badge15.png', amount: 1, grade: 'rare', effect: '공격력2' },
+  { id: 'badge16', name: '서리의 날 획득권', prob: 2.8125, image: '/badge/random_badge16.png', amount: 1, grade: 'rare', effect: '공격력2' },
+];
+
+const drawReward = (rewards: Reward[]): Reward => {
+  const rand = Math.random() * 100;
+  let sum = 0;
+  for (const r of rewards) {
+    sum += r.prob;
+    if (rand <= sum) return r;
+  }
+  return rewards[rewards.length - 1];
+};
+
+const drawVisualReward = (rewards: Reward[]): Reward => {
+  return rewards[Math.floor(Math.random() * rewards.length)];
+};
+
+export default function RandomBadgeSimulator() {
+  const [showAnimation, setShowAnimation] = useState(true);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [mode, setMode] = useState<'normal' | 'test' | 'snipe' | 'budget'>('normal');
+  const [showProbModal, setShowProbModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [strip, setStrip] = useState<Reward[]>([]);
+  const [offset, setOffset] = useState(0);
+  const [wonItem, setWonItem] = useState<Reward | null>(null);
+  
+  const [totalPulls, setTotalPulls] = useState(0);
+  const [totalCost, setTotalCost] = useState(0);
+
+  const [snipeTargetIds, setSnipeTargetIds] = useState<string[]>([]);
+  const [snipeResult, setSnipeResult] = useState<{ attempts: number, cost: number, targets: Record<string, number>, extraMythics: number } | null>(null);
+  const [isSniping, setIsSniping] = useState(false);
+
+  const [budgetAmount, setBudgetAmount] = useState<number>(100000);
+  const [budgetResult, setBudgetResult] = useState<{ pulls: number, results: [Reward, number][] } | null>(null);
+
+  const trackRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [testResults, setTestResults] = useState<Record<string, number>>({});
+  const [testCount, setTestCount] = useState(0);
+
+  useEffect(() => {
+    const initial: Reward[] = [];
+    for (let i = 0; i < 30; i++) {
+      initial.push(drawVisualReward(BADGE_REWARDS));
+    }
+    setStrip(initial);
+    setOffset(-(10 * 120) - 50);
+    setWonItem(null);
+    setSnipeTargetIds([]);
+    setSnipeResult(null);
+    setBudgetResult(null);
+  }, []);
+
+  const categorizedBadges = useMemo(() => {
+    const cats: Record<string, Reward[]> = {};
+    BADGE_REWARDS.forEach(b => {
+      if (!cats[b.effect]) cats[b.effect] = [];
+      cats[b.effect].push(b);
+    });
+    
+    return Object.entries(cats).sort((a, b) => a[0].localeCompare(b[0]));
+  }, []);
+
+  const triggerFancyConfetti = () => {
+    let originX = 0.5;
+    let originY = 0.5;
+
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      originX = (rect.left + rect.width / 2) / window.innerWidth;
+      originY = (rect.top + rect.height / 2) / window.innerHeight;
+    }
+
+    const count = 250; 
+    const defaults = {
+      origin: { x: originX, y: originY },
+      colors: ['#ffffff', '#f8fafc', '#e0f2fe', '#7dd3fc', '#3b82f6', '#1e3a8a'], 
+      ticks: 200, 
+      zIndex: 200
+    };
+
+    function fire(particleRatio: number, opts: any) {
+      confetti(Object.assign({}, defaults, opts, {
+        particleCount: Math.floor(count * particleRatio)
+      }));
+    }
+
+    fire(0.25, { spread: 26, startVelocity: 55 });
+    fire(0.2, { spread: 60 });
+    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+    fire(0.1, { spread: 120, startVelocity: 45 });
+  };
+
+  const handleOpen = () => {
+    if (isSpinning) return;
+
+    const winner = drawReward(BADGE_REWARDS);
+    setTotalPulls(prev => prev + 1);
+    setTotalCost(prev => prev + 5000);
+
+    if (!showAnimation) {
+      setWonItem(winner);
+      return;
+    }
+
+    setIsSpinning(true);
+    setWonItem(null);
+
+    const newStrip: Reward[] = [];
+    for (let i = 0; i < 100; i++) {
+      newStrip.push(drawVisualReward(BADGE_REWARDS));
+    }
+    const targetIndex = 85;
+    newStrip[targetIndex] = winner;
+    
+    setStrip(newStrip);
+
+    const startIdx = 10;
+    setOffset(-(startIdx * 120) - 50);
+
+    setTimeout(() => {
+      const duration = 6000;
+      let startTime: number | null = null;
+
+      const animate = (time: number) => {
+        if (!startTime) startTime = time;
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeProgress = 1 - Math.pow(1 - progress, 4); 
+        
+        const currentIdx = Math.round(startIdx + (targetIndex - startIdx) * easeProgress);
+        const currentOffset = -(currentIdx * 120) - 50;
+        
+        if (trackRef.current) {
+          trackRef.current.style.transform = `translate(${currentOffset}px, -50%)`;
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          setOffset(-(targetIndex * 120) - 50);
+          if (trackRef.current) {
+            trackRef.current.style.transform = `translate(${-(targetIndex * 120) - 50}px, -50%)`;
+          }
+          setIsSpinning(false);
+          setWonItem(winner);
+          triggerFancyConfetti();
+        }
+      };
+
+      requestAnimationFrame(animate);
+    }, 50);
+  };
+
+  const handleMassTest = () => {
+    const results: Record<string, number> = {};
+    BADGE_REWARDS.forEach(r => results[r.id] = 0);
+
+    for (let i = 0; i < 10000; i++) {
+      const reward = drawReward(BADGE_REWARDS);
+      results[reward.id]++;
+    }
+
+    setTotalPulls(prev => prev + 10000);
+    setTotalCost(prev => prev + 50000000);
+    setTestResults(results);
+    setTestCount(10000);
+  };
+
+  const toggleSnipeTarget = (id: string) => {
+    setSnipeTargetIds(prev => 
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    );
+  };
+
+  const handleSnipe = () => {
+    if (snipeTargetIds.length === 0) {
+      alert("저격할 아이템을 1개 이상 선택해주세요.");
+      return;
+    }
+
+    setIsSniping(true);
+    setSnipeResult(null);
+
+    setTimeout(() => {
+      let attempts = 0;
+      const obtained = new Set<string>();
+      const pulledCounts: Record<string, number> = {};
+      let extraMythics = 0;
+      
+      while (obtained.size < snipeTargetIds.length && attempts < 1000000) {
+        attempts++;
+        const pulled = drawReward(BADGE_REWARDS);
+        
+        if (snipeTargetIds.includes(pulled.id)) {
+          obtained.add(pulled.id);
+        } else if (pulled.grade === 'mythic') {
+          extraMythics++;
+        }
+        
+        pulledCounts[pulled.id] = (pulledCounts[pulled.id] || 0) + 1;
+      }
+
+      const cost = attempts * 5000;
+      setSnipeResult({ attempts, cost, targets: pulledCounts, extraMythics });
+      setTotalPulls(prev => prev + attempts);
+      setTotalCost(prev => prev + cost);
+      setIsSniping(false);
+    }, 100);
+  };
+
+  const handleBudgetSimulate = () => {
+    if (budgetAmount < 5000) {
+      alert("크리스탈이 부족합니다. 최소 5,000 크리스탈이 필요합니다.");
+      return;
+    }
+
+    const pulls = Math.floor(budgetAmount / 5000);
+    const results: Record<string, number> = {};
+
+    for (let i = 0; i < pulls; i++) {
+      const reward = drawReward(BADGE_REWARDS);
+      results[reward.id] = (results[reward.id] || 0) + 1;
+    }
+
+    const sortedResults = BADGE_REWARDS
+      .filter(r => results[r.id] > 0)
+      .map(r => [r, results[r.id]] as [Reward, number])
+      .sort((a, b) => {
+        if (a[0].grade !== b[0].grade) return a[0].grade === 'mythic' ? -1 : 1;
+        return b[1] - a[1];
+      });
+
+    setBudgetResult({ pulls, results: sortedResults });
+    setTotalPulls(prev => prev + pulls);
+    setTotalCost(prev => prev + (pulls * 5000));
+  };
+
+  const handleReset = () => {
+    setTotalPulls(0);
+    setTotalCost(0);
+    setWonItem(null);
+    setStrip([]);
+    setSnipeResult(null);
+    setTestCount(0);
+    setBudgetResult(null);
+  };
+
+  return (
+    <div className="w-full space-y-6 relative">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-black/40 border border-white/10 rounded-2xl p-5 shadow-lg gap-4">
+        <div className="flex items-center gap-4">
+          <img src="/sailing/diamond_chest.png" alt="랜덤 뱃지 보급품" className="w-16 h-16 object-contain drop-shadow-lg" />
+          <div>
+            <h2 className="text-xl font-black text-white">랜덤 뱃지 보급품</h2>
+            <p className="text-sm text-gray-400 mt-1">1회 개봉 비용: <span className="text-blue-400 font-bold">5,000</span> 크리스탈</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1 w-full md:w-auto">
+          <div className="text-sm font-bold text-gray-400">누적 개봉: <span className="text-white text-base">{totalPulls.toLocaleString()}</span>회</div>
+          <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-500/20 px-4 py-2 rounded-xl">
+            <span className="text-xs font-bold text-gray-400">총 소모 재화</span>
+            <img src="/crystal.png" className="w-5 h-5 object-contain" alt="크리스탈" />
+            <span className="text-lg font-black text-blue-400">{totalCost.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-4 items-center justify-between border-b border-white/10 pb-4">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setMode('normal')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'normal' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>일반 개봉</button>
+          <button onClick={() => setMode('test')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'test' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>10,000번 검증</button>
+          <button onClick={() => setMode('snipe')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'snipe' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-gray-500 hover:text-gray-300'}`}>특정 다중 저격</button>
+          <button onClick={() => setMode('budget')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'budget' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-gray-500 hover:text-gray-300'}`}>예산 시뮬레이션</button>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {mode === 'normal' && (
+            <div className="flex items-center gap-2 mr-2">
+              <input type="checkbox" id="anim_badge" checked={showAnimation} onChange={(e) => setShowAnimation(e.target.checked)} className="accent-fuchsia-500 w-4 h-4 cursor-pointer" />
+              <label htmlFor="anim_badge" className="text-sm font-bold text-gray-300 cursor-pointer select-none hover:text-white transition-colors">룰렛 켜기</label>
+            </div>
+          )}
+          <button onClick={handleReset} className="px-4 py-2 bg-red-900/20 text-red-400 hover:bg-red-900/40 text-sm font-bold border border-red-500/30 rounded-lg transition-colors">
+            초기화
+          </button>
+          <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-blue-900/20 text-blue-400 hover:bg-blue-900/40 text-sm font-bold border border-blue-500/30 rounded-lg transition-colors">
+            효과별 뱃지
+          </button>
+          <button onClick={() => setShowProbModal(true)} className="px-4 py-2 bg-fuchsia-900/20 text-fuchsia-400 hover:bg-fuchsia-900/40 text-sm font-bold border border-fuchsia-500/30 rounded-lg transition-colors">
+            확률표 보기
+          </button>
+        </div>
+      </div>
+
+      {mode === 'normal' && (
+        <div className="w-full space-y-8 animate-fade-in">
+          <div ref={containerRef} className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 relative overflow-hidden h-72 flex flex-col justify-center shadow-inner w-full">
+            
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex gap-[20px] z-0">
+              {Array.from({ length: 21 }).map((_, i) => (
+                <div key={i} className={`w-[100px] h-[92px] rounded-xl flex-shrink-0 border ${i === 10 ? 'bg-fuchsia-900/20 border-fuchsia-500/50 shadow-[inset_0_0_20px_rgba(217,70,239,0.3)]' : 'bg-gray-900/60 border-white/5'}`}></div>
+              ))}
+            </div>
+
+            <div 
+              ref={trackRef}
+              className="absolute top-1/2 flex gap-[20px] z-10"
+              style={{ 
+                left: '50%',
+                transform: `translate(${offset}px, -50%)`, 
+                transition: 'none'
+              }}
+            >
+              {strip.map((item, i) => (
+                <div key={i} className="w-[100px] h-[92px] flex-shrink-0 flex flex-col items-center justify-center">
+                  <div className="relative">
+                    <img src={item.image} alt={item.name} className="w-12 h-12 object-contain drop-shadow-md relative z-10" />
+                    {item.grade === 'mythic' && <div className="absolute inset-0 bg-yellow-500/40 blur-lg rounded-full z-0"></div>}
+                  </div>
+                  <span className="text-[10px] mt-2 text-center text-gray-300 font-bold line-clamp-1 px-1">{item.name}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[116px] h-[108px] border-4 border-fuchsia-500 rounded-2xl z-20 shadow-[0_0_20px_rgba(217,70,239,0.5)] pointer-events-none"></div>
+
+            {!isSpinning && wonItem && (
+              <div className="absolute inset-0 bg-black/85 z-30 flex flex-col items-center justify-center backdrop-blur-sm animate-fade-in">
+                <span className="text-fuchsia-400 text-base font-bold mb-3 tracking-widest">획득!</span>
+                <img src={wonItem.image} alt={wonItem.name} className="w-28 h-28 object-contain drop-shadow-[0_0_40px_rgba(255,255,255,0.4)]" />
+                <h3 className="text-3xl font-black text-white mt-6 text-center px-4">
+                  {wonItem.name}
+                  <span className="block mt-2 text-sm text-yellow-400 font-medium bg-yellow-500/10 border border-yellow-500/30 px-3 py-1 rounded-full w-fit mx-auto">
+                    효과: {wonItem.effect}
+                  </span>
+                </h3>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center">
+            <button 
+              onClick={handleOpen} 
+              disabled={isSpinning}
+              className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-black text-xl px-20 py-5 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.3)] hover:shadow-[0_0_30px_rgba(217,70,239,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
+            >
+              {isSpinning ? '개봉 중...' : '1회 개봉하기'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {mode === 'test' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/5 p-6 rounded-2xl border border-white/10 gap-4">
+            <div>
+              <h3 className="text-xl font-black text-white">10,000번 대규모 시뮬레이션</h3>
+              <p className="text-sm text-gray-400 mt-1">서버의 공식 확률 데이터가 실제로 어떻게 적용되는지 대수의 법칙으로 검증합니다.</p>
+            </div>
+            <button onClick={handleMassTest} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] whitespace-nowrap">
+              즉시 1만번 돌리기
+            </button>
+          </div>
+
+          {testCount > 0 && (
+            <div className="bg-black/40 border border-white/10 rounded-2xl p-6 overflow-x-auto">
+              <table className="w-full text-sm text-left whitespace-nowrap">
+                <thead className="text-xs text-gray-500 uppercase bg-white/5">
+                  <tr>
+                    <th className="px-4 py-3 rounded-tl-lg">보상 아이템</th>
+                    <th className="px-4 py-3">공식 확률</th>
+                    <th className="px-4 py-3">시뮬레이션 실제 확률</th>
+                    <th className="px-4 py-3 rounded-tr-lg">획득 횟수 (1만번 기준)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {BADGE_REWARDS.map(reward => {
+                    const count = testResults[reward.id] || 0;
+                    const actualProb = (count / 10000) * 100;
+                    const diff = Math.abs(reward.prob - actualProb);
+                    const isAccurate = diff < 1.0; 
+
+                    return (
+                      <tr key={reward.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                        <td className="px-4 py-4 font-bold text-white flex items-center gap-3">
+                          <img src={reward.image} className="w-6 h-6 object-contain" />
+                          {reward.name}
+                        </td>
+                        <td className="px-4 py-4 text-gray-400">{reward.prob.toFixed(4)}%</td>
+                        <td className={`px-4 py-4 font-black ${isAccurate ? 'text-green-400' : 'text-yellow-400'}`}>
+                          {actualProb.toFixed(4)}%
+                        </td>
+                        <td className="px-4 py-4 text-gray-300">{count.toLocaleString()}회</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {mode === 'snipe' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="bg-[#0a0a0a] border border-rose-500/20 rounded-2xl p-6 sm:p-8 shadow-[0_0_30px_rgba(244,63,94,0.05)]">
+            <h3 className="text-xl font-black text-rose-400 mb-2">선택 다중 저격 모드</h3>
+            <p className="text-sm text-gray-400 mb-6">선택한 모든 뱃지들을 최소 1개씩 획득할 때까지 뒷단에서 무한으로 개봉합니다.</p>
+            
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="flex justify-between items-end">
+                <span className="text-sm font-bold text-gray-300">목표 뱃지 선택 (다중 선택 가능)</span>
+                <span className="text-xs text-rose-400 font-bold">{snipeTargetIds.length}개 선택됨</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
+                {BADGE_REWARDS.map(r => {
+                  const isSelected = snipeTargetIds.includes(r.id);
+                  return (
+                    <div 
+                      key={r.id} 
+                      onClick={() => toggleSnipeTarget(r.id)}
+                      className={`cursor-pointer flex items-center gap-2 p-2 rounded-lg border transition-all select-none ${isSelected ? 'bg-rose-500/20 border-rose-500 shadow-[inset_0_0_10px_rgba(225,29,72,0.3)]' : 'bg-black/50 border-white/10 hover:bg-white/5'}`}
+                    >
+                      <img src={r.image} className="w-8 h-8 object-contain" />
+                      <div className="flex flex-col overflow-hidden">
+                        <span className={`text-[11px] font-bold truncate ${r.grade === 'mythic' ? 'text-yellow-400' : 'text-white'}`}>{r.name}</span>
+                        <span className="text-[9px] text-gray-400 truncate">{r.effect}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <button 
+                onClick={handleSnipe}
+                disabled={snipeTargetIds.length === 0 || isSniping}
+                className="bg-rose-600 hover:bg-rose-500 text-white font-black px-12 py-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(225,29,72,0.4)] transition-all"
+              >
+                {isSniping ? '목표 획득을 위해 무한 개봉 중...' : '선택한 뱃지가 모두 나올 때까지 개봉'}
+              </button>
+            </div>
+
+            <div ref={containerRef} className="relative w-full mt-8">
+              {snipeResult && (
+                <div className="bg-black/60 border border-rose-500/30 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center animate-fade-in-up">
+                  <span className="text-rose-400 text-lg font-black tracking-widest mb-2">저격 성공!</span>
+                  <div className="text-gray-300 font-medium mb-8 text-center text-sm md:text-base">
+                    선택한 <span className="text-white font-bold">{snipeTargetIds.length}개</span>의 뱃지를 모두 뽑기 위해<br/>
+                    총 <span className="text-rose-400 font-black text-xl">{snipeResult.attempts.toLocaleString()}</span>회 개봉, 
+                    <span className="text-blue-400 font-black text-xl mx-1">{snipeResult.cost.toLocaleString()}</span>크리스탈을 사용했습니다.
+                  </div>
+                  
+                  <div className="w-full">
+                    <h4 className="text-sm font-bold text-gray-400 text-center border-b border-white/10 pb-2 mb-4">목표 달성 중 획득한 다른 신화(0.625%) 뱃지 수</h4>
+                    <div className="text-3xl font-black text-yellow-400 text-center mb-6">{snipeResult.extraMythics.toLocaleString()}개</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mode === 'budget' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="bg-[#0a0a0a] border border-indigo-500/20 rounded-2xl p-6 sm:p-8 shadow-[0_0_30px_rgba(99,102,241,0.05)]">
+            <h3 className="text-xl font-black text-indigo-400 mb-2">예산 시뮬레이션 모드</h3>
+            <p className="text-sm text-gray-400 mb-6">입력한 크리스탈 한도 내에서 최대로 개봉했을 때의 전체 결과를 보여줍니다.</p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 mb-8 items-end">
+              <div className="flex-1 w-full flex flex-col gap-2">
+                <label className="text-xs font-bold text-gray-400 pl-1">보유 크리스탈 예산</label>
+                <div className="relative">
+                  <img src="/crystal.png" className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 object-contain z-10" />
+                  <input 
+                    type="number" 
+                    value={budgetAmount}
+                    onChange={(e) => setBudgetAmount(Number(e.target.value))}
+                    step="5000"
+                    min="5000"
+                    className="w-full bg-black border border-white/10 text-white font-black text-lg rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+              <button 
+                onClick={handleBudgetSimulate}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-3.5 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] transition-all whitespace-nowrap h-[52px]"
+              >
+                예산 전부 사용하기
+              </button>
+            </div>
+
+            {budgetResult && (
+              <div className="animate-fade-in-up border-t border-white/10 pt-8 mt-4">
+                <div className="flex justify-between items-center mb-6">
+                  <h4 className="text-lg font-black text-white">결과 리포트 <span className="text-sm text-gray-400 font-medium ml-2">({budgetResult.pulls.toLocaleString()}회 개봉)</span></h4>
+                </div>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {budgetResult.results.map(([reward, count]) => (
+                    <div key={reward.id} className={`flex flex-col items-center justify-center p-4 rounded-xl border ${reward.grade === 'mythic' ? 'bg-yellow-500/10 border-yellow-500/50' : 'bg-black/50 border-white/10'}`}>
+                      <img src={reward.image} className="w-10 h-10 object-contain drop-shadow-md mb-2" />
+                      <span className={`text-[11px] font-bold text-center mb-1 line-clamp-1 ${reward.grade === 'mythic' ? 'text-yellow-400' : 'text-gray-300'}`}>{reward.name}</span>
+                      <span className="bg-white/10 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{count.toLocaleString()}개</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowCategoryModal(false)}>
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 max-w-4xl w-full shadow-2xl flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-blue-400">스탯(효과)별 뱃지 목록</h3>
+              <button onClick={() => setShowCategoryModal(false)} className="text-gray-400 hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto custom-scrollbar pr-2 flex-1">
+              {categorizedBadges.map(([effect, items]) => (
+                <div key={effect} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3">
+                  <h4 className="text-sm font-black text-yellow-400 border-b border-white/10 pb-2">{effect}</h4>
+                  <div className="flex flex-col gap-2">
+                    {items.map(item => (
+                      <div key={item.id} className="flex items-center gap-3 bg-black/40 p-2 rounded-lg">
+                        <img src={item.image} className="w-8 h-8 object-contain" />
+                        <div className="flex flex-col">
+                          <span className={`text-xs font-bold ${item.grade === 'mythic' ? 'text-yellow-400' : 'text-gray-200'}`}>{item.name}</span>
+                          <span className="text-[10px] text-gray-500">{item.prob}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showProbModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowProbModal(false)}>
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 max-w-3xl w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-black text-fuchsia-400">랜덤 뱃지 보급품 확률표</h3>
+              <button onClick={() => setShowProbModal(false)} className="text-gray-400 hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+              {BADGE_REWARDS.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3 bg-white/5 p-2 rounded-lg text-sm">
+                  <img src={item.image} className="w-8 h-8 object-contain" />
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-gray-200 font-medium truncate">{item.name}</span>
+                    <span className="text-[10px] text-yellow-500 font-bold">{item.effect}</span>
+                  </div>
+                  <span className="text-white font-bold bg-fuchsia-500/20 text-fuchsia-300 px-2 py-1 rounded whitespace-nowrap">
+                    {item.prob.toFixed(4)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -2,20 +2,39 @@
 
 import { useState, useRef, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { 
-  ENCHANT_BOXES, 
-  GREEN_REWARDS,
-  BLUE_REWARDS,
-  LOWER_REWARDS,
-  UPPER_REWARDS,
-  LEGENDARY_REWARDS,
-  MYTHIC_REWARDS,
-  drawReward, 
-  Reward 
-} from '@/lib/gachaData';
 
-export default function EnchantSimulator() {
-  const [activeBox, setActiveBox] = useState(ENCHANT_BOXES.find(b => b.active));
+interface Reward {
+  id: string;
+  name: string;
+  prob: number;
+  image: string;
+  amount: number;
+  grade: string;
+}
+
+const BIGHEAD_REWARDS: Reward[] = [
+  { id: 'big_head', name: '대두 치장 획득권', prob: 1, image: '/capsule2/feather_pen.png', amount: 1, grade: 'mythic' },
+  { id: 'mid_head', name: '중두 치장 획득권', prob: 2, image: '/capsule2/feather_pen.png', amount: 1, grade: 'legendary' },
+  { id: 'coin_5', name: '코스메틱 코인', prob: 17, image: '/capsule2/cosmetic_coin.png', amount: 5, grade: 'rare' },
+  { id: 'coin_3', name: '코스메틱 코인', prob: 30, image: '/capsule2/cosmetic_coin.png', amount: 3, grade: 'uncommon' },
+  { id: 'coin_1', name: '코스메틱 코인', prob: 50, image: '/capsule2/cosmetic_coin.png', amount: 1, grade: 'common' },
+];
+
+const drawReward = (rewards: Reward[]): Reward => {
+  const rand = Math.random() * 100;
+  let sum = 0;
+  for (const r of rewards) {
+    sum += r.prob;
+    if (rand <= sum) return r;
+  }
+  return rewards[rewards.length - 1];
+};
+
+const drawVisualReward = (rewards: Reward[]): Reward => {
+  return rewards[Math.floor(Math.random() * rewards.length)];
+};
+
+export default function BigHeadCapsuleSimulator() {
   const [showAnimation, setShowAnimation] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [mode, setMode] = useState<'normal' | 'test' | 'snipe'>('normal');
@@ -24,8 +43,11 @@ export default function EnchantSimulator() {
   const [offset, setOffset] = useState(0);
   const [wonItem, setWonItem] = useState<Reward | null>(null);
   
+  const [totalPulls, setTotalPulls] = useState(0);
+  const [totalCost, setTotalCost] = useState(0);
+
   const [snipeTargetId, setSnipeTargetId] = useState<string>('');
-  const [snipeResult, setSnipeResult] = useState<{ attempts: number, target: Reward } | null>(null);
+  const [snipeResult, setSnipeResult] = useState<{ attempts: number, cost: number, target: Reward } | null>(null);
   const [isSniping, setIsSniping] = useState(false);
 
   const trackRef = useRef<HTMLDivElement>(null);
@@ -34,32 +56,17 @@ export default function EnchantSimulator() {
   const [testResults, setTestResults] = useState<Record<string, number>>({});
   const [testCount, setTestCount] = useState(0);
 
-  const getCurrentRewards = () => {
-    switch (activeBox?.id) {
-      case 'general_g': return GREEN_REWARDS;
-      case 'general_b': return BLUE_REWARDS;
-      case 'lower_special': return LOWER_REWARDS;
-      case 'upper_special': return UPPER_REWARDS;
-      case 'legendary_special': return LEGENDARY_REWARDS;
-      case 'mythic_special': return MYTHIC_REWARDS;
-      default: return [];
-    }
-  };
-
-  const currentRewards = getCurrentRewards();
-
   useEffect(() => {
-    if (!currentRewards || currentRewards.length === 0) return;
     const initial: Reward[] = [];
     for (let i = 0; i < 30; i++) {
-      initial.push(drawReward(currentRewards));
+      initial.push(drawVisualReward(BIGHEAD_REWARDS));
     }
     setStrip(initial);
     setOffset(-(10 * 120) - 50);
     setWonItem(null);
     setSnipeTargetId('');
     setSnipeResult(null);
-  }, [activeBox]);
+  }, []);
 
   const triggerFancyConfetti = () => {
     let originX = 0.5;
@@ -93,9 +100,11 @@ export default function EnchantSimulator() {
   };
 
   const handleOpen = () => {
-    if (isSpinning || !activeBox) return;
+    if (isSpinning) return;
 
-    const winner = drawReward(currentRewards);
+    const winner = drawReward(BIGHEAD_REWARDS);
+    setTotalPulls(prev => prev + 1);
+    setTotalCost(prev => prev + 2500);
 
     if (!showAnimation) {
       setWonItem(winner);
@@ -104,10 +113,10 @@ export default function EnchantSimulator() {
 
     setIsSpinning(true);
     setWonItem(null);
-
+    
     const newStrip: Reward[] = [];
     for (let i = 0; i < 100; i++) {
-      newStrip.push(drawReward(currentRewards));
+      newStrip.push(drawVisualReward(BIGHEAD_REWARDS));
     }
     const targetIndex = 85;
     newStrip[targetIndex] = winner;
@@ -153,13 +162,15 @@ export default function EnchantSimulator() {
 
   const handleMassTest = () => {
     const results: Record<string, number> = {};
-    currentRewards.forEach(r => results[r.id] = 0);
+    BIGHEAD_REWARDS.forEach(r => results[r.id] = 0);
 
     for (let i = 0; i < 10000; i++) {
-      const reward = drawReward(currentRewards);
+      const reward = drawReward(BIGHEAD_REWARDS);
       results[reward.id]++;
     }
 
+    setTotalPulls(prev => prev + 10000);
+    setTotalCost(prev => prev + 25000000);
     setTestResults(results);
     setTestCount(10000);
   };
@@ -179,55 +190,65 @@ export default function EnchantSimulator() {
       
       do {
         attempts++;
-        pulled = drawReward(currentRewards);
+        pulled = drawReward(BIGHEAD_REWARDS);
         if (attempts > 50000) break;
       } while (pulled.id !== snipeTargetId);
 
-      setSnipeResult({ attempts, target: pulled });
+      const cost = attempts * 2500;
+      setSnipeResult({ attempts, cost, target: pulled });
+      setTotalPulls(prev => prev + attempts);
+      setTotalCost(prev => prev + cost);
       setIsSniping(false);
     }, 100);
   };
 
+  const handleReset = () => {
+    setTotalPulls(0);
+    setTotalCost(0);
+    setWonItem(null);
+    setStrip([]);
+    setSnipeResult(null);
+    setTestCount(0);
+  };
+
   return (
-    <div className="w-full space-y-8 relative">
-      <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-        {ENCHANT_BOXES.map((box) => (
-          <button
-            key={box.id}
-            disabled={!box.active}
-            onClick={() => {
-              if (isSpinning || isSniping) return;
-              setActiveBox(box);
-            }}
-            className={`flex flex-col items-center p-4 rounded-2xl border min-w-[120px] transition-all ${
-              !box.active ? 'opacity-30 cursor-not-allowed grayscale border-white/5' :
-              activeBox?.id === box.id ? 'bg-fuchsia-500/10 border-fuchsia-500 shadow-[0_0_15px_rgba(217,70,239,0.2)]' : 'bg-white/5 border-white/10 hover:bg-white/10'
-            }`}
-          >
-            <img src={box.image} alt={box.name} className="w-16 h-16 object-contain mb-3 drop-shadow-lg" />
-            <span className="text-xs font-bold text-center break-keep">{box.name}</span>
-          </button>
-        ))}
+    <div className="w-full space-y-6 relative">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-black/40 border border-white/10 rounded-2xl p-5 shadow-lg gap-4">
+        <div className="flex items-center gap-4">
+          <img src="/f1/mythic_special_box.png" alt="대두 치장 캡슐" className="w-16 h-16 object-contain drop-shadow-lg" />
+          <div>
+            <h2 className="text-xl font-black text-white">대두 치장 캡슐</h2>
+            <p className="text-sm text-gray-400 mt-1">1회 개봉 비용: <span className="text-blue-400 font-bold">2,500</span> 크리스탈</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1 w-full md:w-auto">
+          <div className="text-sm font-bold text-gray-400">누적 개봉: <span className="text-white text-base">{totalPulls.toLocaleString()}</span>회</div>
+          <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-500/20 px-4 py-2 rounded-xl">
+            <span className="text-xs font-bold text-gray-400">총 소모 재화</span>
+            <img src="/crystal.png" className="w-5 h-5 object-contain" alt="크리스탈" />
+            <span className="text-lg font-black text-blue-400">{totalCost.toLocaleString()}</span>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-4 items-center justify-between border-b border-white/10 pb-4">
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setMode('normal')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'normal' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>일반 개봉</button>
-          <button onClick={() => setMode('test')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'test' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>10,000번 확률 검증</button>
+          <button onClick={() => setMode('test')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'test' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>10,000번 검증</button>
           <button onClick={() => setMode('snipe')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'snipe' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-gray-500 hover:text-gray-300'}`}>특정 아이템 저격</button>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {mode === 'normal' && (
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="anim" checked={showAnimation} onChange={(e) => setShowAnimation(e.target.checked)} className="accent-fuchsia-500 w-4 h-4 cursor-pointer" />
-              <label htmlFor="anim" className="text-sm font-bold text-gray-300 cursor-pointer select-none hover:text-white transition-colors">룰렛 연출 켜기</label>
+            <div className="flex items-center gap-2 mr-2">
+              <input type="checkbox" id="anim2" checked={showAnimation} onChange={(e) => setShowAnimation(e.target.checked)} className="accent-fuchsia-500 w-4 h-4 cursor-pointer" />
+              <label htmlFor="anim2" className="text-sm font-bold text-gray-300 cursor-pointer select-none hover:text-white transition-colors">룰렛 켜기</label>
             </div>
           )}
-          <button 
-            onClick={() => setShowProbModal(true)}
-            className="px-4 py-2 bg-white/5 hover:bg-white/10 text-fuchsia-400 text-sm font-bold border border-fuchsia-500/30 rounded-lg transition-colors"
-          >
+          <button onClick={handleReset} className="px-4 py-2 bg-red-900/20 text-red-400 hover:bg-red-900/40 text-sm font-bold border border-red-500/30 rounded-lg transition-colors">
+            초기화
+          </button>
+          <button onClick={() => setShowProbModal(true)} className="px-4 py-2 bg-fuchsia-900/20 text-fuchsia-400 hover:bg-fuchsia-900/40 text-sm font-bold border border-fuchsia-500/30 rounded-lg transition-colors">
             확률표 보기
           </button>
         </div>
@@ -239,7 +260,7 @@ export default function EnchantSimulator() {
             
             <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex gap-[20px] z-0">
               {Array.from({ length: 21 }).map((_, i) => (
-                <div key={i} className={`w-[100px] h-[92px] rounded-xl flex-shrink-0 border ${i === 10 ? 'bg-red-900/20 border-transparent shadow-[inset_0_0_20px_rgba(239,68,68,0.2)]' : 'bg-gray-900/50 border-white/5'}`}></div>
+                <div key={i} className={`w-[100px] h-[92px] rounded-xl flex-shrink-0 border ${i === 10 ? 'bg-fuchsia-900/20 border-fuchsia-500/50 shadow-[inset_0_0_20px_rgba(217,70,239,0.3)]' : 'bg-gray-900/60 border-white/5'}`}></div>
               ))}
             </div>
 
@@ -255,7 +276,12 @@ export default function EnchantSimulator() {
               {strip.map((item, i) => (
                 <div key={i} className="w-[100px] h-[92px] flex-shrink-0 flex flex-col items-center justify-center">
                   <div className="relative">
-                    <img src={item.image} alt={item.name} className="w-12 h-12 object-contain drop-shadow-lg relative z-10" />
+                    <img src={item.image} alt={item.name} className="w-12 h-12 object-contain drop-shadow-md relative z-10" />
+                    {item.amount > 1 && (
+                      <div className="absolute -bottom-1 -right-2 bg-black/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded border border-white/20 z-20">
+                        x{item.amount}
+                      </div>
+                    )}
                     {item.grade === 'mythic' && <div className="absolute inset-0 bg-yellow-500/40 blur-lg rounded-full z-0"></div>}
                     {item.grade === 'legendary' && <div className="absolute inset-0 bg-fuchsia-500/40 blur-lg rounded-full z-0"></div>}
                   </div>
@@ -264,15 +290,14 @@ export default function EnchantSimulator() {
               ))}
             </div>
 
-            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[116px] h-[108px] border-4 border-red-500 rounded-2xl z-20 shadow-[0_0_20px_rgba(239,68,68,0.5)] pointer-events-none"></div>
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[116px] h-[108px] border-4 border-fuchsia-500 rounded-2xl z-20 shadow-[0_0_20px_rgba(217,70,239,0.5)] pointer-events-none"></div>
 
             {!isSpinning && wonItem && (
               <div className="absolute inset-0 bg-black/85 z-30 flex flex-col items-center justify-center backdrop-blur-sm animate-fade-in">
                 <span className="text-fuchsia-400 text-base font-bold mb-3 tracking-widest">획득!</span>
                 <img src={wonItem.image} alt={wonItem.name} className="w-28 h-28 object-contain drop-shadow-[0_0_40px_rgba(255,255,255,0.4)]" />
                 <h3 className="text-3xl font-black text-white mt-6">
-                  {wonItem.id === 'piece' ? '인챈트북 조각!' : `${wonItem.name} ${wonItem.name.includes('인챈트북') ? '' : '인챈트북!'}`} 
-                  {wonItem.amount > 1 ? ` (x${wonItem.amount})` : ''}
+                  {wonItem.name} {wonItem.amount > 1 ? ` (x${wonItem.amount})` : ''}
                 </h3>
               </div>
             )}
@@ -281,7 +306,7 @@ export default function EnchantSimulator() {
           <div className="flex justify-center">
             <button 
               onClick={handleOpen} 
-              disabled={isSpinning || !activeBox}
+              disabled={isSpinning}
               className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-black text-xl px-20 py-5 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.3)] hover:shadow-[0_0_30px_rgba(217,70,239,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
             >
               {isSpinning ? '개봉 중...' : '1회 개봉하기'}
@@ -292,12 +317,12 @@ export default function EnchantSimulator() {
 
       {mode === 'test' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="flex justify-between items-center bg-white/5 p-6 rounded-2xl border border-white/10">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/5 p-6 rounded-2xl border border-white/10 gap-4">
             <div>
               <h3 className="text-xl font-black text-white">10,000번 대규모 시뮬레이션</h3>
               <p className="text-sm text-gray-400 mt-1">서버의 공식 확률 데이터가 실제로 어떻게 적용되는지 대수의 법칙으로 검증합니다.</p>
             </div>
-            <button onClick={handleMassTest} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)]">
+            <button onClick={handleMassTest} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] whitespace-nowrap">
               즉시 1만번 돌리기
             </button>
           </div>
@@ -314,7 +339,7 @@ export default function EnchantSimulator() {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentRewards.map(reward => {
+                  {BIGHEAD_REWARDS.map(reward => {
                     const count = testResults[reward.id] || 0;
                     const actualProb = (count / 10000) * 100;
                     const diff = Math.abs(reward.prob - actualProb);
@@ -354,7 +379,7 @@ export default function EnchantSimulator() {
                 className="flex-1 bg-black border border-white/10 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-rose-500 cursor-pointer"
               >
                 <option value="">저격할 목표 아이템을 선택하세요</option>
-                {currentRewards.map(r => (
+                {BIGHEAD_REWARDS.map(r => (
                   <option key={r.id} value={r.id}>{r.name} {r.amount > 1 ? `(x${r.amount})` : ''} - 확률 {r.prob}%</option>
                 ))}
               </select>
@@ -375,8 +400,13 @@ export default function EnchantSimulator() {
                   <div className="mt-6 text-2xl font-black text-white">
                     <span className="text-indigo-400 text-3xl">[{snipeResult.target.name}]</span> 획득 성공!
                   </div>
-                  <div className="mt-3 text-gray-300 font-medium">
-                    해당 아이템을 뽑기 위해 캡슐을 총 <span className="text-rose-400 font-black text-xl px-1">{snipeResult.attempts.toLocaleString()}</span>번 개봉했습니다.
+                  <div className="mt-4 text-gray-300 font-medium flex flex-col md:flex-row items-center justify-center gap-2">
+                    해당 아이템을 뽑기 위해 캡슐을
+                    <span className="bg-white/10 px-3 py-1 rounded-lg">총 <span className="text-rose-400 font-black text-xl">{snipeResult.attempts.toLocaleString()}</span>회</span>
+                    <span className="bg-blue-900/20 border border-blue-500/20 px-3 py-1 rounded-lg flex items-center gap-1.5">
+                      <img src="/crystal.png" className="w-5 h-5 object-contain" alt="크리스탈" />
+                      <span className="text-blue-400 font-black text-xl">{snipeResult.cost.toLocaleString()}</span> 크리스탈 사용
+                    </span>
                   </div>
                 </div>
               )}
@@ -389,28 +419,22 @@ export default function EnchantSimulator() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowProbModal(false)}>
           <div className="bg-[#111] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-black text-fuchsia-400">
-                {activeBox?.name || '확률표'}
-              </h3>
+              <h3 className="text-lg font-black text-fuchsia-400">대두 치장 캡슐 확률표</h3>
               <button onClick={() => setShowProbModal(false)} className="text-gray-400 hover:text-white">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             
             <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-              {currentRewards.length > 0 ? (
-                currentRewards.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-lg text-sm">
-                    <img src={item.image} className="w-8 h-8 object-contain" />
-                    <span className="text-gray-200 flex-1 font-medium">{item.name} {item.amount > 1 ? `x${item.amount}` : ''}</span>
-                    <span className="text-white font-bold bg-fuchsia-500/20 text-fuchsia-300 px-2 py-1 rounded">
-                      {item.prob.toFixed(4)}%
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-gray-500 text-sm text-center py-10">확률 데이터가 없습니다.</div>
-              )}
+              {BIGHEAD_REWARDS.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-lg text-sm">
+                  <img src={item.image} className="w-8 h-8 object-contain" />
+                  <span className="text-gray-200 flex-1 font-medium">{item.name} {item.amount > 1 ? `x${item.amount}` : ''}</span>
+                  <span className="text-white font-bold bg-fuchsia-500/20 text-fuchsia-300 px-2 py-1 rounded">
+                    {item.prob.toFixed(4)}%
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

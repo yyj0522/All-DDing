@@ -5,6 +5,12 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import EnchantSimulator from '@/components/gacha/EnchantSimulator';
 import SailingSimulator from '@/components/gacha/SailingSimulator';
+import SageSimulator from '@/components/gacha/SageSimulator';
+import NicknameCapsuleSimulator from '@/components/gacha/NicknameCapsuleSimulator';
+import BigHeadCapsuleSimulator from '@/components/gacha/BigHeadCapsuleSimulator';
+import RandomBadgeSimulator from '@/components/gacha/RandomBadgeSimulator';
+import DinoPetSimulator from '@/components/gacha/DinoPetSimulator';
+import IslandBoxSimulator from '@/components/gacha/IslandBoxSimulator';
 
 const GACHA_CATEGORIES = [
   '인챈트 캡슐', 
@@ -63,6 +69,18 @@ export default function GachaPage() {
                 <EnchantSimulator />
               ) : activeCategory === '항해 보상' ? (
                 <SailingSimulator />
+              ) : activeCategory === '세이지 도구 강화' ? (
+                <SageSimulator />
+              ) : activeCategory === '아일랜드 보물상자' ? (
+                <IslandBoxSimulator />
+              ) : activeCategory === '랜덤 뱃지 보급품' ? (
+                <RandomBadgeSimulator />
+              ) : activeCategory === '랜덤 공룡펫 보급품' ? (
+                <DinoPetSimulator />
+              ) : activeCategory === '한글 닉네임 변경 캡슐' ? (
+                <NicknameCapsuleSimulator />
+              ) : activeCategory === '대두 치장 캡슐' ? (
+                <BigHeadCapsuleSimulator />
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center space-y-4">
                   <span className="inline-block px-3 py-1 rounded bg-blue-500/20 text-blue-400 font-black text-[10px] tracking-widest border border-blue-500/30 uppercase">
