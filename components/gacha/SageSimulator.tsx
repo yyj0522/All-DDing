@@ -303,12 +303,12 @@ export default function SageSimulator() {
                 <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-white px-1 bg-black/60 rounded border border-white/10">{nextCost.low}</span>
               </div>
               <div className="absolute top-[39%] left-[52%] transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center transition-all duration-300 hover:scale-110">
-                <img src="/tools/lifestone2.png" className={`w-5 h-5 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] ${nextCost.mid > 0 ? 'opacity-90' : 'opacity-20 grayscale'}`} /> 
-                {nextCost.mid > 0 && <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-white px-1 bg-black/60 rounded border border-white/10">{nextCost.mid}</span>}
+                <img src="/tools/lifestone2.png" className={`w-5 h-5 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] ${nextCost.high > 0 ? 'opacity-90' : 'opacity-20 grayscale'}`} /> 
+                {nextCost.high > 0 && <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-white px-1 bg-black/60 rounded border border-white/10">{nextCost.high}</span>}
               </div>
               <div className="absolute top-[46%] left-[69%] transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center transition-all duration-300 hover:scale-110">
-                <img src="/tools/lifestone3.png" className={`w-5 h-5 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] ${nextCost.high > 0 ? 'opacity-90' : 'opacity-20 grayscale'}`} /> 
-                {nextCost.high > 0 && <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-white px-1 bg-black/60 rounded border border-white/10">{nextCost.high}</span>}
+                <img src="/tools/lifestone3.png" className={`w-5 h-5 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] ${nextCost.mid > 0 ? 'opacity-90' : 'opacity-20 grayscale'}`} /> 
+                {nextCost.mid > 0 && <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-white px-1 bg-black/60 rounded border border-white/10">{nextCost.mid}</span>}
               </div>
             </>
           )}
@@ -390,11 +390,11 @@ export default function SageSimulator() {
                 <span className="text-xs font-bold text-gray-200">{totalCost.low.toLocaleString()}</span>
               </div>
               <div className="flex flex-col items-center justify-center bg-black/40 p-2 rounded-xl border border-white/5">
-                <img src="/tools/lifestone2.png" className="w-5 h-5 object-contain mb-1" /> 
+                <img src="/tools/lifestone3.png" className="w-5 h-5 object-contain mb-1" /> 
                 <span className="text-xs font-bold text-gray-200">{totalCost.mid.toLocaleString()}</span>
               </div>
               <div className="flex flex-col items-center justify-center bg-black/40 p-2 rounded-xl border border-white/5">
-                <img src="/tools/lifestone3.png" className="w-5 h-5 object-contain mb-1" /> 
+                <img src="/tools/lifestone2.png" className="w-5 h-5 object-contain mb-1" /> 
                 <span className="text-xs font-bold text-gray-200">{totalCost.high.toLocaleString()}</span>
               </div>
             </div>
@@ -453,8 +453,8 @@ export default function SageSimulator() {
                         </span>
                         {h.cost.ruby > 0 && <span className="text-red-400 bg-red-950/30 px-1.5 py-0.5 rounded border border-red-500/10 flex items-center gap-1"><img src="/ruby.png" className="w-3 h-3 object-contain" />{h.cost.ruby.toLocaleString()}</span>}
                         {h.cost.low > 0 && <span className="text-gray-300 bg-gray-800/50 px-1.5 py-0.5 rounded border border-white/5 flex items-center gap-1"><img src="/tools/lifestone1.png" className="w-3 h-3 object-contain" />{h.cost.low.toLocaleString()}</span>}
-                        {h.cost.mid > 0 && <span className="text-gray-300 bg-gray-800/50 px-1.5 py-0.5 rounded border border-white/5 flex items-center gap-1"><img src="/tools/lifestone2.png" className="w-3 h-3 object-contain" />{h.cost.mid.toLocaleString()}</span>}
-                        {h.cost.high > 0 && <span className="text-gray-300 bg-gray-800/50 px-1.5 py-0.5 rounded border border-white/5 flex items-center gap-1"><img src="/tools/lifestone3.png" className="w-3 h-3 object-contain" />{h.cost.high.toLocaleString()}</span>}
+                        {h.cost.mid > 0 && <span className="text-gray-300 bg-gray-800/50 px-1.5 py-0.5 rounded border border-white/5 flex items-center gap-1"><img src="/tools/lifestone3.png" className="w-3 h-3 object-contain" />{h.cost.mid.toLocaleString()}</span>}
+                        {h.cost.high > 0 && <span className="text-gray-300 bg-gray-800/50 px-1.5 py-0.5 rounded border border-white/5 flex items-center gap-1"><img src="/tools/lifestone2.png" className="w-3 h-3 object-contain" />{h.cost.high.toLocaleString()}</span>}
                       </div>
                     </div>
                   ))
@@ -489,13 +489,13 @@ export default function SageSimulator() {
                       )}
                       {cumulativeCost.mid > 0 && (
                         <span className="flex items-center gap-1 text-gray-300 font-bold bg-black/40 px-2 py-1 rounded">
-                          <img src="/tools/lifestone2.png" className="w-4 h-4 object-contain" />
+                          <img src="/tools/lifestone3.png" className="w-4 h-4 object-contain" />
                           {cumulativeCost.mid.toLocaleString()}
                         </span>
                       )}
                       {cumulativeCost.high > 0 && (
                         <span className="flex items-center gap-1 text-gray-300 font-bold bg-black/40 px-2 py-1 rounded">
-                          <img src="/tools/lifestone3.png" className="w-4 h-4 object-contain" />
+                          <img src="/tools/lifestone2.png" className="w-4 h-4 object-contain" />
                           {cumulativeCost.high.toLocaleString()}
                         </span>
                       )}
@@ -547,8 +547,8 @@ export default function SageSimulator() {
                               {(c.low > 0 || c.mid > 0 || c.high > 0) && (
                                 <div className="flex gap-1 ml-1 bg-gray-800/50 px-1.5 py-0.5 rounded">
                                   {c.low > 0 && <span className="flex items-center gap-0.5 text-gray-300 font-bold text-[10px]"><img src="/tools/lifestone1.png" className="w-3 h-3 object-contain" />{(c.low * expectedTries).toLocaleString()}</span>}
-                                  {c.mid > 0 && <span className="flex items-center gap-0.5 text-gray-300 font-bold text-[10px]"><img src="/tools/lifestone2.png" className="w-3 h-3 object-contain" />{(c.mid * expectedTries).toLocaleString()}</span>}
-                                  {c.high > 0 && <span className="flex items-center gap-0.5 text-gray-300 font-bold text-[10px]"><img src="/tools/lifestone3.png" className="w-3 h-3 object-contain" />{(c.high * expectedTries).toLocaleString()}</span>}
+                                  {c.mid > 0 && <span className="flex items-center gap-0.5 text-gray-300 font-bold text-[10px]"><img src="/tools/lifestone3.png" className="w-3 h-3 object-contain" />{(c.mid * expectedTries).toLocaleString()}</span>}
+                                  {c.high > 0 && <span className="flex items-center gap-0.5 text-gray-300 font-bold text-[10px]"><img src="/tools/lifestone2.png" className="w-3 h-3 object-contain" />{(c.high * expectedTries).toLocaleString()}</span>}
                                 </div>
                               )}
                             </div>
