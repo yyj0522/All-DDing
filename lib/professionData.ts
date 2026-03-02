@@ -468,20 +468,26 @@ export const getCookingPeriod = () => {
   const daysInMonth = new Date(y, m, 0).getDate(); 
   
   let start_d;
-  if (y === 2026 && m === 2 && d >= 24) {
-    start_d = d >= 27 ? 27 : 24;
+  let end_d;
+  
+  if (d < 3) {
+    start_d = 1;
+    end_d = 3;
   } else {
-    const cycleIndex = Math.floor((d - 1) / 3);
-    start_d = 1 + cycleIndex * 3;
+    start_d = Math.floor(d / 3) * 3;
+    end_d = start_d + 3;
   }
   
-  let end_d = start_d + 3;
   let end_m = m;
+  let end_y = y;
   
   if (end_d > daysInMonth) {
     end_d = 1;
     end_m = m + 1;
-    if (end_m > 12) end_m = 1; 
+    if (end_m > 12) {
+      end_m = 1;
+      end_y = y + 1;
+    }
   }
   
   const sStr = `${String(m).padStart(2, '0')}-${String(start_d).padStart(2, '0')}`;
