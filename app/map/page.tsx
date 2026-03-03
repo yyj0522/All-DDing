@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 
@@ -44,128 +44,123 @@ const CAT_COLORS: Record<string, { bg: string, text: string, ring: string }> = {
 };
 
 const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const ZOOM_LEVEL = 2.5;
 
 const getMapPosition = (mcX: number, mcZ: number) => {
-  const offsetX = -10; 
-  const offsetZ = -100;
-  const finalX = mcX + offsetX;
-  const finalZ = mcZ + offsetZ;
-  const ref1_mcX = -735; const ref1_mcZ = -217;
-  const ref1_pctX = 18.66; const ref1_pctY = 25.06;
-  const ref2_mcX = 25; const ref2_mcZ = 129;
-  const ref2_pctX = 75.63; const ref2_pctY = 58.89;
+  const offsetX = -10, offsetZ = -100;
+  const finalX = mcX + offsetX, finalZ = mcZ + offsetZ;
+  const ref1_mcX = -735, ref1_mcZ = -217, ref1_pctX = 18.66, ref1_pctY = 25.06;
+  const ref2_mcX = 25, ref2_mcZ = 129, ref2_pctX = 75.63, ref2_pctY = 58.89;
   const scaleX = (ref2_pctX - ref1_pctX) / (ref2_mcX - ref1_mcX);
   const scaleY = (ref2_pctY - ref1_pctY) / (ref2_mcZ - ref1_mcZ);
-  const pctX = ref1_pctX + (finalX - ref1_mcX) * scaleX;
-  const pctY = ref1_pctY + (finalZ - ref1_mcZ) * scaleY;
-  return { left: `${pctX}%`, top: `${pctY}%` };
+  return { left: `${ref1_pctX + (finalX - ref1_mcX) * scaleX}%`, top: `${ref1_pctY + (finalZ - ref1_mcZ) * scaleY}%` };
 };
-
-const ZOOM_LEVEL = 2.5; 
 
 export default function MapPage() {
   const [activeCat, setActiveCat] = useState<Category>('전체');
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const [mag, setMag] = useState({ active: false, x: 0, y: 0, mapW: 0, mapH: 0 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (mag.active) {
-      setMag({ ...mag, active: false });
-      return;
+  useEffect(() => {
+    const handleExit = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleExit);
+    return () => document.removeEventListener('fullscreenchange', handleExit);
+  }, []);
+
+  const handleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      mapContainerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
     }
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setMag({ active: true, x, y, mapW: rect.width, mapH: rect.height });
   };
 
-  const renderMapContent = (isMagnifier = false) => (
-    <>
-      <img 
-        src={`${STORAGE_BASE_URL}/map.png`} 
-        alt="아일랜드 상세 지도" 
-        className="w-full h-auto block pointer-events-none select-none"
-        draggable={false}
-        style={isMagnifier ? { imageRendering: '-webkit-optimize-contrast' as any } : {}}
-      />
-      <div className="absolute inset-0 pointer-events-none">
-        {MARKERS.filter(m => activeCat === '전체' || m.cat === activeCat).map((marker) => {
-          const pos = getMapPosition(marker.x, marker.z);
-          const colors = CAT_COLORS[marker.cat];
-          return (
-            <div 
-              key={marker.id} 
-              className={`absolute z-10 -translate-x-1/2 -translate-y-full flex flex-col items-center ${isMagnifier ? '' : 'group hover:z-50 pointer-events-auto'}`}
-              style={pos}
-            >
-              <div className="relative cursor-pointer flex flex-col items-center pb-1">
-                <svg viewBox="0 0 24 24" fill="currentColor" className={`w-5 h-5 md:w-7 md:h-7 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] ${colors.text} transition-transform ${isMagnifier ? '' : 'group-hover:scale-125 group-hover:-translate-y-2'}`}>
-                  <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                </svg>
+  const handleMapClick = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    if (mag.active) { setMag({ ...mag, active: false }); return; }
+    const rect = e.currentTarget.getBoundingClientRect();
+    let cx, cy;
+    if ('touches' in e) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+    else { cx = e.clientX; cy = e.clientY; }
+    setMag({ active: true, x: cx - rect.left, y: cy - rect.top, mapW: rect.width, mapH: rect.height });
+  };
+
+  const renderMarkers = (isMag: boolean) => (
+    MARKERS.filter(m => activeCat === '전체' || m.cat === activeCat).map((m) => {
+      const pos = getMapPosition(m.x, m.z);
+      const colors = CAT_COLORS[m.cat];
+      const isSel = selectedMarkerId === m.id;
+      return (
+        <div 
+          key={m.id} 
+          className={`absolute -translate-x-1/2 -translate-y-full pointer-events-auto transition-all ${isSel ? 'z-[1001]' : 'z-[100]'}`} 
+          style={pos}
+        >
+          <div className="relative cursor-pointer flex flex-col items-center pb-1" onClick={(e) => { if (isMag) return; e.stopPropagation(); setSelectedMarkerId(isSel ? null : m.id); }}>
+            <svg viewBox="0 0 24 24" fill="currentColor" className={`w-5 h-5 md:w-7 md:h-7 drop-shadow-md ${colors.text} transition-transform ${isSel ? 'scale-125 -translate-y-1' : ''}`}>
+              <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 transition-all duration-200 ${isSel ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+            <div className={`bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 px-3 py-2 rounded-xl shadow-2xl flex flex-col items-center min-w-[115px] ring-2 ${colors.ring}`}>
+              <span className={`text-[9px] font-black tracking-widest uppercase mb-0.5 ${colors.text}`}>{m.cat}</span>
+              <span className="text-xs font-bold text-white whitespace-nowrap">{m.name}</span>
+              <div className="w-full h-px bg-white/5 my-1.5"></div>
+              <div className="flex gap-2 text-[10px] font-mono font-bold text-gray-300">
+                <span>X: {m.realX}</span><span>Z: {m.realZ}</span>
               </div>
-              <div className="absolute top-full pointer-events-none whitespace-nowrap mt-[-2px]">
-                 <span className={`bg-black/80 backdrop-blur-md border border-white/10 text-gray-200 font-bold px-1.5 py-0.5 rounded shadow-sm ${isMagnifier ? 'text-xs' : 'text-[10px]'}`}>
-                   {marker.name}
-                 </span>
-              </div>
-              {!isMagnifier && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none translate-y-3 group-hover:translate-y-0 z-50">
-                  <div className={`bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 px-4 py-3 rounded-2xl shadow-2xl flex flex-col items-center min-w-[130px] ring-2 ${colors.ring}`}>
-                    <span className={`text-[10px] font-black tracking-widest uppercase mb-1 ${colors.text}`}>{marker.cat}</span>
-                    <span className="text-sm font-bold text-white whitespace-nowrap">{marker.name}</span>
-                    <div className="w-full h-px bg-white/10 my-2"></div>
-                    <div className="flex gap-3 text-xs font-mono font-bold">
-                      <span className="text-gray-400">X: <span className="text-gray-200">{marker.realX}</span></span>
-                      <span className="text-gray-400">Z: <span className="text-gray-200">{marker.realZ}</span></span>
-                    </div>
-                  </div>
-                  <div className="w-3 h-3 bg-[#0a0a0a] border-r border-b border-white/10 rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2"></div>
-                </div>
-              )}
             </div>
-          );
-        })}
-      </div>
-    </>
+            <div className="w-2.5 h-2.5 bg-[#0a0a0a] border-r border-b border-white/10 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+          </div>
+        </div>
+      );
+    })
   );
 
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-emerald-500/30 flex flex-col relative overflow-x-hidden">
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-emerald-600/10 rounded-full blur-[150px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#050505] text-gray-100 flex flex-col relative overflow-x-hidden">
+      <div className="absolute top-[-10%] left-[-5%] w-full h-[40%] bg-emerald-600/5 rounded-full blur-[120px] pointer-events-none"></div>
       <Header />
-      <main className="relative z-10 flex-1 max-w-[1200px] w-full mx-auto px-4 pt-32 md:pt-40 pb-20 flex flex-col items-center">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 w-full max-w-[1150px] mb-10 border-b border-white/5 pb-6">
-          <div>
-            <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white mb-4">아일랜드 지도</h1>
-            <p className="text-gray-400 text-sm md:text-base tracking-wide">
-              지도 위를 클릭하여 상세 위치를 돋보기로 확인하고, 마커에 마우스를 올려 인게임 좌표를 파악하세요.
-            </p>
+      <main className="relative z-10 flex-1 max-w-[1200px] w-full mx-auto px-4 pt-28 md:pt-40 pb-20 flex flex-col items-center">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 w-full max-w-[1000px] mb-8 border-b border-white/5 pb-6">
+          <div className="text-center md:text-left">
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">아일랜드 <span className="text-emerald-500">지도</span></h1>
+            <p className="text-gray-400 text-xs md:text-base max-w-lg break-keep px-2 italic opacity-80">지도를 클릭하여 확대하고 마커를 눌러 좌표를 확인하세요.</p>
           </div>
-          <div className="flex items-center gap-4 bg-[#0a0a0a] border border-white/10 px-6 py-3.5 rounded-2xl shadow-xl flex-shrink-0 h-fit">
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <span className="text-sm font-bold text-gray-400">돋보기 확대 배율</span>
-            <span className="text-emerald-400 font-black text-lg">{ZOOM_LEVEL * 100}%</span>
-          </div>
+          <button onClick={handleFullscreen} className="md:hidden flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-5 py-3 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-95">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+            모바일 전체화면
+          </button>
         </div>
-        <div className="flex flex-col lg:flex-row gap-8 items-start justify-center w-full relative max-w-[1150px]">
-          <div className="w-full lg:w-48 flex-shrink-0 flex lg:flex-col gap-2 overflow-x-auto custom-scrollbar pb-2 lg:pb-0">
+
+        <div className="flex flex-col lg:flex-row gap-6 md:gap-8 items-start justify-center w-full relative max-w-[1100px]">
+          <div className="w-full lg:w-44 flex-shrink-0 flex lg:flex-col gap-2 overflow-x-auto scrollbar-hide pb-2 px-1">
             {(['전체', '농장', '광산', '과수원', '양식장', '서식지', '푸른석상', '하얀석상'] as Category[]).map((cat) => (
-              <button key={cat} onClick={() => setActiveCat(cat)} className={`px-5 py-3.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap text-left ${activeCat === cat ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-[#0a0a0a] border border-white/5 text-gray-500 hover:text-white hover:border-white/20'}`}>{cat}</button>
+              <button key={cat} onClick={() => { setActiveCat(cat); setSelectedMarkerId(null); }} className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border-2 ${activeCat === cat ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/50 shadow-lg' : 'bg-[#0a0a0a] border-white/5 text-gray-500 hover:border-white/20'}`}>{cat}</button>
             ))}
           </div>
-          <div className="flex-1 w-full relative flex justify-center my-8 lg:my-0">
-            <div className={`relative w-full max-w-[950px] transition-all duration-300 ${mag.active ? 'cursor-auto' : 'cursor-crosshair hover:opacity-90'}`} onClick={handleMapClick}>
-              {renderMapContent(false)}
+
+          <div ref={mapContainerRef} className={`flex-1 w-full relative flex justify-center bg-[#050505] rounded-[1.5rem] p-1 border border-white/5 ${isFullscreen ? 'flex items-center justify-center !p-0 bg-black' : ''}`}>
+            <div className={`relative w-full max-w-[900px] transition-all duration-300 rounded-xl ${mag.active ? 'cursor-auto' : 'cursor-crosshair'}`} onClick={handleMapClick}>
+              <img src={`${STORAGE_BASE_URL}/map.png`} alt="Map" className="w-full h-auto block select-none rounded-lg" draggable={false} />
+              <div className="absolute inset-0 pointer-events-none">{renderMarkers(false)}</div>
               {mag.active && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setMag({ ...mag, active: false }); }} />
-                  <div className="absolute border-[3px] border-white/30 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden z-50 bg-[#050505] pointer-events-none" style={{ width: 360, height: 360, left: mag.x, top: mag.y, transform: 'translate(-50%, -50%)', boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.4), 0 25px 50px -12px rgba(0, 0, 0, 0.8)' }}>
-                    <div className="absolute origin-top-left" style={{ width: mag.mapW * ZOOM_LEVEL, height: mag.mapH * ZOOM_LEVEL, left: 180 - (mag.x * ZOOM_LEVEL), top: 180 - (mag.y * ZOOM_LEVEL) }}>
-                      {renderMapContent(true)}
+                  <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-[2px]" onClick={(e) => { e.stopPropagation(); setMag({ ...mag, active: false }); }} />
+                  <div className="absolute border-[2px] border-white/40 rounded-full shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden z-[120] bg-[#050505] pointer-events-none" style={{ width: 'min(240px, 55vw)', height: 'min(240px, 55vw)', left: mag.x, top: mag.y, transform: 'translate(-50%, -50%)', boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)' }}>
+                    <div className="absolute origin-top-left" style={{ width: mag.mapW * ZOOM_LEVEL, height: mag.mapH * ZOOM_LEVEL, left: `calc(min(120px, 27.5vw) - ${mag.x * ZOOM_LEVEL}px)`, top: `calc(min(120px, 27.5vw) - ${mag.y * ZOOM_LEVEL}px)` }}>
+                      <img src={`${STORAGE_BASE_URL}/map.png`} className="w-full h-auto block" alt="" />
+                      <div className="absolute inset-0">{renderMarkers(true)}</div>
                     </div>
                   </div>
                 </>
               )}
             </div>
+            {isFullscreen && (
+               <button onClick={() => document.exitFullscreen()} className="fixed top-6 right-6 z-[2000] bg-black/80 p-4 rounded-full text-white border border-white/20 shadow-2xl font-black">X</button>
+            )}
           </div>
         </div>
       </main>

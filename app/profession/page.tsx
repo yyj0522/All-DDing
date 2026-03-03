@@ -129,53 +129,98 @@ export default function ProfessionPage() {
   if (!isLoaded) return <div className="min-h-screen bg-[#050505]"></div>;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-amber-500/30 relative flex flex-col">
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-stone-600/10 rounded-full blur-[150px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-amber-500/30 relative flex flex-col overflow-x-hidden">
+      {/* 배경 글로우 효과 */}
+      <div className="absolute top-[-20%] left-[-10%] w-full h-[50%] bg-stone-600/5 rounded-full blur-[120px] pointer-events-none"></div>
       <Header />
 
-      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 pt-32 md:pt-40 pb-20 flex flex-col items-center">
-        <div className="mb-10 text-center w-full">
-          <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white mb-4">전문가별 편의성 기능</h1>
-          <p className="text-gray-400 text-sm md:text-base tracking-wide mx-auto whitespace-normal w-full max-w-2xl px-4">
-            각 직업별 전용 조합법을 확인하고, 설정된 내 능력치 기반으로 수익률을 계산하세요.
+      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 pt-28 md:pt-40 pb-20 flex flex-col items-center">
+        {/* 헤더 섹션 */}
+        <div className="mb-8 text-center w-full px-2">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">전문가 기능</h1>
+          <p className="text-gray-400 text-xs md:text-base tracking-wide max-w-xl mx-auto break-keep opacity-80">
+            내 능력치 기반 수익률 계산 및 전용 조합법 확인
           </p>
         </div>
 
-        <div className="flex justify-center gap-2 md:gap-4 mb-8 overflow-x-auto pb-2 custom-scrollbar w-full max-w-2xl">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => { setActiveTab(tab.id as Profession); setSubTab(tab.id === '사냥' ? '시세수익' : '조합법'); }}
-              className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all whitespace-nowrap border-2 ${
-                activeTab === tab.id 
-                ? `${tab.bg} ${tab.color} ${tab.border}` 
-                : 'bg-[#0a0a0a] border-white/5 text-gray-500 hover:bg-white/10 hover:text-gray-300'
-              }`}
-            >
-              {tab.id} 전문가
-            </button>
-          ))}
+        {/* 1. 전문가 탭: 모바일 중앙 정렬 및 균등 배분 (개선 포인트) */}
+        <div className="w-full max-w-2xl mb-8 px-2">
+          <div className="grid grid-cols-4 gap-1.5 md:gap-4 bg-white/5 p-1.5 rounded-[20px] md:rounded-[24px] border border-white/5 shadow-2xl">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => { 
+                  setActiveTab(tab.id as Profession); 
+                  setSubTab(tab.id === '사냥' ? '시세수익' : '조합법'); 
+                }}
+                className={`flex items-center justify-center py-3 md:py-4 rounded-[14px] md:rounded-[18px] font-bold transition-all text-[11px] sm:text-sm md:text-base shadow-sm ${
+                  activeTab === tab.id 
+                  ? `bg-white text-black scale-100 shadow-white/10` 
+                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                }`}
+              >
+                {tab.id}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex justify-center gap-8 w-full mb-8 border-b border-white/10">
-          <button onClick={() => setSubTab('조합법')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '조합법' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>전용 제작 & 조합법</button>
+        {/* 2. 서브 내비게이션: 모바일 가독성 개선 */}
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-8 w-full mb-10 border-b border-white/10 px-2">
+          <button 
+            onClick={() => setSubTab('조합법')} 
+            className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
+              subTab === '조합법' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            제작 & 조합법
+          </button>
           
           {(activeTab === '채광' || activeTab === '사냥' || activeTab === '해양') && (
-            <button onClick={() => setSubTab('시세수익')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>예상 일일 수익</button>
+            <button 
+              onClick={() => setSubTab('시세수익')} 
+              className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
+                subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              예상 일일 수익
+            </button>
           )}
 
           {activeTab === '재배' && (
-            <button onClick={() => setSubTab('변동시세')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>3일 주기 변동 시세</button>
+            <button 
+              onClick={() => setSubTab('변동시세')} 
+              className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
+                subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              3일 주기 시세
+            </button>
           )}
 
           {activeTab === '해양' && (
-            <button onClick={() => setSubTab('변동시세')} className={`pb-3 font-bold text-sm transition-colors border-b-2 px-2 ${subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>공예품 시세 (1일 변동)</button>
+            <button 
+              onClick={() => setSubTab('변동시세')} 
+              className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
+                subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              공예품 시세
+            </button>
           )}
         </div>
 
-        <div className="w-full animate-fade-in-up">
+        {/* 컨텐츠 렌더링 */}
+        <div className="w-full animate-fade-in px-1 md:px-0">
           {activeTab === '채광' && subTab === '조합법' && <RecipeTab recipes={MINE_RECIPES} />}
-          {activeTab === '채광' && subTab === '시세수익' && <MiningStatsTab userStats={userStats} targetZone={targetZone} setTargetZone={setTargetZone} results={results} />}
+          {activeTab === '채광' && subTab === '시세수익' && (
+            <MiningStatsTab 
+              userStats={userStats} 
+              targetZone={targetZone} 
+              setTargetZone={setTargetZone} 
+              results={results} 
+            />
+          )}
           
           {activeTab === '재배' && subTab === '조합법' && <RecipeTab recipes={FARMING_RECIPES} />}
           {activeTab === '재배' && subTab === '변동시세' && <FarmingStatsTab />}
@@ -185,17 +230,21 @@ export default function ProfessionPage() {
           {activeTab === '해양' && subTab === '변동시세' && <OceanStatsTab />}
 
           {activeTab === '사냥' && (
-             <div className="w-full bg-rose-900/10 border border-rose-500/20 rounded-3xl p-8 md:p-12 min-h-[400px] flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden">
-               <svg className="w-12 h-12 text-rose-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-               <h2 className="relative z-10 text-2xl font-bold text-rose-400 mb-2">시스템 안정화 대기 중</h2>
-               <p className="relative z-10 text-rose-300/70 text-sm max-w-md leading-relaxed">
-                 사냥 전문가 콘텐츠는 현재 서버 내 밸런스 패치 및 변경 사항이 잦은 상태입니다. <br/>
-                 시스템이 완전히 안정화된 이후에 데이터가 일괄 업데이트될 예정입니다.
-               </p>
-             </div>
+            <div className="w-full bg-rose-950/20 border border-rose-500/20 rounded-[2.5rem] p-10 md:p-16 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden backdrop-blur-sm">
+              <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-rose-500/10 blur-3xl rounded-full"></div>
+              <svg className="w-16 h-16 text-rose-500 mb-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-4">콘텐츠 안정화 중</h2>
+              <p className="text-rose-200/60 text-[13px] md:text-base max-w-md leading-relaxed break-keep">
+                사냥 전문가 콘텐츠는 현재 잦은 밸런스 패치로 인해 데이터 신뢰도가 낮습니다. <br className="hidden md:block"/>
+                서버가 안정된 이후 업데이트될 예정입니다.
+              </p>
+            </div>
           )}
         </div>
       </main>
+
       <Footer />
     </div>
   );

@@ -39,13 +39,11 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'트리'|'도구'|'단가'|'기타'>('트리');
   const [profTab, setProfTab] = useState<Profession>('재배');
   const [activeToolId, setActiveToolId] = useState<string>('hoe');
-  
   const [levels, setLevels] = useState<Record<string, number>>({});
   const [savedLevels, setSavedLevels] = useState<Record<string, number>>({});
   const [toolLevels, setToolLevels] = useState<Record<string, number>>({});
   const [savedToolLevels, setSavedToolLevels] = useState<Record<string, number>>({});
   const [prices, setPrices] = useState<Record<string, number>>({});
-  
   const [townRank, setTownRank] = useState<string>('씨앗');
   const [drinkRoutine, setDrinkRoutine] = useState<number[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -56,7 +54,6 @@ export default function SettingsPage() {
       const sTools = localStorage.getItem('alldding_sage_tools');
       const sPrices = localStorage.getItem('alldding_prices');
       const sMisc = localStorage.getItem('alldding_misc_settings');
-      
       if (sLevels) { const p = JSON.parse(sLevels); setLevels(p); setSavedLevels(p); }
       if (sTools) { const t = JSON.parse(sTools); setToolLevels(t); setSavedToolLevels(t); }
       if (sMisc) {
@@ -65,28 +62,21 @@ export default function SettingsPage() {
         if (m.drinkRoutine) setDrinkRoutine(m.drinkRoutine);
         else if (m.drinkType && m.drinkCount) setDrinkRoutine(Array(m.drinkCount).fill(m.drinkType));
       }
-
       let initialPrices: Record<string, number> = sPrices ? JSON.parse(sPrices) : {};
-      
       const allData = await getCachedPrices();
       const data = allData.filter((d: any) => d.category === 'ingredient');
-      
       if (data && data.length > 0) {
         const finalPrices: Record<string, number> = {};
-        
         data.forEach((row: any) => { 
-          let displayPrice = row.price; 
-
           if (initialPrices[row.item_name] !== undefined && !isNaN(initialPrices[row.item_name])) {
             finalPrices[row.item_name] = initialPrices[row.item_name];
           } else {
-            finalPrices[row.item_name] = displayPrice;
+            finalPrices[row.item_name] = row.price;
           }
         });
-
         setPrices({ ...initialPrices, ...finalPrices });
-      } else {
-        if (sPrices) setPrices(initialPrices);
+      } else if (sPrices) {
+        setPrices(initialPrices);
       }
       setIsLoaded(true);
     };
@@ -97,7 +87,7 @@ export default function SettingsPage() {
     const skill = SKILL_DATA[profTab][id];
     if (!skill) return;
     const current = levels[id] || 0;
-    let isUnlocked = (skill.req && skill.req2) ? ((levels[skill.req] || 0) > 0 || (levels[skill.req2] || 0) > 0) : (skill.req ? (levels[skill.req] || 0) > 0 : true);
+    const isUnlocked = (skill.req && skill.req2) ? ((levels[skill.req] || 0) > 0 || (levels[skill.req2] || 0) > 0) : (skill.req ? (levels[skill.req] || 0) > 0 : true);
     if (!isUnlocked && delta > 0) return;
     setLevels(prev => ({ ...prev, [id]: Math.max(0, Math.min(skill.max, current + delta)) }));
   };
@@ -171,12 +161,10 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-indigo-500/30 flex flex-col relative overflow-x-hidden">
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-white/5 rounded-full blur-[150px] pointer-events-none"></div>
-
+      <div className="absolute top-[-10%] left-[-5%] w-full h-[40%] bg-white/5 rounded-full blur-[120px] pointer-events-none"></div>
       <Header />
-
       <style dangerouslySetInnerHTML={{__html: `
-        .skill-tree { display: flex; justify-content: center; width: 100%; padding-bottom: 2rem; }
+        .skill-tree { display: flex; justify-content: center; width: 100%; padding-bottom: 2rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .skill-tree ul { padding-top: 25px; position: relative; display: flex; justify-content: center; transition: all 0.3s; white-space: nowrap; }
         .skill-tree li { display: inline-block; vertical-align: top; text-align: center; list-style-type: none; position: relative; padding: 25px 5px 0 5px; transition: all 0.3s; }
         .skill-tree li::before, .skill-tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #3f3f46; width: 50%; height: 25px; z-index: 1; }
@@ -189,28 +177,29 @@ export default function SettingsPage() {
         .skill-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #3f3f46; width: 0; height: 25px; margin-left: -1px; z-index: 1; }
         input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
+        .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
       `}} />
-
-      <main className="relative z-10 flex-1 max-w-[1600px] w-full mx-auto px-4 pt-32 md:pt-40 pb-20">
-        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 max-w-7xl mx-auto">
-          <div>
-            <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white mb-4">개인 설정 보드</h1>
-            <p className="text-gray-400 text-sm md:text-base tracking-wide">전문가 스킬, 세이지 도구 현황 및 재료 단가를 통합 관리합니다.</p>
+      <main className="relative z-10 flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-40 pb-20">
+        <div className="mb-8 md:mb-12 text-center md:text-left max-w-7xl mx-auto px-2">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white mb-3">개인 설정 <span className="text-indigo-500">보드</span></h1>
+          <p className="text-gray-400 text-xs sm:text-sm md:text-base tracking-wide max-w-2xl break-keep">전문가 스킬 트리, 세이지 도구 강화 현황 및 재료 단가를 통합 관리합니다.</p>
+        </div>
+        <div className="w-full max-w-7xl mx-auto mb-8 md:mb-12 px-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white/5 p-1.5 rounded-2xl md:rounded-full border border-white/5 shadow-2xl">
+            <button onClick={() => setActiveTab('트리')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '트리' ? 'bg-amber-600 text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}>스킬 트리</button>
+            <button onClick={() => setActiveTab('도구')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '도구' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}>도구 강화</button>
+            <button onClick={() => setActiveTab('단가')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '단가' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}>단가 관리</button>
+            <button onClick={() => setActiveTab('기타')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '기타' ? 'bg-emerald-600 text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}>기타 설정</button>
           </div>
         </div>
-
-        <div className="flex gap-4 mb-8 border-b border-white/10 pb-4 overflow-x-auto max-w-7xl mx-auto custom-scrollbar">
-          <button onClick={() => setActiveTab('트리')} className={`px-6 py-2.5 rounded-xl font-bold transition-colors whitespace-nowrap ${activeTab === '트리' ? 'bg-amber-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>전문가 스킬 현황</button>
-          <button onClick={() => setActiveTab('도구')} className={`px-6 py-2.5 rounded-xl font-bold transition-colors whitespace-nowrap ${activeTab === '도구' ? 'bg-rose-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>세이지 도구 현황</button>
-          <button onClick={() => setActiveTab('단가')} className={`px-6 py-2.5 rounded-xl font-bold transition-colors whitespace-nowrap ${activeTab === '단가' ? 'bg-indigo-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>개인 재료 단가 시트</button>
-          <button onClick={() => setActiveTab('기타')} className={`px-6 py-2.5 rounded-xl font-bold transition-colors whitespace-nowrap ${activeTab === '기타' ? 'bg-emerald-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>기타 부가 설정</button>
+        <div className="w-full animate-fade-in px-1 sm:px-0">
+          {activeTab === '트리' && <SkillTreeTab profTab={profTab} setProfTab={setProfTab} levels={levels} handleLevelChange={handleLevelChange} resetTree={resetTree} saveAll={saveAll} diffCost={diffCost} activeEffects={activeEffects} />}
+          {activeTab === '도구' && <SageToolsTab activeToolId={activeToolId} setActiveToolId={setActiveToolId} toolLevels={toolLevels} handleToolLevelChange={handleToolLevelChange} resetTools={resetTools} saveAll={saveAll} diffToolCost={diffToolCost} getToolImageName={getToolImageName} />}
+          {activeTab === '단가' && <PriceSheetTab prices={prices} handlePriceChange={handlePriceChange} saveAll={saveAll} />}
+          {activeTab === '기타' && <MiscSettingsTab townRank={townRank} setTownRank={setTownRank} drinkRoutine={drinkRoutine} addDrinkToRoutine={addDrinkToRoutine} removeDrinkFromRoutine={removeDrinkFromRoutine} saveAll={saveAll} currentTownEmoji={currentTownEmoji} currentMaxStamina={currentMaxStamina} dailyDrinkRecovery={dailyDrinkRecovery} totalDailyStamina={totalDailyStamina} TOWN_RANKS={TOWN_RANKS} STAMINA_DRINKS={STAMINA_DRINKS} />}
         </div>
-
-        {activeTab === '트리' && <SkillTreeTab profTab={profTab} setProfTab={setProfTab} levels={levels} handleLevelChange={handleLevelChange} resetTree={resetTree} saveAll={saveAll} diffCost={diffCost} activeEffects={activeEffects} />}
-        {activeTab === '도구' && <SageToolsTab activeToolId={activeToolId} setActiveToolId={setActiveToolId} toolLevels={toolLevels} handleToolLevelChange={handleToolLevelChange} resetTools={resetTools} saveAll={saveAll} diffToolCost={diffToolCost} getToolImageName={getToolImageName} />}
-        {activeTab === '단가' && <PriceSheetTab prices={prices} handlePriceChange={handlePriceChange} saveAll={saveAll} />}
-        {activeTab === '기타' && <MiscSettingsTab townRank={townRank} setTownRank={setTownRank} drinkRoutine={drinkRoutine} addDrinkToRoutine={addDrinkToRoutine} removeDrinkFromRoutine={removeDrinkFromRoutine} saveAll={saveAll} currentTownEmoji={currentTownEmoji} currentMaxStamina={currentMaxStamina} dailyDrinkRecovery={dailyDrinkRecovery} totalDailyStamina={totalDailyStamina} TOWN_RANKS={TOWN_RANKS} STAMINA_DRINKS={STAMINA_DRINKS} />}
-
       </main>
       <Footer />
     </div>
