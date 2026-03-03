@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase'; 
 
 export default function Footer() {
@@ -62,6 +63,13 @@ export default function Footer() {
               <p>
                 사이트 내 사용된 모든 게임 관련 이미지 및 리소스의 출처와 저작권은 <span className="font-bold text-gray-400">'띵타이쿤 온라인'</span>에 있습니다.
               </p>
+              <div className="mt-3 flex items-center justify-center md:justify-start gap-3">
+                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors font-bold underline underline-offset-4 decoration-white/20">
+                  개인정보 처리방침
+                </Link>
+                <span className="w-1 h-1 bg-white/10 rounded-full"></span>
+                <span className="text-[9px]">© 2026 All-Dding</span>
+              </div>
             </div>
           </div>
 
@@ -158,7 +166,7 @@ export default function Footer() {
                     <input 
                       type="checkbox" 
                       checked={wantsReply}
-                      onChange={(e) => setWantsReply(e.target.value === 'true' ? true : e.target.checked)} // 버그 방지
+                      onChange={(e) => setWantsReply(e.target.checked)}
                       className="peer appearance-none w-4 h-4 border border-gray-600 rounded bg-transparent checked:bg-blue-600 checked:border-blue-600 transition-all cursor-pointer"
                     />
                     <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
