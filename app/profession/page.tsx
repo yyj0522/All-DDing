@@ -237,7 +237,7 @@ export default function ProfessionPage() {
               </svg>
               <h2 className="text-2xl md:text-3xl font-black text-white mb-4">콘텐츠 안정화 중</h2>
               <p className="text-rose-200/60 text-[13px] md:text-base max-w-md leading-relaxed break-keep">
-                사냥 전문가 콘텐츠는 현재 잦은 밸런스 패치로 인해 데이터 신뢰도가 낮습니다. <br className="hidden md:block"/>
+                사냥 전문가 콘텐츠는 현재 잦은 밸런스 패치로 인해 변경점이 많은 상황입니다. <br className="hidden md:block"/>
                 서버가 안정된 이후 업데이트될 예정입니다.
               </p>
             </div>
