@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Profession, SKILL_DATA } from '@/lib/skillData';
 import SkillTree from '@/components/SkillTree';
 
@@ -62,22 +63,27 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
                 <span className="text-sm font-bold text-gray-400">필요 골드</span>
                 <div className="flex items-center gap-2">
                   <span className="font-black text-amber-400 text-xl">{diffCost.gold.toLocaleString()}</span>
-                  <img src={`${STORAGE_BASE_URL}/coin.png`} alt="G" className="w-5 h-5 object-contain" onError={(e) => {e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden')}} />
-                  <span className="text-amber-400 font-bold hidden">G</span>
+                  <div className="relative w-5 h-5">
+                    <Image src={`${STORAGE_BASE_URL}/coin.png`} alt="G" fill unoptimized className="object-contain" />
+                  </div>
                 </div>
               </div>
               <div className="flex justify-between items-center border-b border-white/5 pb-3">
                 <span className="text-sm font-bold text-gray-400">어빌리티 스톤</span>
                 <div className="flex items-center gap-2">
                   <span className="font-black text-blue-400 text-xl">{diffCost.stone.toLocaleString()}</span>
-                  <img src={`${STORAGE_BASE_URL}/icons/ability_stone.png`} alt="스톤" className="w-5 h-5 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
+                  <div className="relative w-5 h-5">
+                    <Image src={`${STORAGE_BASE_URL}/icons/ability_stone.png`} alt="스톤" fill unoptimized className="object-contain" style={{ imageRendering: 'pixelated' }} />
+                  </div>
                 </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-gray-400">스킬 포인트</span>
                 <div className="flex items-center gap-2">
                   <span className="font-black text-emerald-400 text-xl">{diffCost.point.toLocaleString()}</span>
-                  <img src={`${STORAGE_BASE_URL}/icons/skill_arc.png`} alt="P" className="w-5 h-5 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
+                  <div className="relative w-5 h-5">
+                    <Image src={`${STORAGE_BASE_URL}/icons/skill_arc.png`} alt="P" fill unoptimized className="object-contain" style={{ imageRendering: 'pixelated' }} />
+                  </div>
                 </div>
               </div>
             </div>

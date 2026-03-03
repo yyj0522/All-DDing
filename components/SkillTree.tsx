@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { SKILL_DATA, Profession } from '@/lib/skillData';
 
 interface SkillTreeProps {
@@ -10,6 +10,8 @@ interface SkillTreeProps {
 }
 
 export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeProps) {
+  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
   const SkillBox = ({ id }: { id: string }) => {
     const skill = SKILL_DATA[profTab]?.[id];
     if(!skill) return null;
@@ -29,18 +31,17 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
       profTab === '채광' ? 'mine_skill' : 
       profTab === '해양' ? 'ocean_skill' : 
       'hunt_skill';
-    
-    const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
 
     return (
       <div className={`inline-block w-40 md:w-44 bg-[#0a0a0a] border-2 rounded-2xl p-3 flex flex-col items-center gap-2 shadow-lg transition-all z-10 ${isUnlocked ? (lv > 0 ? 'border-amber-500 bg-amber-500/5' : 'border-gray-600') : 'border-gray-800 opacity-40'}`}>
-        <div className={`mx-auto w-10 h-10 rounded-lg border flex items-center justify-center text-[10px] font-bold overflow-hidden ${isUnlocked ? 'bg-white/5 border-white/20 text-white' : 'bg-black border-gray-700 text-gray-600'}`}>
-          <img 
-            src={`${STORAGE_BASE_URL}/${folderName}/${id}_${lv > 0 ? 'on' : 'off'}.png`} 
+        <div className={`relative mx-auto w-10 h-10 rounded-lg border flex items-center justify-center overflow-hidden ${isUnlocked ? 'bg-white/5 border-white/20' : 'bg-black border-gray-700'}`}>
+          <Image 
+            src={`${STORAGE_BASE_URL}/${folderName}/${id}_on.png`} 
             alt={skill.name}
-            className="w-full h-full object-contain"
+            fill
+            unoptimized={true}
+            className={`object-contain p-1 transition-all duration-300 ${lv > 0 ? 'grayscale-0 opacity-100' : 'grayscale opacity-40 blur-[0.3px]'}`}
             style={{ imageRendering: 'pixelated' }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         </div>
         <div className="text-[11px] md:text-xs font-bold text-white text-center leading-tight h-8 flex items-center justify-center break-keep w-full px-1">{skill.name}</div>
