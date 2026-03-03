@@ -119,7 +119,7 @@ export const getImagePath = (name: string) => {
     '그라밋': '/mining_items/gramit.png',
     '에메리오': '/mining_items/emerio.png',
     '샤인플레어': '/mining_items/shineflare.png',
-    '바닐라 횃불': '/mining_items/Torch.png',
+    '횃불': '/mining_items/torch.png',
     '심층암 조약돌': '/mining_items/Cobbled_Deepslate.png',
     '조약돌': '/mining_items/Cobblestone.png',
     '구리블록': '/mining_items/Block_of_Copper.png',
@@ -291,7 +291,7 @@ export const getImagePath = (name: string) => {
 };
 
 export const MINE_RECIPES = [
-  { name: '강화 횃불', facility: '채광물 가공 시설', time: '7초', ingredients: ['바닐라 횃불 4개'], type: '가공' },
+  { name: '강화 횃불', facility: '채광물 가공 시설', time: '7초', ingredients: ['횃불 4개'], type: '가공' },
   { name: '코룸 주괴', facility: '채광 제작 시설', time: '20초', ingredients: ['코룸(광석) 16개', '강화 횃불 2개'], type: '제작' },
   { name: '리프톤 주괴', facility: '채광 제작 시설', time: '30초', ingredients: ['리프톤(광석) 16개', '강화 횃불 4개'], type: '제작' },
   { name: '세렌트 주괴', facility: '채광 제작 시설', time: '40초', ingredients: ['세렌트(광석) 16개', '강화 횃불 8개'], type: '제작' },
