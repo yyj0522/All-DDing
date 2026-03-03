@@ -1,3 +1,5 @@
+'use client';
+
 import { SAGE_TOOLS, SAGE_TOOL_EFFECTS } from '@/lib/sageData';
 
 interface Props {
@@ -12,6 +14,8 @@ interface Props {
 }
 
 export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels, handleToolLevelChange, resetTools, saveAll, diffToolCost, getToolImageName }: Props) {
+  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
   return (
     <div className="flex flex-col xl:flex-row gap-8 w-full justify-center max-w-7xl mx-auto animate-fade-in-up">
       <div className="flex-1 bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl">
@@ -40,7 +44,7 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
               >
                 <div className={`w-32 h-32 bg-white/5 border rounded-2xl flex items-center justify-center text-gray-600 font-bold overflow-hidden shadow-inner relative transition-colors ${isActive ? 'border-rose-500/50' : 'border-white/10'}`}>
                   <img 
-                    src={`/tools/${getToolImageName(tool.id, lv)}.png`} 
+                    src={`${STORAGE_BASE_URL}/tools/${getToolImageName(tool.id, lv)}.png`} 
                     alt={tool.name} 
                     className="w-full h-full object-contain p-2"
                     style={{ imageRendering: 'pixelated' }}
@@ -94,7 +98,7 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
               <span className="text-sm font-bold text-gray-400">필요 코인</span>
               <div className="flex items-center gap-2">
                 <span className="font-black text-amber-400 text-lg">{diffToolCost.coin.toLocaleString()}</span>
-                <img src="/coin.png" alt="C" className="w-4 h-4 object-contain" onError={(e) => {e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden')}} />
+                <img src={`${STORAGE_BASE_URL}/coin.png`} alt="C" className="w-4 h-4 object-contain" onError={(e) => {e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden')}} />
                 <span className="text-amber-400 font-bold hidden bg-amber-500/20 px-1.5 rounded text-[10px]">C</span>
               </div>
             </div>
@@ -102,7 +106,7 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
               <span className="text-sm font-bold text-gray-400">필요 루비</span>
               <div className="flex items-center gap-2">
                 <span className="font-black text-rose-400 text-lg">{diffToolCost.ruby.toLocaleString()}</span>
-                <img src="/ruby.png" alt="R" className="w-4 h-4 object-contain" onError={(e) => {e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden')}} />
+                <img src={`${STORAGE_BASE_URL}/ruby.png`} alt="R" className="w-4 h-4 object-contain" onError={(e) => {e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden')}} />
                 <span className="text-rose-400 font-bold hidden bg-rose-500/20 px-1.5 rounded text-[10px]">R</span>
               </div>
             </div>
@@ -110,21 +114,21 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
               <span className="text-xs font-bold text-gray-500">하급 라이프스톤</span>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-gray-300 text-sm">{diffToolCost.stone1.toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
-                <img src="/tools/lifestone1.png" alt="하급" className="w-4 h-4 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
+                <img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} alt="하급" className="w-4 h-4 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
               </div>
             </div>
             <div className="flex justify-between items-center border-b border-white/5 pb-2">
               <span className="text-xs font-bold text-gray-500">중급 라이프스톤</span>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-gray-300 text-sm">{diffToolCost.stone2.toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
-                <img src="/tools/lifestone2.png" alt="중급" className="w-4 h-4 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
+                <img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} alt="중급" className="w-4 h-4 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
               </div>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-gray-500">상급 라이프스톤</span>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-gray-300 text-sm">{diffToolCost.stone3.toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
-                <img src="/tools/lifestone3.png" alt="상급" className="w-4 h-4 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
+                <img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} alt="상급" className="w-4 h-4 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
               </div>
             </div>
           </div>

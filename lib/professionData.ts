@@ -53,6 +53,8 @@ export const CRAFT_MAX_PRICES: Record<string, number> = {
 };
 
 export const getImagePath = (name: string) => {
+  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+  
   const map: Record<string, string> = {
     '토마토 스파게티': '/foods/tomato_spaghetti.png',
     '어니언 링': '/foods/onion_ring.png',
@@ -276,12 +278,12 @@ export const getImagePath = (name: string) => {
     '농어 회': '/f1/Sea bass.png'
   };
 
-  if (map[name]) return map[name];
+  if (map[name]) return `${STORAGE_BASE_URL}${map[name]}`;
 
   const keys = Object.keys(map).sort((a, b) => b.length - a.length);
   for (const key of keys) {
     if (name.includes(key)) {
-      return map[key];
+      return `${STORAGE_BASE_URL}${map[key]}`;
     }
   }
 
@@ -324,19 +326,16 @@ export const OCEAN_RECIPES = [
   { name: '청어 회(2개)', facility: '대형 제작대', time: '0초', ingredients: ['익히지 않은 청어 1개'], note: '1회 2개 제작', type: '가공' },
   { name: '금붕어 회(2개)', facility: '대형 제작대', time: '0초', ingredients: ['금붕어 1개'], note: '1회 2개 제작', type: '가공' },
   { name: '농어 회(2개)', facility: '대형 제작대', time: '0초', ingredients: ['농어 1개'], note: '1회 2개 제작', type: '가공' },
-  
   { name: '수호의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['굴(1성) 2개', '점토 2개'], type: '제작' },
   { name: '파동의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['소라(1성) 2개', '모래 4개'], type: '제작' },
   { name: '생명의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['미역(1성) 2개', '자갈 4개'], type: '제작' },
   { name: '부식의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['성게(1성) 2개', '화강암 2개'], type: '제작' },
   { name: '혼란의 정수(1성)', facility: '연금 제작 시설', time: '5초', ingredients: ['문어(1성) 2개', '흙 8개'], type: '제작' },
-  
   { name: '물결 수호의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['수호의 정수(1성)', '파동의 정수(1성)', '깐 새우'], type: '제작' },
   { name: '파동 오염의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['파동의 정수(1성)', '혼란의 정수(1성)', '도미 회'], type: '제작' },
   { name: '질서 파괴의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['혼란의 정수(1성)', '생명의 정수(1성)', '청어 회'], type: '제작' },
   { name: '활력 붕괴의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['생명의 정수(1성)', '부식의 정수(1성)', '금붕어 회'], type: '제작' },
   { name: '침식 방어의 핵', facility: '연금 제작 시설', time: '10초', ingredients: ['부식의 정수(1성)', '수호의 정수(1성)', '농어 회'], type: '제작' },
-  
   { name: '영생의 아쿠티스', facility: '연금 제작 시설', time: '30초', ingredients: ['물결 수호의 핵', '질서 파괴의 핵', '활력 붕괴의 핵'], type: '제작' },
   { name: '크라켄의 광란체', facility: '연금 제작 시설', time: '30초', ingredients: ['질서 파괴의 핵', '활력 붕괴의 핵', '파동 오염의 핵'], type: '제작' },
   { name: '리바이던의 깃털', facility: '연금 제작 시설', time: '30초', ingredients: ['침식 방어의 핵', '파동 오염의 핵', '물결 수호의 핵'], type: '제작' },

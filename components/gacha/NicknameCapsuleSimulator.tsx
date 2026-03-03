@@ -12,11 +12,13 @@ interface Reward {
   grade: string;
 }
 
+const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
 const NICKNAME_REWARDS: Reward[] = [
-  { id: 'nick_ticket', name: '한글 닉네임 변경권', prob: 3, image: '/capsule2/nickname_change_scroll.png', amount: 1, grade: 'mythic' },
-  { id: 'coin_5', name: '코스메틱 코인', prob: 17, image: '/capsule2/cosmetic_coin.png', amount: 5, grade: 'rare' },
-  { id: 'coin_3', name: '코스메틱 코인', prob: 30, image: '/capsule2/cosmetic_coin.png', amount: 3, grade: 'uncommon' },
-  { id: 'coin_1', name: '코스메틱 코인', prob: 50, image: '/capsule2/cosmetic_coin.png', amount: 1, grade: 'common' },
+  { id: 'nick_ticket', name: '한글 닉네임 변경권', prob: 3, image: `${STORAGE_BASE_URL}/capsule2/nickname_change_scroll.png`, amount: 1, grade: 'mythic' },
+  { id: 'coin_5', name: '코스메틱 코인', prob: 17, image: `${STORAGE_BASE_URL}/capsule2/cosmetic_coin.png`, amount: 5, grade: 'rare' },
+  { id: 'coin_3', name: '코스메틱 코인', prob: 30, image: `${STORAGE_BASE_URL}/capsule2/cosmetic_coin.png`, amount: 3, grade: 'uncommon' },
+  { id: 'coin_1', name: '코스메틱 코인', prob: 50, image: `${STORAGE_BASE_URL}/capsule2/cosmetic_coin.png`, amount: 1, grade: 'common' },
 ];
 
 const drawReward = (rewards: Reward[]): Reward => {
@@ -214,7 +216,7 @@ export default function NicknameCapsuleSimulator() {
     <div className="w-full space-y-6 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-black/40 border border-white/10 rounded-2xl p-5 shadow-lg gap-4">
         <div className="flex items-center gap-4">
-          <img src="/f1/mythic_special_box.png" alt="한글 닉네임 캡슐" className="w-16 h-16 object-contain drop-shadow-lg" />
+          <img src={`${STORAGE_BASE_URL}/f1/mythic_special_box.png`} alt="한글 닉네임 캡슐" className="w-16 h-16 object-contain drop-shadow-lg" />
           <div>
             <h2 className="text-xl font-black text-white">한글 닉네임 변경 캡슐</h2>
             <p className="text-sm text-gray-400 mt-1">1회 개봉 비용: <span className="text-blue-400 font-bold">2,500</span> 크리스탈</p>
@@ -224,7 +226,7 @@ export default function NicknameCapsuleSimulator() {
           <div className="text-sm font-bold text-gray-400">누적 개봉: <span className="text-white text-base">{totalPulls.toLocaleString()}</span>회</div>
           <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-500/20 px-4 py-2 rounded-xl">
             <span className="text-xs font-bold text-gray-400">총 소모 재화</span>
-            <img src="/crystal.png" className="w-5 h-5 object-contain" alt="크리스탈" />
+            <img src={`${STORAGE_BASE_URL}/crystal.png`} className="w-5 h-5 object-contain" alt="크리스탈" />
             <span className="text-lg font-black text-blue-400">{totalCost.toLocaleString()}</span>
           </div>
         </div>
@@ -403,7 +405,7 @@ export default function NicknameCapsuleSimulator() {
                     해당 아이템을 뽑기 위해 캡슐을
                     <span className="bg-white/10 px-3 py-1 rounded-lg">총 <span className="text-rose-400 font-black text-xl">{snipeResult.attempts.toLocaleString()}</span>회</span>
                     <span className="bg-blue-900/20 border border-blue-500/20 px-3 py-1 rounded-lg flex items-center gap-1.5">
-                      <img src="/crystal.png" className="w-5 h-5 object-contain" alt="크리스탈" />
+                      <img src={`${STORAGE_BASE_URL}/crystal.png`} className="w-5 h-5 object-contain" alt="크리스탈" />
                       <span className="text-blue-400 font-black text-xl">{snipeResult.cost.toLocaleString()}</span> 크리스탈 사용
                     </span>
                   </div>

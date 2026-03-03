@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import { getImagePath, MINE_FIXED_PRICES, PRICE_BUFF_EFFECTS, PICKAXE_BASE_DROPS, LUCKY_HIT_EFFECTS, GEM_DROP_EFFECTS } from '@/lib/professionData';
@@ -13,6 +15,7 @@ interface Props {
 export default function MiningStatsTab({ userStats, targetZone, setTargetZone, results }: Props) {
   const { expectedIngots, expectedGems, expectedRelics, expectedRelicPoints, ingotRevenue, gemRevenue, totalRevenue } = results;
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
 
   return (
     <div className="flex flex-col gap-8 w-full relative">
@@ -146,7 +149,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
             <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-10 transition-opacity"><svg className="w-32 h-32 text-cyan-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4">
               <div>
-                <p className="text-sm font-bold text-gray-400 mb-2 flex items-center gap-2"><img src="/mining_items/mining_relic5.png" alt="유물" className="w-5 h-5 object-contain" onError={(e) => e.currentTarget.style.display='none'} />예상 획득 유물 (전체)</p>
+                <p className="text-sm font-bold text-gray-400 mb-2 flex items-center gap-2"><img src={`${STORAGE_BASE_URL}/mining_items/mining_relic5.png`} alt="유물" className="w-5 h-5 object-contain" onError={(e) => e.currentTarget.style.display='none'} />예상 획득 유물 (전체)</p>
                 <div className="flex items-end gap-2"><span className="text-2xl font-black text-white">{expectedRelics.toLocaleString(undefined, {maximumFractionDigits: 1})}</span><span className="text-xs font-bold text-gray-500 mb-1">개</span></div>
               </div>
               <div className="sm:text-right w-full sm:w-auto bg-cyan-500/5 px-4 py-3 rounded-xl border border-cyan-500/10">
@@ -204,6 +207,14 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
             })}
           </div>
         </div>
+      </div>
+      
+      <div className="hidden">
+        <img src={`${STORAGE_BASE_URL}/coin.png`} alt="" />
+        <img src={`${STORAGE_BASE_URL}/ruby.png`} alt="" />
+        <img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} alt="" />
+        <img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} alt="" />
+        <img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} alt="" />
       </div>
     </div>
   );

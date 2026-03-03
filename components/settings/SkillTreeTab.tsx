@@ -1,3 +1,5 @@
+'use client';
+
 import { Profession, SKILL_DATA } from '@/lib/skillData';
 import SkillTree from '@/components/SkillTree';
 
@@ -13,8 +15,9 @@ interface Props {
 }
 
 export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelChange, resetTree, saveAll, diffCost, activeEffects }: Props) {
+  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
   return (
-    // 최상단 래퍼의 최대 너비를 1400px -> 1500px로 살짝 더 확장
     <div className="flex flex-col gap-8 animate-fade-in-up w-full max-w-[1500px] mx-auto">
       <div className="flex justify-center gap-2 md:gap-4 mb-4 overflow-x-auto pb-2 custom-scrollbar w-full">
         {(['재배', '채광', '해양', '사냥'] as Profession[]).map((tab) => (
@@ -33,7 +36,6 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
       </div>
 
       <div className="flex flex-col xl:flex-row gap-8 w-full justify-center">
-        {/* 스킬트리가 렌더링되는 패널의 최대 너비를 1300px -> 1400px로 상향 */}
         <div className="flex-1 bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 shadow-2xl overflow-hidden flex flex-col w-full xl:max-w-[1400px]">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white">{profTab} 스킬 트리</h2>
@@ -60,7 +62,7 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
                 <span className="text-sm font-bold text-gray-400">필요 골드</span>
                 <div className="flex items-center gap-2">
                   <span className="font-black text-amber-400 text-xl">{diffCost.gold.toLocaleString()}</span>
-                  <img src="/coin.png" alt="G" className="w-5 h-5 object-contain" onError={(e) => {e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden')}} />
+                  <img src={`${STORAGE_BASE_URL}/coin.png`} alt="G" className="w-5 h-5 object-contain" onError={(e) => {e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden')}} />
                   <span className="text-amber-400 font-bold hidden">G</span>
                 </div>
               </div>
@@ -68,14 +70,14 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
                 <span className="text-sm font-bold text-gray-400">어빌리티 스톤</span>
                 <div className="flex items-center gap-2">
                   <span className="font-black text-blue-400 text-xl">{diffCost.stone.toLocaleString()}</span>
-                  <img src="/icons/ability_stone.png" alt="스톤" className="w-5 h-5 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
+                  <img src={`${STORAGE_BASE_URL}/icons/ability_stone.png`} alt="스톤" className="w-5 h-5 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
                 </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-gray-400">스킬 포인트</span>
                 <div className="flex items-center gap-2">
                   <span className="font-black text-emerald-400 text-xl">{diffCost.point.toLocaleString()}</span>
-                  <img src="/icons/skill_arc.png" alt="P" className="w-5 h-5 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
+                  <img src={`${STORAGE_BASE_URL}/icons/skill_arc.png`} alt="P" className="w-5 h-5 object-contain" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
                 </div>
               </div>
             </div>

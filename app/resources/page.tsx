@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 
 export default function ResourcesPage() {
+  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
   return (
     <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-cyan-500/30 relative flex flex-col">
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-cyan-600/10 rounded-full blur-[150px] pointer-events-none"></div>
@@ -43,7 +47,11 @@ export default function ResourcesPage() {
           </div>
           
           <div className="w-full sm:w-auto">
-            <a href="/files/Timer_mod.jar" download="Timer_mod.jar" className="w-full bg-white/5 hover:bg-cyan-600 text-white font-bold tracking-widest px-8 py-3.5 rounded-xl transition-all duration-300 border border-white/10 flex justify-center items-center gap-2 whitespace-nowrap group">
+            <a 
+              href={`${STORAGE_BASE_URL}/files/Timer_mod.jar`} 
+              download="Timer_mod.jar" 
+              className="w-full bg-white/5 hover:bg-cyan-600 text-white font-bold tracking-widest px-8 py-3.5 rounded-xl transition-all duration-300 border border-white/10 flex justify-center items-center gap-2 whitespace-nowrap group"
+            >
               <svg className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               다운로드
             </a>
@@ -63,7 +71,7 @@ export default function ResourcesPage() {
               모드 파일 적용하기
             </h3>
             <div className="w-full border border-white/10 rounded-2xl overflow-hidden bg-[#0a0a0a]">
-               <img src="/guide/guide1.png" alt="모드 파일 적용 가이드" className="w-full h-auto object-contain block" />
+               <img src={`${STORAGE_BASE_URL}/guide/guide1.png`} alt="모드 파일 적용 가이드" className="w-full h-auto object-contain block" />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
               다운로드 받은 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">Timer_mod.jar</code> 파일을 마인크래프트 설치 폴더 내의 <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">mods</code> 폴더에 넣어주세요. <code className="bg-black border border-white/10 px-2 py-1 rounded text-cyan-300 text-sm">Fabric api</code> 파일이 정상적으로 설치되어 있어야 작동합니다. Fabric api 파일만 같이 있다면 모든 환경에서 정상작동합니다. 오류나 적용이 안된다면 하단 의견남기기를 해주시면 최대한 빠른 답장 드리겠습니다.
@@ -76,7 +84,7 @@ export default function ResourcesPage() {
               인게임 설정 창 호출 (F12)
             </h3>
             <div className="w-full border border-white/10 rounded-2xl overflow-hidden bg-[#0a0a0a]">
-               <img src="/guide/guide2.png" alt="인게임 설정 창 가이드" className="w-full h-auto object-contain block" />
+               <img src={`${STORAGE_BASE_URL}/guide/guide2.png`} alt="인게임 설정 창 가이드" className="w-full h-auto object-contain block" />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
               게임 접속 후 <strong className="text-white">F12 키</strong>를 누르면 제작시간 감소 스킬 설정 창이 나타납니다. 이곳에서 각 스킬의 현재 레벨을 설정하면, 쿨타임 감소가 적용됩니다. 또한, 처음 모드 적용 시 위치설정버튼을 통해 위치를 잡아주셔야합니다.
@@ -89,7 +97,7 @@ export default function ResourcesPage() {
               작동여부 확인
             </h3>
             <div className="w-full border border-white/10 rounded-2xl overflow-hidden bg-[#0a0a0a]">
-               <img src="/guide/guide3.png" alt="작동 여부 확인 가이드" className="w-full h-auto object-contain block" />
+               <img src={`${STORAGE_BASE_URL}/guide/guide3.png`} alt="작동 여부 확인 가이드" className="w-full h-auto object-contain block" />
             </div>
             <p className="text-gray-300 leading-relaxed text-lg">
               모드가 정상작동한다면 청사진에서 아이템 가공 시 우측하단에 타이머가 작동하게 됩니다.

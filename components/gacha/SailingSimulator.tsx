@@ -20,6 +20,8 @@ export default function SailingSimulator() {
   const [testResults, setTestResults] = useState<Record<string, number>>({});
   const [testCount, setTestCount] = useState(0);
 
+  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
   const spawnIsland = (island: Island) => {
     if (activeIslands.length >= 5) {
       alert("바다에 띄울 수 있는 섬은 최대 5개입니다.");
@@ -78,7 +80,6 @@ export default function SailingSimulator() {
       const reward = drawSailingReward(target.island.rewards);
       setWonItem({ islandName: target.island.name, reward });
       setHistory(prev => [{ islandName: target.island.name, reward }, ...prev].slice(0, 10));
-      
       setActiveIslands(activeIslands.filter(i => i.uniqueId !== uniqueId));
     }
   };
@@ -92,12 +93,10 @@ export default function SailingSimulator() {
   const handleMassTest = () => {
     const results: Record<string, number> = {};
     testIsland.rewards.forEach(r => results[r.name] = 0);
-
     for (let i = 0; i < 10000; i++) {
       const reward = drawSailingReward(testIsland.rewards);
       results[reward.name]++;
     }
-
     setTestResults(results);
     setTestCount(10000);
   };
@@ -132,7 +131,7 @@ export default function SailingSimulator() {
                         onClick={() => spawnIsland(island)}
                         className="bg-black border border-white/10 hover:border-blue-500/50 rounded-lg p-2.5 flex flex-col items-center gap-1.5 transition-all group shadow-sm"
                       >
-                        <img src={island.image} className="w-10 h-10 object-contain group-hover:scale-110 transition-transform" style={{ imageRendering: 'pixelated' }} />
+                        <img src={island.image.startsWith('http') ? island.image : `${STORAGE_BASE_URL}${island.image}`} className="w-10 h-10 object-contain group-hover:scale-110 transition-transform" style={{ imageRendering: 'pixelated' }} />
                         <span className="text-[11px] text-gray-300 font-bold whitespace-nowrap">{island.name}</span>
                       </button>
                     ))}
@@ -144,7 +143,7 @@ export default function SailingSimulator() {
 
           <div className="flex-1 min-w-0 flex flex-col gap-6">
             <div className="relative w-full rounded-2xl overflow-hidden border-2 border-[#b8860b] shadow-[0_0_30px_rgba(59,130,246,0.15)] bg-[#050505]">
-              <img src="/sailing/sailing.png" alt="바다 UI" className="w-full h-auto block select-none" style={{ imageRendering: 'pixelated' }} />
+              <img src={`${STORAGE_BASE_URL}/sailing/sailing.png`} alt="바다 UI" className="w-full h-auto block select-none" style={{ imageRendering: 'pixelated' }} />
               
               <button onClick={clearSea} className="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white text-xs font-bold px-4 py-2 rounded border border-white/20 backdrop-blur-sm transition-colors z-20 shadow-lg">
                 바다 비우기
@@ -158,7 +157,7 @@ export default function SailingSimulator() {
                   onClick={() => handleIslandClick(item.uniqueId)}
                 >
                   <div className="relative">
-                    <img src={item.island.image} alt={item.island.name} className="w-16 md:w-20 lg:w-24 h-auto object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.6)]" style={{ imageRendering: 'pixelated' }} />
+                    <img src={item.island.image.startsWith('http') ? item.island.image : `${STORAGE_BASE_URL}${item.island.image}`} alt={item.island.name} className="w-16 md:w-20 lg:w-24 h-auto object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.6)]" style={{ imageRendering: 'pixelated' }} />
                     
                     {item.state === 'sailing' && (
                       <div className="absolute -top-2 -right-2 w-6 h-6 md:w-8 md:h-8 bg-green-500 rounded-full border-2 border-white flex items-center justify-center animate-bounce shadow-xl z-10">
@@ -182,7 +181,7 @@ export default function SailingSimulator() {
                 <div className="absolute inset-0 bg-black/85 z-30 flex flex-col items-center justify-center backdrop-blur-sm animate-fade-in" onClick={() => setWonItem(null)}>
                   <span className="text-blue-400 text-base font-bold mb-3 tracking-widest">[{wonItem.islandName}] 항해 보상</span>
                   {wonItem.reward.image !== '/unknown.png' && (
-                    <img src={wonItem.reward.image} alt={wonItem.reward.name} className="w-16 h-16 object-contain mt-4 animate-bounce" style={{ imageRendering: 'pixelated' }} />
+                    <img src={wonItem.reward.image.startsWith('http') ? wonItem.reward.image : `${STORAGE_BASE_URL}${wonItem.reward.image}`} alt={wonItem.reward.name} className="w-16 h-16 object-contain mt-4 animate-bounce" style={{ imageRendering: 'pixelated' }} />
                   )}
                   <h3 className="text-4xl sm:text-5xl font-black text-white mt-4 text-center leading-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                     {wonItem.reward.name} <br/>
@@ -207,9 +206,8 @@ export default function SailingSimulator() {
                         <>
                           <span className="text-[10px] text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 w-full text-center truncate shrink-0">{h.islandName}</span>
                           <div className="flex-1 flex flex-col items-center justify-center w-full">
-                            {/* 이미지가 있을 경우 출력 */}
                             {h.reward.image !== '/unknown.png' && (
-                              <img src={h.reward.image} alt={h.reward.name} className="w-6 h-6 object-contain mb-1.5" style={{ imageRendering: 'pixelated' }} />
+                              <img src={h.reward.image.startsWith('http') ? h.reward.image : `${STORAGE_BASE_URL}${h.reward.image}`} alt={h.reward.name} className="w-6 h-6 object-contain mb-1.5" style={{ imageRendering: 'pixelated' }} />
                             )}
                             <span className="text-[11px] text-gray-200 text-center leading-tight font-medium break-keep line-clamp-2">
                               {h.reward.name}
@@ -273,12 +271,11 @@ export default function SailingSimulator() {
                       const actualProb = (count / 10000) * 100;
                       const diff = Math.abs(reward.prob - actualProb);
                       const isAccurate = diff < 1.0; 
-
                       return (
                         <tr key={idx} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
                           <td className="px-4 py-4 font-bold text-white flex items-center gap-2">
                             {reward.image !== '/unknown.png' && (
-                              <img src={reward.image} alt={reward.name} className="w-5 h-5 object-contain" style={{ imageRendering: 'pixelated' }} />
+                              <img src={reward.image.startsWith('http') ? reward.image : `${STORAGE_BASE_URL}${reward.image}`} alt={reward.name} className="w-5 h-5 object-contain" style={{ imageRendering: 'pixelated' }} />
                             )}
                             {reward.name} <span className="text-blue-400 text-xs ml-1">x{reward.amount}</span>
                           </td>

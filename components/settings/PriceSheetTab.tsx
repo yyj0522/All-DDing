@@ -1,3 +1,5 @@
+'use client';
+
 import { INGREDIENTS, ITEM_IMAGES } from '@/lib/skillData';
 
 interface Props {
@@ -10,6 +12,8 @@ const SEEDS = ["토마토 씨앗", "양파 씨앗", "마늘 씨앗"];
 const VARIABLE_ITEMS = ["정제된 광석", "단단한 주괴", "스태미나 드링크 I", "맹수의 발톱"];
 
 export default function PriceSheetTab({ prices, handlePriceChange, saveAll }: Props) {
+  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
   return (
     <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl animate-fade-in-up max-w-7xl mx-auto relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -44,7 +48,7 @@ export default function PriceSheetTab({ prices, handlePriceChange, saveAll }: Pr
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-white/5 rounded border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                         <img 
-                          src={`/ingredients/${ITEM_IMAGES[item] || 'default'}.png`} 
+                          src={`${STORAGE_BASE_URL}/ingredients/${ITEM_IMAGES[item] || 'default'}.png`} 
                           alt={item}
                           className="w-6 h-6 object-contain"
                           style={{ imageRendering: 'pixelated' }}

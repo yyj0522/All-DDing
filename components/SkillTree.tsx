@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { SKILL_DATA, Profession } from '@/lib/skillData';
 
 interface SkillTreeProps {
@@ -27,11 +30,13 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
       profTab === '해양' ? 'ocean_skill' : 
       'hunt_skill';
     
+    const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
     return (
       <div className={`inline-block w-40 md:w-44 bg-[#0a0a0a] border-2 rounded-2xl p-3 flex flex-col items-center gap-2 shadow-lg transition-all z-10 ${isUnlocked ? (lv > 0 ? 'border-amber-500 bg-amber-500/5' : 'border-gray-600') : 'border-gray-800 opacity-40'}`}>
         <div className={`mx-auto w-10 h-10 rounded-lg border flex items-center justify-center text-[10px] font-bold overflow-hidden ${isUnlocked ? 'bg-white/5 border-white/20 text-white' : 'bg-black border-gray-700 text-gray-600'}`}>
           <img 
-            src={`/${folderName}/${id}_${lv > 0 ? 'on' : 'off'}.png`} 
+            src={`${STORAGE_BASE_URL}/${folderName}/${id}_${lv > 0 ? 'on' : 'off'}.png`} 
             alt={skill.name}
             className="w-full h-full object-contain"
             style={{ imageRendering: 'pixelated' }}

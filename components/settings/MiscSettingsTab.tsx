@@ -1,3 +1,5 @@
+'use client';
+
 interface Props {
   townRank: string;
   setTownRank: (rank: string) => void;
@@ -15,12 +17,14 @@ interface Props {
 
 export default function MiscSettingsTab({ townRank, setTownRank, drinkRoutine, addDrinkToRoutine, removeDrinkFromRoutine, saveAll, currentTownEmoji, currentMaxStamina, dailyDrinkRecovery, totalDailyStamina, TOWN_RANKS, STAMINA_DRINKS }: Props) {
   
+  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
   const getTownImage = (rank: string) => {
     switch (rank) {
-      case '숲': return '/town_fund_ranking/town_1.png';
-      case '열매': return '/town_fund_ranking/town_2.png';
-      case '꽃': return '/town_fund_ranking/town_3.png';
-      case '새싹': return '/town_fund_ranking/town_4.png';
+      case '숲': return `${STORAGE_BASE_URL}/town_fund_ranking/town_1.png`;
+      case '열매': return `${STORAGE_BASE_URL}/town_fund_ranking/town_2.png`;
+      case '꽃': return `${STORAGE_BASE_URL}/town_fund_ranking/town_3.png`;
+      case '새싹': return `${STORAGE_BASE_URL}/town_fund_ranking/town_4.png`;
       default: return null;
     }
   };
@@ -102,7 +106,7 @@ export default function MiscSettingsTab({ townRank, setTownRank, drinkRoutine, a
                       {drinkVal ? (
                         <>
                           <img 
-                            src={`/stamina/stamina_drink_${drinkVal}.png`} 
+                            src={`${STORAGE_BASE_URL}/stamina/stamina_drink_${drinkVal}.png`} 
                             className="w-10 h-10 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)] group-hover:scale-90 transition-transform" 
                             style={{imageRendering: 'pixelated'}} 
                             alt={`드링크 ${drinkVal}`}
@@ -132,7 +136,7 @@ export default function MiscSettingsTab({ townRank, setTownRank, drinkRoutine, a
                     className="flex flex-col items-center gap-2 bg-[#0a0a0a] border border-white/5 rounded-xl p-3 hover:border-indigo-500/50 hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
                   >
                     <img 
-                      src={`/stamina/stamina_drink_${drink.value}.png`} 
+                      src={`${STORAGE_BASE_URL}/stamina/stamina_drink_${drink.value}.png`} 
                       className="w-10 h-10 object-contain drop-shadow-md group-hover:-translate-y-1 transition-transform" 
                       style={{imageRendering: 'pixelated'}} 
                       alt={drink.name}

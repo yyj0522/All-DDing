@@ -2,30 +2,32 @@
 
 import { useState, useRef, useEffect } from 'react';
 
+const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
 const ITEM_IMAGES: Record<string, string> = {
-  '토마토 씨앗': '/ingredients/tomato_seed.png',
-  '양파 씨앗': '/ingredients/onion_seed.png',
-  '마늘 씨앗': '/ingredients/garlic_seed.png',
-  '에르칼의 장갑': '/islandbox/treaure_relic1.png',
-  '스태미나 드링크 I': '/stamina/stamina_drink_1.png',
-  '스태미나 드링크 II': '/stamina/stamina_drink_2.png',
-  '스태미나 드링크 III': '/stamina/stamina_drink_3.png',
-  '스태미나 드링크 IV': '/stamina/stamina_drink_4.png',
-  '이그논의 탈리즈만': '/islandbox/treaure_relic2.png',
-  '스킬 프리즘': '/sailing/skill_prism.png',
-  '신화 특수 인챈트 캡슐': '/f1/mythic_special_box.png',
-  '카르세나의 룬': '/islandbox/treaure_relic3.png',
-  '실바르의 보석함': '/islandbox/treaure_relic4.png',
-  '신화 열쇠': '/ocean_items/mythic_key.png',
-  '아르데온의 반지': '/islandbox/treaure_relic5.png',
-  '상급 미끼 인챈트북': '/islandbox/common_general_enchant_book.png',
-  '겉날개': '/sailing/ItemSprite_elytra.png',
+  '토마토 씨앗': `${STORAGE_BASE_URL}/ingredients/tomato_seed.png`,
+  '양파 씨앗': `${STORAGE_BASE_URL}/ingredients/onion_seed.png`,
+  '마늘 씨앗': `${STORAGE_BASE_URL}/ingredients/garlic_seed.png`,
+  '에르칼의 장갑': `${STORAGE_BASE_URL}/islandbox/treaure_relic1.png`,
+  '스태미나 드링크 I': `${STORAGE_BASE_URL}/stamina/stamina_drink_1.png`,
+  '스태미나 드링크 II': `${STORAGE_BASE_URL}/stamina/stamina_drink_2.png`,
+  '스태미나 드링크 III': `${STORAGE_BASE_URL}/stamina/stamina_drink_3.png`,
+  '스태미나 드링크 IV': `${STORAGE_BASE_URL}/stamina/stamina_drink_4.png`,
+  '이그논의 탈리즈만': `${STORAGE_BASE_URL}/islandbox/treaure_relic2.png`,
+  '스킬 프리즘': `${STORAGE_BASE_URL}/sailing/skill_prism.png`,
+  '신화 특수 인챈트 캡슐': `${STORAGE_BASE_URL}/f1/mythic_special_box.png`,
+  '카르세나의 룬': `${STORAGE_BASE_URL}/islandbox/treaure_relic3.png`,
+  '실바르의 보석함': `${STORAGE_BASE_URL}/islandbox/treaure_relic4.png`,
+  '신화 열쇠': `${STORAGE_BASE_URL}/ocean_items/mythic_key.png`,
+  '아르데온의 반지': `${STORAGE_BASE_URL}/islandbox/treaure_relic5.png`,
+  '상급 미끼 인챈트북': `${STORAGE_BASE_URL}/islandbox/common_general_enchant_book.png`,
+  '겉날개': `${STORAGE_BASE_URL}/sailing/ItemSprite_elytra.png`,
 };
 
 const BOX_DATA = {
   rookie: {
     name: '루키 상자',
-    video: '/islandbox/rookie_box.mp4',
+    video: `${STORAGE_BASE_URL}/islandbox/rookie_box.mp4`,
     slotWeights: [{ slots: 1, chance: 50 }, { slots: 2, chance: 35 }, { slots: 3, chance: 15 }],
     drops: [
       { name: '토마토 씨앗', min: 5, max: 15, chance: 35 },
@@ -38,7 +40,7 @@ const BOX_DATA = {
   },
   normal: {
     name: '노멀 상자',
-    video: '/islandbox/normal_box.mp4',
+    video: `${STORAGE_BASE_URL}/islandbox/normal_box.mp4`,
     slotWeights: [{ slots: 1, chance: 60 }, { slots: 2, chance: 40 }],
     drops: [
       { name: '토마토 씨앗', min: 10, max: 30, chance: 25 },
@@ -54,7 +56,7 @@ const BOX_DATA = {
   },
   legend: {
     name: '전설 상자',
-    video: '/islandbox/legendary_box.mp4',
+    video: `${STORAGE_BASE_URL}/islandbox/legendary_box.mp4`,
     slotWeights: [{ slots: 1, chance: 100 }],
     drops: [
       { name: '신화 특수 인챈트 캡슐', min: 1, max: 1, chance: 30 },
@@ -70,7 +72,7 @@ const BOX_DATA = {
   },
   mythic: {
     name: '신화 상자',
-    video: '/islandbox/mythic_box.mp4',
+    video: `${STORAGE_BASE_URL}/islandbox/mythic_box.mp4`,
     slotWeights: [{ slots: 1, chance: 100 }],
     drops: [
       { name: '스킬 프리즘', min: 3, max: 10, chance: 40 },
@@ -252,7 +254,7 @@ export default function IslandBoxSimulator() {
               <div className="flex flex-wrap justify-center gap-6">
                 {results.map((item, idx) => (
                   <div key={idx} className="bg-white/10 border border-white/20 p-4 rounded-xl flex flex-col items-center justify-center min-w-[120px]">
-                    <img src={ITEM_IMAGES[item.name] || "/unknown.png"} alt={item.name} className="w-16 h-16 mb-3 object-contain" />
+                    <img src={ITEM_IMAGES[item.name] || `${STORAGE_BASE_URL}/unknown.png`} alt={item.name} className="w-16 h-16 mb-3 object-contain" />
                     <p className="text-white font-semibold text-sm text-center">{item.name}</p>
                     <p className="text-blue-400 font-bold text-base mt-1">{item.count}개</p>
                   </div>
@@ -274,14 +276,12 @@ export default function IslandBoxSimulator() {
               </button>
             </div>
             <div className="p-5 overflow-y-auto custom-scrollbar">
-              
               <div className="mb-4 p-3.5 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs text-yellow-100/90 leading-relaxed">
                 <span className="font-bold text-yellow-400">※ 확률 안내:</span><br/>
                 공식 위키에 누락된 정보인 '개봉 시 등장하는 아이템 종류 수(1~3종)'의 확률 가중치와, 
                 '1~15개'처럼 수량 범위로 나타나는 아이템의 세부 개별 획득 확률은 일반적인 균등 분포를 임의로 적용하여 구현되었습니다.<br/>
-                따라서 <span className="text-white font-semibold">실제 인게임 상자의 체감 획득 수량 및 확률과 다소 차이가 있을 수 있음</span>을 알려드립니다.
+                 따라서 실제 인게임 상자의 체감 획득 수량 및 확률과 다소 차이가 있을 수 있음을 알려드립니다.
               </div>
-
               <table className="w-full text-left text-sm text-gray-300">
                 <thead className="text-xs text-gray-400 bg-white/5 uppercase">
                   <tr>
