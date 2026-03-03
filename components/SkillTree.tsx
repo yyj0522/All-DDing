@@ -40,6 +40,8 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
             alt={skill.name}
             fill
             unoptimized={true}
+            loading="eager"
+            priority={true}
             className={`object-contain p-1 transition-all duration-300 ${lv > 0 ? 'grayscale-0 opacity-100' : 'grayscale opacity-40 blur-[0.3px]'}`}
             style={{ imageRendering: 'pixelated' }}
           />
