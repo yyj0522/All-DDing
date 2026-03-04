@@ -390,9 +390,9 @@ export const OCEAN_RECIPES = [
 
 export const MINE_FIXED_PRICES = {
   ingots: [
-    { name: '코룸 주괴', zone: '코룸', base: 3675 },
-    { name: '리프톤 주괴', zone: '리프톤', base: 3938 },
-    { name: '세렌트 주괴', zone: '세렌트', base: 4200 },
+    { name: '코룸 주괴', zone: '코룸', base: 3500 },
+    { name: '리프톤 주괴', zone: '리프톤', base: 3750 },
+    { name: '세렌트 주괴', zone: '세렌트', base: 4000 },
   ],
   gems: [
     { name: '그라밋', type: '코룸 보석', zone: '코룸', base: 7000 },

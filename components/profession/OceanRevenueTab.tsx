@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { getCachedPrices } from '@/lib/supabase';
@@ -48,9 +50,15 @@ export default function OceanRevenueTab({ userStats }: Props) {
     const rem3 = Math.floor(qty3 % 6);
 
     const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
-    const rev1 = Math.floor(crafts1 * 5393 * (1 + o16Bonus));
-    const rev2 = Math.floor(crafts2 * 11399 * (1 + o16Bonus));
-    const rev3 = Math.floor(crafts3 * 19328 * (1 + o16Bonus));
+    
+    const unitPrice1 = Math.ceil(5393 * (1 + o16Bonus));
+    const unitPrice2 = Math.ceil(11399 * (1 + o16Bonus));
+    const unitPrice3 = Math.ceil(19328 * (1 + o16Bonus));
+
+    const rev1 = crafts1 * unitPrice1;
+    const rev2 = crafts2 * unitPrice2;
+    const rev3 = crafts3 * unitPrice3;
+
     const totalAlchemyRev = rev1 + rev2 + rev3;
 
     const o14Bonus = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10][userStats.o14Lv] || 0;
@@ -213,15 +221,15 @@ export default function OceanRevenueTab({ userStats }: Props) {
               <p className="text-sm font-bold text-emerald-400 mb-4 flex items-center gap-2">최고 효율 연금품 제작</p>
               <div className="space-y-3 relative z-10">
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2"><img src={getImagePath('리바이던의 깃털')||''} alt="" className="w-5 h-5 object-contain" onError={(e)=>e.currentTarget.style.display='none'}/> <span className="text-xs text-gray-300 font-bold">리바이던의 깃털 (1성)</span></div>
+                  <div className="flex items-center gap-2"><img src={getImagePath('리바이던의 깃털')||''} alt="" className="w-5 h-5 object-contain" /> <span className="text-xs text-gray-300 font-bold">리바이던의 깃털 (1성)</span></div>
                   <span className="text-sm font-black text-white">{calcResults.crafts1.toLocaleString()} 개</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2"><img src={getImagePath('청해룡의 날개')||''} alt="" className="w-5 h-5 object-contain" onError={(e)=>e.currentTarget.style.display='none'}/> <span className="text-xs text-gray-300 font-bold">청해룡의 날개 (2성)</span></div>
+                  <div className="flex items-center gap-2"><img src={getImagePath('청해룡의 날개')||''} alt="" className="w-5 h-5 object-contain" /> <span className="text-xs text-gray-300 font-bold">청해룡의 날개 (2성)</span></div>
                   <span className="text-sm font-black text-white">{calcResults.crafts2.toLocaleString()} 개</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2"><img src={getImagePath('무저의 척추')||''} alt="" className="w-5 h-5 object-contain" onError={(e)=>e.currentTarget.style.display='none'}/> <span className="text-xs text-gray-300 font-bold">무저의 척추 (3성)</span></div>
+                  <div className="flex items-center gap-2"><img src={getImagePath('무저의 척추')||''} alt="" className="w-5 h-5 object-contain" /> <span className="text-xs text-gray-300 font-bold">무저의 척추 (3성)</span></div>
                   <span className="text-sm font-black text-white">{calcResults.crafts3.toLocaleString()} 개</span>
                 </div>
               </div>
@@ -297,7 +305,7 @@ export default function OceanRevenueTab({ userStats }: Props) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {OCEAN_FIXED_PRICES.map((item, idx) => {
-            const buffedPrice = Math.floor(item.base * (1 + o16Bonus));
+            const buffedPrice = Math.ceil(item.base * (1 + o16Bonus));
             const imgPath = getImagePath(item.name);
             return (
               <div key={idx} className="bg-black border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:border-white/20 transition-colors">
