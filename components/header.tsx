@@ -26,6 +26,8 @@ export default function Header() {
     { name: '확률형 아이템', href: '/gacha', color: 'text-fuchsia-400', shadow: 'rgba(217,70,239,0.5)' },
     { name: '아일랜드 지도', href: '/map', color: 'text-emerald-400', shadow: 'rgba(16,185,129,0.5)' },
     { name: '자료실', href: '/resources', color: 'text-cyan-400', shadow: 'rgba(34,211,238,0.5)' },
+    // 패치노트 탭 추가
+    { name: '패치노트', href: '/note', color: 'text-rose-400', shadow: 'rgba(244,63,94,0.5)' },
   ];
 
   const getLinkClass = (path: string, activeColor: string, activeShadow: string) => {
