@@ -30,6 +30,8 @@ export default function AdminPage() {
 
   const [farmingCount, setFarmingCount] = useState<number>(0);
   const [oceanCount, setOceanCount] = useState<number>(0);
+  const [fabricCount, setFabricCount] = useState<number>(0);
+  const [neoforgeCount, setNeoforgeCount] = useState<number>(0);
 
   const currentCookingPeriod = getCookingPeriod();
   const currentCraftingPeriod = getCraftingPeriod();
@@ -83,8 +85,20 @@ export default function AdminPage() {
       .select('*', { count: 'exact', head: true })
       .eq('category', 'ocean');
 
+    const { count: fbCount } = await supabase
+      .from('file_download_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('file_type', 'fabric');
+
+    const { count: neoCount } = await supabase
+      .from('file_download_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('file_type', 'neoforge');
+
     setFarmingCount(farmCount || 0);
     setOceanCount(ocCount || 0);
+    setFabricCount(fbCount || 0);
+    setNeoforgeCount(neoCount || 0);
   };
 
   const handlePriceChange = (name: string, value: string) => {
@@ -426,7 +440,9 @@ export default function AdminPage() {
           <div className="animate-fade-in-up max-w-5xl mx-auto pb-32">
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
               <h2 className="text-xl font-bold text-white border-l-4 border-yellow-500 pl-3 mb-8">기능 사용 통계 현황</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <h3 className="text-sm text-gray-400 font-bold mb-4 ml-1">이미지 저장 통계</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                 <div className="bg-[#111] p-8 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center group hover:border-green-500/50 transition-all duration-300">
                   <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -449,6 +465,32 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
+
+              <h3 className="text-sm text-gray-400 font-bold mb-4 ml-1">타이머 모드 다운로드 통계</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-[#111] p-8 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center group hover:border-rose-500/50 transition-all duration-300">
+                  <div className="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  </div>
+                  <p className="text-gray-400 text-sm font-bold mb-2">Fabric 버전 다운로드</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl font-black text-white tracking-tighter">{fabricCount.toLocaleString()}</span>
+                    <span className="text-rose-500 font-bold">회</span>
+                  </div>
+                </div>
+
+                <div className="bg-[#111] p-8 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 transition-all duration-300">
+                  <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  </div>
+                  <p className="text-gray-400 text-sm font-bold mb-2">NeoForge 버전 다운로드</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl font-black text-white tracking-tighter">{neoforgeCount.toLocaleString()}</span>
+                    <span className="text-emerald-500 font-bold">회</span>
+                  </div>
+                </div>
+              </div>
+              
             </div>
           </div>
         )}

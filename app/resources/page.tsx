@@ -3,9 +3,25 @@
 import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import { supabase } from '@/lib/supabase';
 
 export default function ResourcesPage() {
   const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+
+  const handleDownload = async (fileType: string, fileUrl: string, fileName: string) => {
+    try {
+      await supabase.from('file_download_logs').insert([{ file_type: fileType }]);
+    } catch (error) {
+      console.error(error);
+    }
+    
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-cyan-500/30 relative flex flex-col">
@@ -47,22 +63,20 @@ export default function ResourcesPage() {
           </div>
           
           <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
-            <a 
-              href={`${STORAGE_BASE_URL}/files/Timer_mod.jar`} 
-              download="Timer_mod.jar" 
+            <button 
+              onClick={() => handleDownload('fabric', `${STORAGE_BASE_URL}/files/Timer_mod.jar`, 'Timer_mod.jar')}
               className="w-full sm:w-auto bg-white/5 hover:bg-cyan-600 text-white font-bold tracking-widest px-6 py-3.5 rounded-xl transition-all duration-300 border border-white/10 flex justify-center items-center gap-2 whitespace-nowrap group"
             >
               <svg className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               Fabric 버전
-            </a>
-            <a 
-              href={`${STORAGE_BASE_URL}/files/timermod-1.0.0.jar`} 
-              download="timermod-1.0.0.jar" 
+            </button>
+            <button 
+              onClick={() => handleDownload('neoforge', `${STORAGE_BASE_URL}/files/timermod-1.0.0.jar`, 'timermod-1.0.0.jar')}
               className="w-full sm:w-auto bg-white/5 hover:bg-emerald-600 text-white font-bold tracking-widest px-6 py-3.5 rounded-xl transition-all duration-300 border border-white/10 flex justify-center items-center gap-2 whitespace-nowrap group"
             >
               <svg className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               NeoForge 버전
-            </a>
+            </button>
           </div>
         </div>
 
