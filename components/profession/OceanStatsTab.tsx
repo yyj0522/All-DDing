@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { getCachedPrices } from '@/lib/supabase';
+import { getCachedPrices, supabase } from '@/lib/supabase';
 import { getImagePath, CRAFT_MAX_PRICES, getCraftingPeriod } from '@/lib/professionData';
 import { toPng } from 'html-to-image';
 
@@ -70,6 +70,9 @@ export default function OceanStatsTab() {
       link.download = `올띵_해양공예품시세_${latestPeriod}.png`;
       link.href = dataUrl;
       link.click();
+
+      await supabase.from('image_download_logs').insert([{ category: 'ocean' }]);
+
     } catch (error) {
       console.error(error);
     }

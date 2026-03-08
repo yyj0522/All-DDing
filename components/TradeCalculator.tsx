@@ -65,7 +65,6 @@ export default function TradeCalculator() {
         </div>
       </div>
 
-      {/* 정산 확인 메시지 */}
       {numPrice > 0 && (
         <div className="text-center text-[11px] text-gray-400 font-bold bg-white/5 py-2.5 rounded-lg border border-white/5">
           <span className="text-white">{remittanceAmount.toLocaleString()}G</span> 송금 시, 수수료 포함<br/>총 <span className="text-rose-400">{(remittanceAmount + feeAmount).toLocaleString()}G</span>가 인벤토리에서 빠져나갑니다.<br/>

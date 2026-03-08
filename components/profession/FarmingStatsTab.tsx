@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { getCachedPrices } from '@/lib/supabase';
+import { getCachedPrices, supabase } from '@/lib/supabase';
 import { FOOD_NAMES, getImagePath, FOOD_MAX_PRICES } from '@/lib/professionData';
 import { toPng } from 'html-to-image';
 
@@ -66,6 +66,9 @@ export default function FarmingStatsTab() {
       link.download = `올띵_요리시세_${latestPeriod}.png`;
       link.href = dataUrl;
       link.click();
+
+      await supabase.from('image_download_logs').insert([{ category: 'farming' }]);
+
     } catch (error) {
       console.error(error);
     }
