@@ -35,65 +35,110 @@ export default function WelcomePopup() {
 
   return (
     <div className="fixed top-20 left-4 md:top-24 md:left-8 z-[999] animate-fade-in pointer-events-auto">
-      <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-[90vw] sm:w-[450px] shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden relative">
+      <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-[90vw] md:w-[850px] shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col relative">
         
-        <div className="bg-gradient-to-r from-fuchsia-600/10 via-fuchsia-500/5 to-transparent border-b border-white/5 px-6 py-5 relative z-10">
-          <h2 className="text-lg font-black text-white tracking-tight">
-            올띵(All-Dding)에 오신 것을 환영합니다!
-          </h2>
-        </div>
-        
-        <div className="p-6 space-y-5">
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-            <p className="text-red-400 text-sm font-bold leading-relaxed text-center">
-              본 사이트는 띵타이쿤 유저가 개인적으로 제작한 <br/>
-              <span className="text-red-300 underline underline-offset-4 decoration-red-500/50">비공식 유저 웹사이트</span>이며, 공식 서비스가 아닙니다.
-            </p>
-          </div>
-
-          <ul className="space-y-3">
-            <li className="flex gap-4 items-start bg-rose-500/5 rounded-xl p-4 border border-rose-500/20">
-              <div className="bg-rose-500/20 text-rose-400 p-2 rounded-lg shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-200 mb-1">정보의 최신성 보장 불가 안내</p>
-                <p className="text-[11px] text-gray-400 leading-relaxed">
-                  본 사이트에서 제공하는 모든 데이터와 텍스트는 <span className="font-bold text-gray-300">최신 정보가 아닐 수 있습니다.</span> 또한 사이트 내 모든 게임 리소스(이미지 등)의 출처와 저작권은 전적으로 <span className="font-bold text-gray-300">'띵타이쿤 온라인'</span>에 있습니다.
+        <div className="flex flex-col md:flex-row w-full relative z-10">
+          
+          <div className="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-white/5">
+            <div className="bg-gradient-to-r from-fuchsia-600/10 via-fuchsia-500/5 to-transparent border-b border-white/5 px-6 py-5">
+              <h2 className="text-lg font-black text-white tracking-tight">
+                올띵(All-Dding)에 오신 것을 환영합니다!
+              </h2>
+            </div>
+            
+            <div className="p-6 space-y-5">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                <p className="text-red-400 text-sm font-bold leading-relaxed text-center">
+                  본 사이트는 띵타이쿤 유저가 개인적으로 제작한 <br/>
+                  <span className="text-red-300 underline underline-offset-4 decoration-red-500/50">비공식 유저 웹사이트</span>이며, 공식 서비스가 아닙니다.
                 </p>
               </div>
-            </li>
 
-            <li className="flex gap-4 items-start bg-white/5 rounded-xl p-4 border border-white/5">
-              <div className="bg-fuchsia-500/20 text-fuchsia-400 p-2 rounded-lg shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 001.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-200 mb-1">우측 상단 개인설정 필수</p>
-                <p className="text-[11px] text-gray-400 leading-relaxed">자신의 인게임 스탯과 능력을 설정해야 정확한 시세 및 수익 계산이 이루어집니다.</p>
-              </div>
-            </li>
-            
-            <li className="flex gap-4 items-start bg-white/5 rounded-xl p-4 border border-white/5">
-              <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-200 mb-1">PC 접속 강력 권장</p>
-                <p className="text-[11px] text-gray-400 leading-relaxed">수많은 데이터 표와 시뮬레이터가 포함되어 있어, 모바일보다 PC 환경에 최적화되어 있습니다.</p>
-              </div>
-            </li>
+              <ul className="space-y-3">
+                <li className="flex gap-4 items-start bg-rose-500/5 rounded-xl p-4 border border-rose-500/20">
+                  <div className="bg-rose-500/20 text-rose-400 p-2 rounded-lg shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-200 mb-1">정보의 최신성 보장 불가 안내</p>
+                    <p className="text-[11px] text-gray-400 leading-relaxed">
+                      본 사이트에서 제공하는 모든 데이터와 텍스트는 <span className="font-bold text-gray-300">최신 정보가 아닐 수 있습니다.</span> 또한 사이트 내 모든 게임 리소스(이미지 등)의 출처와 저작권은 전적으로 <span className="font-bold text-gray-300">'띵타이쿤 온라인'</span>에 있습니다.
+                    </p>
+                  </div>
+                </li>
 
-            <li className="flex gap-4 items-start bg-white/5 rounded-xl p-4 border border-white/5">
-              <div className="bg-emerald-500/20 text-emerald-400 p-2 rounded-lg shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                <li className="flex gap-4 items-start bg-white/5 rounded-xl p-4 border border-white/5">
+                  <div className="bg-fuchsia-500/20 text-fuchsia-400 p-2 rounded-lg shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-200 mb-1">우측 상단 개인설정 필수</p>
+                    <p className="text-[11px] text-gray-400 leading-relaxed">자신의 인게임 스탯과 능력을 설정해야 정확한 시세 및 수익 계산이 이루어집니다.</p>
+                  </div>
+                </li>
+                
+                <li className="flex gap-4 items-start bg-white/5 rounded-xl p-4 border border-white/5">
+                  <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-200 mb-1">PC 접속 강력 권장</p>
+                    <p className="text-[11px] text-gray-400 leading-relaxed">수많은 데이터 표와 시뮬레이터가 포함되어 있어, 모바일보다 PC 환경에 최적화되어 있습니다.</p>
+                  </div>
+                </li>
+
+                <li className="flex gap-4 items-start bg-white/5 rounded-xl p-4 border border-white/5">
+                  <div className="bg-emerald-500/20 text-emerald-400 p-2 rounded-lg shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-200 mb-1">데이터 부족 및 제보 환영</p>
+                    <p className="text-[11px] text-gray-400 leading-relaxed">개인이 제작하다보니 일부 전문가/콘텐츠의 경우 아직 데이터나 이해도가 부족할 수 있습니다. 우측 하단 <span className="text-gray-300 font-bold">[문의/오류 제보]</span>를 통해 의견을 남겨주시면 반영하겠습니다!</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col bg-amber-500/5">
+            <div className="bg-gradient-to-r from-amber-600/20 via-amber-500/10 to-transparent border-b border-white/5 px-6 py-5 flex items-center gap-2">
+              <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <h2 className="text-lg font-black text-amber-400 tracking-tight">
+                시스템 점검 및 업데이트 안내
+              </h2>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="space-y-4">
+                <p className="text-gray-200 text-sm leading-relaxed">
+                  현재 원활한 서비스 제공을 위한 <strong className="text-white">시스템 점검 및 DB 서버 이관 작업</strong>이 진행 중입니다.
+                </p>
+                <div className="bg-black/40 border border-amber-500/20 rounded-xl p-4">
+                  <ul className="text-sm text-gray-400 space-y-2 list-disc list-inside ml-1">
+                    <li><strong className="text-amber-300">요리 및 공예품 시세 최신화 일시 지연</strong></li>
+                    <li>일부 시세 통계 데이터 표시 오차 가능성</li>
+                  </ul>
+                </div>
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  불편하시겠지만 <strong className="text-amber-400">2026년 3월 16일(월)</strong>까지 표시되는 데이터에 일부 오차가 있을 수 있으니 서비스 이용에 참고해 주시기 바랍니다.
+                </p>
               </div>
-              <div>
-                <p className="text-sm font-bold text-gray-200 mb-1">데이터 부족 및 제보 환영</p>
-                <p className="text-[11px] text-gray-400 leading-relaxed">개인이 제작하다보니 일부 전문가/콘텐츠의 경우 아직 데이터나 이해도가 부족할 수 있습니다. 우측 하단 <span className="text-gray-300 font-bold">[문의/오류 제보]</span>를 통해 의견을 남겨주시면 반영하겠습니다!</p>
+              
+              <div className="h-px w-full bg-white/5"></div>
+              
+              <div className="flex gap-4 items-start">
+                <div className="bg-emerald-500/20 text-emerald-400 p-2 rounded-lg shrink-0 mt-0.5">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white mb-1">3월 16일 정상화 및 업데이트</p>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    그동안 유저분들께서 제보해주신 소중한 오류와 건의사항을 종합하였습니다. 3월 16일 데이터 정상화와 함께 더욱 개선된 기능으로 찾아뵙겠습니다!
+                  </p>
+                </div>
               </div>
-            </li>
-          </ul>
+            </div>
+          </div>
+
         </div>
 
         <div className="bg-[#050505] border-t border-white/5 px-6 py-4 flex items-center justify-between relative z-10">
@@ -116,7 +161,7 @@ export default function WelcomePopup() {
           
           <button 
             onClick={handleClose}
-            className="bg-white/10 hover:bg-white/20 text-white text-sm font-bold px-6 py-2.5 rounded-lg transition-all border border-white/10 hover:border-white/20"
+            className="bg-white/10 hover:bg-white/20 text-white text-sm font-bold px-8 py-2.5 rounded-lg transition-all border border-white/10 hover:border-white/20"
           >
             닫기
           </button>
