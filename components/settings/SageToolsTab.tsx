@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels, handleToolLevelChange, resetTools, saveAll, diffToolCost, getToolImageName }: Props) {
-  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+  const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
   return (
     <div className="flex flex-col xl:flex-row gap-8 w-full justify-center max-w-7xl mx-auto animate-fade-in-up">

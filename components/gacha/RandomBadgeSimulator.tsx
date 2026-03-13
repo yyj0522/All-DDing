@@ -13,7 +13,7 @@ interface Reward {
   effect: string;
 }
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 const BADGE_REWARDS: Reward[] = [
   { id: 'badge42', name: '거인의 해골 획득권', prob: 0.625, image: `${STORAGE_BASE_URL}/badge/random_badge42.png`, amount: 1, grade: 'mythic', effect: '거인1' },

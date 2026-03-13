@@ -12,7 +12,7 @@ const SEEDS = ["토마토 씨앗", "양파 씨앗", "마늘 씨앗"];
 const VARIABLE_ITEMS = ["정제된 광석", "단단한 주괴", "스태미나 드링크 I", "맹수의 발톱"];
 
 export default function PriceSheetTab({ prices, handlePriceChange, saveAll }: Props) {
-  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+  const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
   return (
     <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl animate-fade-in-up max-w-7xl mx-auto relative">

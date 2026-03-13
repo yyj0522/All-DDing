@@ -15,7 +15,7 @@ export interface Island {
   rewards: SailingReward[];
 }
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 export const ISLANDS: Island[] = [
   {

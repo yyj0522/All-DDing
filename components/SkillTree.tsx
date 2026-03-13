@@ -10,7 +10,7 @@ interface SkillTreeProps {
 }
 
 export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeProps) {
-  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+  const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
   const SkillBox = ({ id }: { id: string }) => {
     const skill = SKILL_DATA[profTab]?.[id];

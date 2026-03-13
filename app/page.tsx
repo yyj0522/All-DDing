@@ -10,7 +10,7 @@ import { ITEM_IMAGES } from '@/lib/skillData';
 import { supabase, getCachedPrices } from '@/lib/supabase';
 import { getCookingPeriod } from '@/lib/professionData';
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 const RECIPES = [
   { id: "c01", name: "토마토 스파게티", maxPrice: 864, isHard: false, ingredients: { "토마토 베이스": 1, "호박 묶음": 1 } },

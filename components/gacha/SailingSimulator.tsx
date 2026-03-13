@@ -20,7 +20,7 @@ export default function SailingSimulator() {
   const [testResults, setTestResults] = useState<Record<string, number>>({});
   const [testCount, setTestCount] = useState(0);
 
-  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+  const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
   const spawnIsland = (island: Island) => {
     if (activeIslands.length >= 5) {

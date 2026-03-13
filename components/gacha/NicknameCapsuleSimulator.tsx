@@ -12,7 +12,7 @@ interface Reward {
   grade: string;
 }
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 const NICKNAME_REWARDS: Reward[] = [
   { id: 'nick_ticket', name: '한글 닉네임 변경권', prob: 3, image: `${STORAGE_BASE_URL}/capsule2/nickname_change_scroll.png`, amount: 1, grade: 'mythic' },

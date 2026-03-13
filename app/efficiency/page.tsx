@@ -8,7 +8,7 @@ import TradeCalculator from '@/components/TradeCalculator';
 import { ITEM_IMAGES } from '@/lib/skillData';
 import { getCachedPrices } from '@/lib/supabase';
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 const SKILL_BONUS = [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.1, 0.15, 0.3, 0.5];
 const F8_EXPECTED_EXTRA = [0, 0.01, 0.02, 0.03, 0.04, 0.10, 0.14, 0.30];

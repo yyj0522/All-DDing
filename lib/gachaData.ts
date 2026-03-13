@@ -7,7 +7,7 @@ export interface Reward {
   grade: string;
 }
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 export const ENCHANT_BOXES = [
   { id: 'general_g', name: '그린 일반 인챈트 캡슐', image: `${STORAGE_BASE_URL}/f1/general_g_box.png`, active: true },

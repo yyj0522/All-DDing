@@ -10,7 +10,7 @@ interface EnhanceHistory {
   cost: { coin: number; ruby: number; low: number; mid: number; high: number };
 }
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 const SpriteEffect = ({ type, onComplete }: { type: 'hitting' | 'success' | 'fail', onComplete?: () => void }) => {
   const [frame, setFrame] = useState(0);

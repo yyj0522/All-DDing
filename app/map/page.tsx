@@ -43,7 +43,7 @@ const CAT_COLORS: Record<string, { bg: string, text: string, ring: string }> = {
   '하얀석상': { bg: 'bg-gray-100', text: 'text-gray-100', ring: 'ring-gray-100/30' },
 };
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 const ZOOM_LEVEL = 2.5;
 
 const getMapPosition = (mcX: number, mcZ: number) => {

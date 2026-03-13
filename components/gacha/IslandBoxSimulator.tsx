@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 const ITEM_IMAGES: Record<string, string> = {
   '토마토 씨앗': `${STORAGE_BASE_URL}/ingredients/tomato_seed.png`,

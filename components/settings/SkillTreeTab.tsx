@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelChange, resetTree, saveAll, diffCost, activeEffects }: Props) {
-  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+  const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in-up w-full max-w-[1600px] mx-auto px-1 sm:px-0">

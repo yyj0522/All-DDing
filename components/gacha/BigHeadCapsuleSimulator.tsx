@@ -12,7 +12,7 @@ interface Reward {
   grade: string;
 }
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 const BIGHEAD_REWARDS: Reward[] = [
   { id: 'big_head', name: '대두 치장 획득권', prob: 1, image: `${STORAGE_BASE_URL}/capsule2/feather_pen.png`, amount: 1, grade: 'mythic' },

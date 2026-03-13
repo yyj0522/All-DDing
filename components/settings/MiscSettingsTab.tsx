@@ -17,7 +17,7 @@ interface Props {
 
 export default function MiscSettingsTab({ townRank, setTownRank, drinkRoutine, addDrinkToRoutine, removeDrinkFromRoutine, saveAll, currentTownEmoji, currentMaxStamina, dailyDrinkRecovery, totalDailyStamina, TOWN_RANKS, STAMINA_DRINKS }: Props) {
   
-  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+  const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
   const getTownImage = (rank: string) => {
     switch (rank) {

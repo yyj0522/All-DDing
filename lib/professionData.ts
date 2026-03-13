@@ -53,7 +53,7 @@ export const CRAFT_MAX_PRICES: Record<string, number> = {
 };
 
 export const getImagePath = (name: string) => {
-  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+  const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
   
   const map: Record<string, string> = {
     '토마토 스파게티': '/foods/tomato_spaghetti.png',

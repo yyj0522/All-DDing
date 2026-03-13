@@ -10,7 +10,7 @@ interface Reward {
   image: string;
 }
 
-const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
 const DINO_REWARDS: Reward[] = [
   { id: 'amargasaurus', name: '아마르가사우루스 입양권', prob: 5.2631, image: `${STORAGE_BASE_URL}/dino/amargasaurus_baby.png` },

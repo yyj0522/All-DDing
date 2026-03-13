@@ -15,7 +15,7 @@ interface Props {
 export default function MiningStatsTab({ userStats, targetZone, setTargetZone, results }: Props) {
   const { expectedIngots, expectedGems, expectedRelics, expectedRelicPoints, ingotRevenue, gemRevenue, totalRevenue } = results;
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const STORAGE_BASE_URL = "https://kwefkeqvltaiixylcewm.supabase.co/storage/v1/object/public/alldding-assets";
+  const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
   return (
     <div className="flex flex-col gap-8 w-full relative">
