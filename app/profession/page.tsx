@@ -6,7 +6,7 @@ import Footer from '@/components/footer';
 import { Profession } from '@/lib/skillData';
 
 import { 
-  TOWN_RANKS, STAMINA_DRINKS, MINE_RECIPES, FARMING_RECIPES, OCEAN_RECIPES, MINE_FIXED_PRICES,
+  TOWN_RANKS, STAMINA_DRINKS, MINE_RECIPES, FARMING_RECIPES, OCEAN_RECIPES, HUNT_RECIPES, MINE_FIXED_PRICES,
   PICKAXE_BASE_DROPS, PICKAXE_RELIC_CHANCES, LUCKY_HIT_EFFECTS, 
   GEM_DROP_EFFECTS, FLAMING_PICKAXE_EFFECTS, PRICE_BUFF_EFFECTS, AVG_RELIC_POINTS 
 } from '@/lib/professionData';
@@ -16,6 +16,7 @@ import MiningStatsTab from '@/components/profession/MiningStatsTab';
 import FarmingStatsTab from '@/components/profession/FarmingStatsTab';
 import OceanStatsTab from '@/components/profession/OceanStatsTab';
 import OceanRevenueTab from '@/components/profession/OceanRevenueTab';
+import BaristaTab from '@/components/profession/BaristaTab';
 
 const TABS = [
   { id: '재배', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/50' },
@@ -130,12 +131,10 @@ export default function ProfessionPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-amber-500/30 relative flex flex-col overflow-x-hidden">
-      {/* 배경 글로우 효과 */}
       <div className="absolute top-[-20%] left-[-10%] w-full h-[50%] bg-stone-600/5 rounded-full blur-[120px] pointer-events-none"></div>
       <Header />
 
       <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 pt-28 md:pt-40 pb-20 flex flex-col items-center">
-        {/* 헤더 섹션 */}
         <div className="mb-8 text-center w-full px-2">
           <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">전문가 기능</h1>
           <p className="text-gray-400 text-xs md:text-base tracking-wide max-w-xl mx-auto break-keep opacity-80">
@@ -143,7 +142,6 @@ export default function ProfessionPage() {
           </p>
         </div>
 
-        {/* 1. 전문가 탭: 모바일 중앙 정렬 및 균등 배분 (개선 포인트) */}
         <div className="w-full max-w-2xl mb-8 px-2">
           <div className="grid grid-cols-4 gap-1.5 md:gap-4 bg-white/5 p-1.5 rounded-[20px] md:rounded-[24px] border border-white/5 shadow-2xl">
             {TABS.map((tab) => (
@@ -151,7 +149,7 @@ export default function ProfessionPage() {
                 key={tab.id}
                 onClick={() => { 
                   setActiveTab(tab.id as Profession); 
-                  setSubTab(tab.id === '사냥' ? '시세수익' : '조합법'); 
+                  setSubTab('조합법'); 
                 }}
                 className={`flex items-center justify-center py-3 md:py-4 rounded-[14px] md:rounded-[18px] font-bold transition-all text-[11px] sm:text-sm md:text-base shadow-sm ${
                   activeTab === tab.id 
@@ -165,7 +163,6 @@ export default function ProfessionPage() {
           </div>
         </div>
 
-        {/* 2. 서브 내비게이션: 모바일 가독성 개선 */}
         <div className="flex flex-wrap justify-center gap-4 sm:gap-8 w-full mb-10 border-b border-white/10 px-2">
           <button 
             onClick={() => setSubTab('조합법')} 
@@ -188,14 +185,24 @@ export default function ProfessionPage() {
           )}
 
           {activeTab === '재배' && (
-            <button 
-              onClick={() => setSubTab('변동시세')} 
-              className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              3일 주기 시세
-            </button>
+            <>
+              <button 
+                onClick={() => setSubTab('변동시세')} 
+                className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
+                  subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                3일 주기 시세
+              </button>
+              <button 
+                onClick={() => setSubTab('바리스타')} 
+                className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
+                  subTab === '바리스타' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                바리스타
+              </button>
+            </>
           )}
 
           {activeTab === '해양' && (
@@ -210,7 +217,6 @@ export default function ProfessionPage() {
           )}
         </div>
 
-        {/* 컨텐츠 렌더링 */}
         <div className="w-full animate-fade-in px-1 md:px-0">
           {activeTab === '채광' && subTab === '조합법' && <RecipeTab recipes={MINE_RECIPES} />}
           {activeTab === '채광' && subTab === '시세수익' && (
@@ -224,21 +230,23 @@ export default function ProfessionPage() {
           
           {activeTab === '재배' && subTab === '조합법' && <RecipeTab recipes={FARMING_RECIPES} />}
           {activeTab === '재배' && subTab === '변동시세' && <FarmingStatsTab />}
+          {activeTab === '재배' && subTab === '바리스타' && <BaristaTab />}
 
           {activeTab === '해양' && subTab === '조합법' && <RecipeTab recipes={OCEAN_RECIPES} />}
           {activeTab === '해양' && subTab === '시세수익' && <OceanRevenueTab userStats={userStats} />}
           {activeTab === '해양' && subTab === '변동시세' && <OceanStatsTab />}
 
-          {activeTab === '사냥' && (
+          {activeTab === '사냥' && subTab === '조합법' && <RecipeTab recipes={HUNT_RECIPES} />}
+          {activeTab === '사냥' && subTab === '시세수익' && (
             <div className="w-full bg-rose-950/20 border border-rose-500/20 rounded-[2.5rem] p-10 md:p-16 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden backdrop-blur-sm">
               <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-rose-500/10 blur-3xl rounded-full"></div>
               <svg className="w-16 h-16 text-rose-500 mb-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <h2 className="text-2xl md:text-3xl font-black text-white mb-4">콘텐츠 안정화 중</h2>
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-4">데이터 수집 중</h2>
               <p className="text-rose-200/60 text-[13px] md:text-base max-w-md leading-relaxed break-keep">
-                사냥 전문가 콘텐츠는 현재 잦은 밸런스 패치로 인해 변경점이 많은 상황입니다. <br className="hidden md:block"/>
-                서버가 안정된 이후 업데이트될 예정입니다.
+                사냥 전문가의 일일 수익을 정확하게 예측하기 위해 데이터를 수집하고 있습니다. <br className="hidden md:block"/>
+                충분한 데이터가 모이는 대로 업데이트될 예정입니다.
               </p>
             </div>
           )}

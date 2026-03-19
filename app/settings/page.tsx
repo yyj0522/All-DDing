@@ -20,9 +20,9 @@ const getToolImageName = (toolId: string, level: number) => {
 };
 
 const TOWN_RANKS = [
-  { name: '숲 (1~3위)', value: '숲', maxStamina: 3300, emoji: '🌲' },
-  { name: '열매 (상위 5%)', value: '열매', maxStamina: 3200, emoji: '🍎' },
-  { name: '꽃 (상위 30%)', value: '꽃', maxStamina: 3100, emoji: '🌸' },
+  { name: '숲 (1~3위)', value: '숲', maxStamina: 4000, emoji: '🌲' },
+  { name: '열매 (상위 5%)', value: '열매', maxStamina: 3500, emoji: '🍎' },
+  { name: '꽃 (상위 30%)', value: '꽃', maxStamina: 3300, emoji: '🌸' },
   { name: '새싹 (상위 70%)', value: '새싹', maxStamina: 3000, emoji: '🌱' },
   { name: '씨앗 (순위 밖)', value: '씨앗', maxStamina: 3000, emoji: '🫘' },
 ];

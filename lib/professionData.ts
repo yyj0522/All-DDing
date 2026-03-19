@@ -1,7 +1,7 @@
 export const TOWN_RANKS = [
-  { name: '숲 (1~3위)', value: '숲', maxStamina: 3300 },
-  { name: '열매 (상위 5%)', value: '열매', maxStamina: 3200 },
-  { name: '꽃 (상위 30%)', value: '꽃', maxStamina: 3100 },
+  { name: '숲 (1~3위)', value: '숲', maxStamina: 4000 },
+  { name: '열매 (상위 5%)', value: '열매', maxStamina: 3500 },
+  { name: '꽃 (상위 30%)', value: '꽃', maxStamina: 3300 },
   { name: '새싹 (상위 70%)', value: '새싹', maxStamina: 3000 },
   { name: '씨앗 (순위 밖)', value: '씨앗', maxStamina: 3000 },
 ];
@@ -275,7 +275,43 @@ export const getImagePath = (name: string) => {
     '도미 회': '/f1/Sea bream.png',
     '청어 회': '/f1/herring.png',
     '금붕어 회': '/f1/Goldfish.png',
-    '농어 회': '/f1/Sea bass.png'
+    '농어 회': '/f1/Sea bass.png',
+    
+    // 사냥 전문가 아이템 추가
+    '수상한 각인석': '/h_item/suspect_stone.png',
+    '번영의 영혼 계약서': '/h_item/prosperity_contract.png',
+    '파쇄의 영혼 계약서': '/h_item/shatter_contract.png',
+    '만조의 영혼 계약서': '/h_item/high_tide_contract.png',
+    '정복의 영혼 계약서': '/h_item/conquest_contract.png',
+    '사슴의 영혼': '/h_item/deer_soul.png',
+    '미어캣의 영혼': '/h_item/meerkat_soul.png',
+    '기린의 영혼': '/h_item/giraffe_soul.png',
+    '코끼리의 영혼': '/h_item/elephant_soul.png',
+    '하마의 영혼': '/h_item/hippo_soul.png',
+    '플라밍고의 영혼': '/h_item/flamingo_soul.png',
+    '칠면조의 영혼': '/h_item/turkey_soul.png',
+    '곰의 영혼': '/h_item/bear_soul.png',
+    '영혼 불꽃': '/h_item/soul_flame.png',
+    '좀비의 심장': '/h_item/zombie_heart.png',
+    '스켈레톤의 심장': '/h_item/skeleton_heart.png',
+    '거미의 심장': '/h_item/spider_heart.png',
+    '크리퍼의 심장': '/h_item/creeper_heart.png',
+    '사슴의 뿔': '/h_item/deer_horn.png',
+    '미어캣의 꼬리': '/h_item/meerkat_tail.png',
+    '기린의 가죽': '/h_item/giraffe_leather.png',
+    '코끼리의 상아': '/h_item/elephant_ivory.png',
+    '하마의 송곳니': '/h_item/hippo_tusk.png',
+    '플라밍고의 부리': '/h_item/flamingo_beak.png',
+    '칠면조의 깃털': '/h_item/turkey_feather.png',
+    '곰의 발바닥': '/h_item/bear_paw.png',
+    '수상한 각인석 조각': '/h_item/suspect_stone_piece.png', 
+    '거미줄': '/h_item/cobweb.png',
+    '실': '/h_item/String.png',
+    '육식 동물 덫' : '/h_item/trap.png',
+    '에메랄드': '/h_item/Emerald.png',
+    '사과': '/h_item/Apple.png',
+    '철사 덫 갈고리': '/h_item/tripwire_hook.png',
+    '부싯돌': '/h_item/Flint.png'
   };
 
   if (map[name]) return `${STORAGE_BASE_URL}${map[name]}`;
@@ -386,6 +422,25 @@ export const OCEAN_RECIPES = [
   { name: '분홍 헤어핀', facility: '해양 제작 시설', time: '10분', ingredients: ['깨진 조개껍데기 4개', '분홍빛 진주', '합성수지 재활용품 3개', '섬유 재활용품 3개', '대나무 64개', '분홍 꽃잎 16개'], type: '제작' },
   { name: '자개 부채', facility: '해양 제작 시설', time: '10분', ingredients: ['깨진 조개껍데기 5개', '보라빛 진주', '합금 재활용품 5개', '합성수지 재활용품 5개', '막대기 64개', '자수정 조각 16개'], type: '제작' },
   { name: '흑진주 시계', facility: '해양 제작 시설', time: '15분', ingredients: ['깨진 조개껍데기 6개', '흑진주', '금속 재활용품 7개', '합금 재활용품 7개', '섬유 재활용품 7개', '흑요석 16개', '시계 8개'], type: '제작' }
+];
+
+export const HUNT_RECIPES = [
+  { name: '수상한 각인석', facility: '강화 제작 시설', time: '25초', ingredients: ['수상한 각인석 조각 5개'], type: '제작' },
+  { name: '번영의 영혼 계약서', facility: '강화 제작 시설', time: '30초', ingredients: ['사슴의 영혼 1개', '미어캣의 영혼 1개'], type: '제작' },
+  { name: '파쇄의 영혼 계약서', facility: '강화 제작 시설', time: '30초', ingredients: ['기린의 영혼 1개', '코끼리의 영혼 1개'], type: '제작' },
+  { name: '만조의 영혼 계약서', facility: '강화 제작 시설', time: '30초', ingredients: ['하마의 영혼 1개', '플라밍고의 영혼 1개'], type: '제작' },
+  { name: '정복의 영혼 계약서', facility: '강화 제작 시설', time: '30초', ingredients: ['칠면조의 영혼 1개', '곰의 영혼 1개'], type: '제작' },
+  { name: '사슴의 영혼', facility: '영혼 가공 시설', time: '15초', ingredients: ['사슴의 뿔 10개', '영혼 불꽃 2개'], type: '가공' },
+  { name: '미어캣의 영혼', facility: '영혼 가공 시설', time: '15초', ingredients: ['미어캣의 꼬리 10개', '영혼 불꽃 2개'], type: '가공' },
+  { name: '기린의 영혼', facility: '영혼 가공 시설', time: '15초', ingredients: ['기린의 가죽 10개', '영혼 불꽃 2개'], type: '가공' },
+  { name: '코끼리의 영혼', facility: '영혼 가공 시설', time: '15초', ingredients: ['코끼리의 상아 10개', '영혼 불꽃 2개'], type: '가공' },
+  { name: '하마의 영혼', facility: '영혼 가공 시설', time: '15초', ingredients: ['하마의 송곳니 10개', '영혼 불꽃 2개'], type: '가공' },
+  { name: '플라밍고의 영혼', facility: '영혼 가공 시설', time: '15초', ingredients: ['플라밍고의 부리 10개', '영혼 불꽃 2개'], type: '가공' },
+  { name: '칠면조의 영혼', facility: '영혼 가공 시설', time: '15초', ingredients: ['칠면조의 깃털 10개', '영혼 불꽃 2개'], type: '가공' },
+  { name: '곰의 영혼', facility: '영혼 가공 시설', time: '15초', ingredients: ['곰의 발바닥 10개', '영혼 불꽃 2개'], type: '가공' },
+  { name: '영혼 불꽃', facility: '영혼 가공 시설', time: '5초', ingredients: ['좀비의 심장 1개', '스켈레톤의 심장 1개', '거미의 심장 1개', '크리퍼의 심장 1개'], type: '가공' },
+  { name: '육식 동물 덫', facility: '도구/무기 제작 시설', time: '60초', ingredients: ['에메랄드 16개', '철사 덫 갈고리 8개', '거미줄 4개', '사과 4개', '부싯돌 4개'], type: '가공' },
+  { name: '거미줄', facility: '대형 제작대', time: '즉시', ingredients: ['실 4개'], type: '제작' }
 ];
 
 export const MINE_FIXED_PRICES = {

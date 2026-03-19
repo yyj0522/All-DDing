@@ -32,11 +32,17 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
       profTab === '해양' ? 'ocean_skill' : 
       'hunt_skill';
 
+    let imageId = id;
+    if (id === 'h14') imageId = 'h6';
+    if (id === 'h15') imageId = 'h14';
+    if (id === 'h16') imageId = 'h15';
+    if (id === 'f22') imageId = 'f15';
+
     return (
       <div className={`inline-block w-40 md:w-44 bg-[#0a0a0a] border-2 rounded-2xl p-3 flex flex-col items-center gap-2 shadow-lg transition-all z-10 ${isUnlocked ? (lv > 0 ? 'border-amber-500 bg-amber-500/5' : 'border-gray-600') : 'border-gray-800 opacity-40'}`}>
         <div className={`relative mx-auto w-10 h-10 rounded-lg border flex items-center justify-center overflow-hidden ${isUnlocked ? 'bg-white/5 border-white/20' : 'bg-black border-gray-700'}`}>
           <Image 
-            src={`${STORAGE_BASE_URL}/${folderName}/${id}_on.png`} 
+            src={`${STORAGE_BASE_URL}/${folderName}/${imageId}_on.png`} 
             alt={skill.name}
             fill
             unoptimized={true}
@@ -48,12 +54,12 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
         </div>
         <div className="text-[11px] md:text-xs font-bold text-white text-center leading-tight h-8 flex items-center justify-center break-keep w-full px-1">{skill.name}</div>
         <div className="flex items-center gap-2 bg-black rounded-xl p-1.5 w-full justify-between border border-white/5 mt-1">
-          <button onClick={() => onLevelChange(id, -1)} disabled={lv === 0} className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-30 bg-white/5 rounded-lg">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
+          <button onClick={() => onLevelChange(id, -1)} disabled={lv === 0} className="relative w-5 h-5 flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-30 bg-white/5 rounded-lg cursor-pointer disabled:cursor-default before:absolute before:-inset-2 before:content-['']">
+            <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
           </button>
-          <span className={`text-[10px] md:text-xs font-black tracking-widest ${lv > 0 ? 'text-amber-400' : 'text-gray-500'}`}>{lv}/{skill.max}</span>
-          <button onClick={() => onLevelChange(id, 1)} disabled={!isUnlocked || lv === skill.max} className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-30 bg-white/5 rounded-lg">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+          <span className={`text-[10px] md:text-xs font-black tracking-widest ${lv > 0 ? 'text-amber-400' : 'text-gray-500'} pointer-events-none`}>{lv}/{skill.max}</span>
+          <button onClick={() => onLevelChange(id, 1)} disabled={!isUnlocked || lv === skill.max} className="relative w-5 h-5 flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-30 bg-white/5 rounded-lg cursor-pointer disabled:cursor-default before:absolute before:-inset-2 before:content-['']">
+            <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
           </button>
         </div>
       </div>
@@ -62,7 +68,7 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
 
   if (profTab === '재배') {
     return (
-      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top">
+      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top [&_li]:!px-[2px] [&_li]:!mx-0">
         <ul>
           <li><SkillBox id="f1" />
             <ul>
@@ -79,7 +85,27 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
               <li><SkillBox id="f3" />
                 <ul>
                   <li><SkillBox id="f11" />
-                    <ul><li><SkillBox id="f12" /><ul><li><SkillBox id="f13" /></li></ul></li></ul>
+                    <ul>
+                      <li><SkillBox id="f12" />
+                        <ul>
+                          <li><SkillBox id="f13" />
+                            <ul>
+                              <li><SkillBox id="f18" />
+                                <ul>
+                                  <li><SkillBox id="f19" />
+                                    <ul>
+                                      <li><SkillBox id="f20" /></li>
+                                      <li><SkillBox id="f21" /></li>
+                                    </ul>
+                                  </li>
+                                </ul>
+                              </li>
+                              <li><SkillBox id="f22" /></li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
                   </li>
                   <li><SkillBox id="f14" />
                     <ul><li><SkillBox id="f15" /><ul><li><SkillBox id="f16" /><ul><li><SkillBox id="f17" /></li></ul></li></ul></li></ul>
@@ -95,7 +121,7 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
 
   if (profTab === '채광') {
     return (
-      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top">
+      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top [&_li]:!px-[2px] [&_li]:!mx-0">
         <ul>
           <li><SkillBox id="m1" />
             <ul>
@@ -139,7 +165,7 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
 
   if (profTab === '해양') {
     return (
-      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top">
+      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top [&_li]:!px-[2px] [&_li]:!mx-0">
         <ul>
           <li><SkillBox id="o1" />
             <ul>
@@ -172,7 +198,7 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
 
   if (profTab === '사냥') {
     return (
-      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top">
+      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top [&_li]:!px-[2px] [&_li]:!mx-0">
         <ul>
           <li><SkillBox id="h1" />
             <ul>
@@ -190,13 +216,42 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
                 <div className="flex flex-col items-center mt-[-2px]">
                   <div className="w-[2px] h-[20px] bg-[#3f3f46] z-0"></div>
                   <SkillBox id="h5" />
+                  <div className="w-[2px] h-[25px] bg-[#3f3f46] z-0"></div>
+                  <SkillBox id="h13" />
                 </div>
               </li>
               <li><SkillBox id="h6" />
-                <ul><li><SkillBox id="h7" /><ul><li><SkillBox id="h8" /></li></ul></li></ul>
+                <ul>
+                  <li><SkillBox id="h7" />
+                    <ul>
+                      <li><SkillBox id="h8" />
+                        <ul className="!pb-0">
+                          <li>
+                            <SkillBox id="h14" />
+                          </li>
+                          <li>
+                            <SkillBox id="h15" />
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
               </li>
               <li><SkillBox id="h9" />
-                <ul><li><SkillBox id="h10" /><ul><li><SkillBox id="h11" /><ul><li><SkillBox id="h12" /></li></ul></li></ul></li></ul>
+                <ul>
+                  <li><SkillBox id="h10" />
+                    <ul>
+                      <li><SkillBox id="h11" />
+                        <ul>
+                          <li><SkillBox id="h12" />
+                            <ul><li><SkillBox id="h16" /></li></ul>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
               </li>
             </ul>
           </li>
