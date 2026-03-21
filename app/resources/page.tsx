@@ -9,18 +9,17 @@ export default function ResourcesPage() {
   const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
   const handleDownload = async (fileType: string, fileUrl: string, fileName: string) => {
-    try {
-      await supabase.from('file_download_logs').insert([{ file_type: fileType }]);
-    } catch (error) {
-      console.error(error);
-    }
-    
     const link = document.createElement('a');
     link.href = fileUrl;
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    const { error } = await supabase.from('file_download_logs').insert([{ file_type: fileType }]);
+    if (error) {
+      console.error(error);
+    }
   };
 
   return (
