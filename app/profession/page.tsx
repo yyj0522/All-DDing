@@ -17,6 +17,7 @@ import FarmingStatsTab from '@/components/profession/FarmingStatsTab';
 import OceanStatsTab from '@/components/profession/OceanStatsTab';
 import OceanRevenueTab from '@/components/profession/OceanRevenueTab';
 import BaristaTab from '@/components/profession/BaristaTab';
+import OceanTradeCalcTab from '@/components/profession/OceanTradeCalcTab';
 
 const TABS = [
   { id: '재배', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/50' },
@@ -206,14 +207,24 @@ export default function ProfessionPage() {
           )}
 
           {activeTab === '해양' && (
-            <button 
-              onClick={() => setSubTab('변동시세')} 
-              className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              공예품 시세
-            </button>
+            <>
+              <button 
+                onClick={() => setSubTab('변동시세')} 
+                className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
+                  subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                공예품 시세
+              </button>
+              <button 
+                onClick={() => setSubTab('거래계산기')} 
+                className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
+                  subTab === '거래계산기' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                거래 계산기
+              </button>
+            </>
           )}
         </div>
 
@@ -235,6 +246,7 @@ export default function ProfessionPage() {
           {activeTab === '해양' && subTab === '조합법' && <RecipeTab recipes={OCEAN_RECIPES} />}
           {activeTab === '해양' && subTab === '시세수익' && <OceanRevenueTab userStats={userStats} />}
           {activeTab === '해양' && subTab === '변동시세' && <OceanStatsTab />}
+          {activeTab === '해양' && subTab === '거래계산기' && <OceanTradeCalcTab userStats={userStats} />}
 
           {activeTab === '사냥' && subTab === '조합법' && <RecipeTab recipes={HUNT_RECIPES} />}
           {activeTab === '사냥' && subTab === '시세수익' && (
