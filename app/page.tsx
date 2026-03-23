@@ -668,7 +668,7 @@ export default function Home() {
                   </div>
                   <div className="text-center sm:text-right lg:text-center xl:text-right flex flex-col items-center sm:items-end lg:items-center xl:items-end shrink-0">
                     <div className={`font-black whitespace-nowrap text-lg md:text-xl ${colors.percentText}`}>{item.currentMarketPrice.toLocaleString()} G</div>
-                    <div className="text-[11px] text-gray-500 font-bold whitespace-nowrap mt-1 bg-white dark:bg-white/5 px-2 py-0.5 rounded border border-gray-200 dark:border-transparent">효율 {item.percentToMax.toFixed(1)}%</div>
+                    <div className="text-[11px] text-gray-500 font-bold whitespace-nowrap mt-1 bg-white dark:bg-white/5 px-2 py-0.5 rounded border border-gray-200 dark:border-transparent">최고가 대비 {item.percentToMax.toFixed(1)}%</div>
                   </div>
                 </div>
               );
