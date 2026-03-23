@@ -92,9 +92,9 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
                             <ul>
                               <li><SkillBox id="f18" />
                                 <ul>
-                                  <li><SkillBox id="f19" />
+                                  <li><SkillBox id="f20" />
                                     <ul>
-                                      <li><SkillBox id="f20" /></li>
+                                      <li><SkillBox id="f19" /></li>
                                       <li><SkillBox id="f21" /></li>
                                     </ul>
                                   </li>
