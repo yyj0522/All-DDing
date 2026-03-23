@@ -2,13 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase'; // Supabase 클라이언트 연결
 
 export default function WelcomePopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [dontShowToday, setDontShowToday] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [isVoting, setIsVoting] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
+    // 투표 참여 여부 확인
+    const voted = localStorage.getItem('hasVotedSaveFeature');
+    if (voted) setHasVoted(true);
+
     const hideUntil = localStorage.getItem('hideWelcomePopup');
     if (hideUntil) {
       const now = new Date().getTime();
@@ -31,11 +38,26 @@ export default function WelcomePopup() {
     setIsOpen(false);
   };
 
+  const handleVote = async (voteType: 'agree' | 'disagree') => {
+    setIsVoting(true);
+    try {
+      // Supabase에 투표 결과 전송 (feature_votes 테이블 필요)
+      await supabase.from('feature_votes').insert([{ vote_type: voteType }]);
+    } catch (error) {
+      console.error('투표 저장 실패:', error);
+    } finally {
+      localStorage.setItem('hasVotedSaveFeature', 'true');
+      setHasVoted(true);
+      setIsVoting(false);
+    }
+  };
+
   if (!isOpen || pathname !== '/') return null;
 
   return (
     <div className="fixed top-20 left-4 md:top-24 md:left-8 z-[999] animate-fade-in pointer-events-auto max-w-[calc(100vw-2rem)] max-h-[calc(100vh-6rem)] flex flex-col transition-colors duration-300">
-      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[760px] lg:w-[840px] shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-full overflow-hidden transition-colors">
+      {/* 팝업 창 넓이를 기존 840px에서 1150px로 우측 확장 */}
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[760px] lg:w-[1150px] shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-full overflow-hidden transition-colors">
         
         <div className="bg-gradient-to-r from-fuchsia-50 dark:from-fuchsia-600/10 via-fuchsia-100 dark:via-fuchsia-500/5 to-transparent border-b border-gray-200 dark:border-white/5 px-6 py-5 shrink-0 transition-colors">
           <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight transition-colors">
@@ -43,8 +65,11 @@ export default function WelcomePopup() {
           </h2>
         </div>
         
-        <div className="flex flex-col md:flex-row overflow-y-auto">
-          <div className="flex-1 p-6 space-y-5 border-b md:border-b-0 md:border-r border-gray-200 dark:border-white/5 transition-colors">
+        {/* lg 사이즈 이상에서 3단(3-column)으로 배치되도록 수정 */}
+        <div className="flex flex-col lg:flex-row overflow-y-auto custom-scrollbar">
+          
+          {/* 첫 번째 단: 기존 공지 */}
+          <div className="flex-1 p-6 space-y-5 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/5 transition-colors">
             <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 transition-colors">
               <p className="text-red-600 dark:text-red-400 text-sm font-bold leading-relaxed text-center break-keep transition-colors">
                 본 사이트는 띵타이쿤 유저가 개인적으로 제작한 <br className="hidden sm:block" />
@@ -60,7 +85,7 @@ export default function WelcomePopup() {
                 <div>
                   <p className="text-sm font-bold text-gray-900 dark:text-gray-200 mb-1 transition-colors">정보의 최신성 보장 불가 안내</p>
                   <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed break-keep transition-colors">
-                    본 사이트에서 제공하는 모든 데이터와 텍스트는 <span className="font-bold text-gray-900 dark:text-gray-300 transition-colors">최신 정보가 아닐 수 있습니다.</span> 또한 사이트 내 모든 게임 리소스(이미지 등)의 출처와 저작권은 전적으로 <span className="font-bold text-gray-900 dark:text-gray-300 transition-colors">'띵타이쿤 온라인'</span>에 있습니다.
+                    본 사이트에서 제공하는 모든 데이터와 텍스트는 <span className="font-bold text-gray-900 dark:text-gray-300 transition-colors">최신 정보가 아닐 수 있습니다.</span> 또한 사이트 내 모든 게임 리소스의 출처와 저작권은 전적으로 <span className="font-bold text-gray-900 dark:text-gray-300 transition-colors">'띵타이쿤 온라인'</span>에 있습니다.
                   </p>
                 </div>
               </li>
@@ -87,7 +112,8 @@ export default function WelcomePopup() {
             </ul>
           </div>
 
-          <div className="flex-1 p-6 space-y-6 bg-gray-50 dark:bg-black/20 transition-colors">
+          {/* 두 번째 단: 기존 업데이트 안내 */}
+          <div className="flex-1 p-6 space-y-6 bg-gray-50 dark:bg-black/20 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/5 transition-colors">
             <div>
               <h3 className="text-base font-black text-gray-900 dark:text-white mb-2 flex items-center gap-2 transition-colors">
                 업데이트 및 의견 제보 안내
@@ -101,14 +127,14 @@ export default function WelcomePopup() {
               <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/5 rounded-xl p-4 shadow-sm dark:shadow-none transition-colors">
                 <h4 className="text-sm font-bold text-amber-600 dark:text-amber-500 mb-1 transition-colors">사냥꾼 관련 제보 요청</h4>
                 <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep transition-colors">
-                  전문가 페이지에 사냥꾼 전용 아이템 레시피가 추가되었습니다. 일일수익 및 사냥꾼 관련 툴을 구현하기에 이해도와 정보가 부족한 상황입니다. 사냥꾼의 수익구조와 플레이 루틴등을 제보해주시면 큰 도움이 될 것 같습니다.
+                  전문가 페이지에 사냥꾼 전용 아이템 레시피가 추가되었습니다. 사냥꾼의 수익구조와 플레이 루틴등을 제보해주시면 큰 도움이 될 것 같습니다.
                 </p>
               </div>
 
               <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/5 rounded-xl p-4 shadow-sm dark:shadow-none transition-colors">
                 <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-500 mb-1 transition-colors">필요한 툴을 제안해 주세요</h4>
                 <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep transition-colors">
-                  현재 사이트에 없지만, 전문가 활동이나 띵타이쿤 플레이에 <span className="text-gray-900 dark:text-gray-200 font-bold transition-colors">도움이 될 만한 계산기나 편의 기능</span>이 있다면 적극적으로 아이디어를 제보해 주세요.
+                  현재 사이트에 없지만, 띵타이쿤 플레이에 도움이 될 만한 계산기나 편의 기능이 있다면 적극적으로 아이디어를 제보해 주세요.
                 </p>
               </div>
 
@@ -119,12 +145,60 @@ export default function WelcomePopup() {
                     우측 하단 버튼을 적극 활용해 주세요!
                   </h4>
                   <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep transition-colors">
-                    화면 <span className="font-bold text-fuchsia-600 dark:text-fuchsia-300 bg-fuchsia-100 dark:bg-fuchsia-500/20 px-1 py-0.5 rounded transition-colors">우측 하단의 [의견 남기기]</span> 버튼을 통해 오타, 잘못된 데이터 수정 요청, 새로운 아이디어 등 어떤 의견이든 편하게 남겨주시면 큰 힘이 됩니다.
+                    화면 <span className="font-bold text-fuchsia-600 dark:text-fuchsia-300 bg-fuchsia-100 dark:bg-fuchsia-500/20 px-1 py-0.5 rounded transition-colors">우측 하단의 [의견 남기기]</span> 버튼을 통해 어떤 의견이든 편하게 남겨주시면 큰 힘이 됩니다.
                   </p>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* 세 번째 단: 신규 추가 (서버 이전 공지 및 투표) */}
+          <div className="flex-1 p-6 space-y-6 bg-red-50/50 dark:bg-red-950/10 transition-colors">
+            <div>
+              <h3 className="text-base font-black text-red-600 dark:text-red-400 mb-2 flex items-center gap-2 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                서버 이전 및 설정 초기화 안내
+              </h3>
+              <p className="text-[12px] text-gray-800 dark:text-gray-300 break-keep leading-relaxed transition-colors">
+                이용자 급증으로 기존 무료 서버의 <strong>트래픽 한도(월 100만 회)를 초과</strong>하여 사이트 차단을 막고자 긴급하게 무제한 서버로 이전하였습니다.
+                <br /><br />
+                이 과정에서 도메인이 변경되어 <strong>기존 개인 설정(스탯, 스킬 등)이 초기화</strong>되었습니다. 번거로우시겠지만 설정을 다시 진행해 주시길 부탁드립니다. (자세한 내용은 공지사항 참조)
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-[#111] border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-5 shadow-sm transition-colors">
+              <h4 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-2 transition-colors">
+                클라우드 저장 기능 도입 투표
+              </h4>
+              <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep mb-5 transition-colors">
+                향후 커스텀 도메인 적용 등으로 또다시 데이터가 초기화되는 것을 막기 위해, 개인정보 수집 없이 <strong>'닉네임 + 숫자 6자리'</strong>만으로 설정을 서버에 저장하는 기능을 개발하고자 합니다. 해당 기능이 도입되면 사용하실 의향이 있으신가요?
+              </p>
+              
+              {!hasVoted ? (
+                <div className="flex flex-col gap-2">
+                  <button 
+                    onClick={() => handleVote('agree')}
+                    disabled={isVoting}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg text-[13px] transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    {isVoting ? '처리 중...' : '사용하겠습니다 (찬성)'}
+                  </button>
+                  <button 
+                    onClick={() => handleVote('disagree')}
+                    disabled={isVoting}
+                    className="w-full bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 font-bold py-2.5 rounded-lg text-[13px] transition-colors"
+                  >
+                    필요 없습니다 (반대)
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-lg p-3 text-center text-[12px] font-bold text-indigo-600 dark:text-indigo-400 transition-colors">
+                  소중한 의견이 제출되었습니다. 감사합니다!
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>
 
         <div className="bg-gray-100 dark:bg-[#050505] border-t border-gray-200 dark:border-white/5 px-6 py-4 flex items-center justify-between shrink-0 transition-colors">

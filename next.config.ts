@@ -10,19 +10,6 @@ const nextConfig = {
       },
     ],
   },
-  
-  async redirects() {
-    if (process.env.VERCEL) {
-      return [
-        {
-          source: '/:path*',
-          destination: 'https://all-dding.pages.dev/:path*',
-          permanent: true, 
-        },
-      ];
-    }
-    return [];
-  },
 };
 
 export default nextConfig;
