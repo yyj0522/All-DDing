@@ -108,13 +108,13 @@ export const SKILL_DATA: Record<Profession, Record<string, SkillNode>> = {
     f18: { id: 'f18', name: '[아일랜드] 몽글몽글', max: 4, req: 'f13', costs: [
       { p: 10, g: 10000, s: 20, effect: "대기 슬롯 4개" }, { p: 30, g: 1000000, s: 60, effect: "대기 슬롯 5개" }, { p: 50, g: 2000000, s: 100, effect: "대기 슬롯 6개" }, { p: 70, g: 3000000, s: 140, effect: "대기 슬롯 7개" }
     ]},
-    f19: { id: 'f19', name: '[마을] 프로 바리스타', max: 3, req: 'f18', costs: [
+    f19: { id: 'f19', name: '[마을] 프로 바리스타', max: 3, req: 'f20', costs: [
       { p: 70, g: 7000000, s: 140, effect: "빈센트 해금 (EPIC)" }, { p: 120, g: 10000000, s: 240, effect: "웬디 해금 (LEGENDARY)" }, { p: 170, g: 15000000, s: 340, effect: "아이비 해금 (MYTHIC)" }
     ]},
-    f20: { id: 'f20', name: '[마을] 오늘 좀 한가하네?', max: 5, req: 'f19', costs: [
+    f20: { id: 'f20', name: '[마을] 오늘 좀 한가하네?', max: 5, req: 'f18', costs: [
       { p: 10, g: 10000, s: 20, effect: "판매 슬롯 2개" }, { p: 20, g: 500000, s: 40, effect: "판매 슬롯 3개" }, { p: 30, g: 1000000, s: 60, effect: "판매 슬롯 4개" }, { p: 40, g: 3000000, s: 80, effect: "판매 슬롯 5개" }, { p: 50, g: 5000000, s: 100, effect: "판매 슬롯 6개" }
     ]},
-    f21: { id: 'f21', name: '[마을] 풍미 유지 기술', max: 3, req: 'f19', costs: [
+    f21: { id: 'f21', name: '[마을] 풍미 유지 기술', max: 3, req: 'f20', costs: [
       { p: 30, g: 3000000, s: 60, effect: "유통기한 3일" }, { p: 70, g: 7000000, s: 140, effect: "유통기한 4일" }, { p: 150, g: 10000000, s: 300, effect: "유통기한 5일" }
     ]},
     f22: { id: 'f22', name: '[아일랜드] 커피값이 밥값', max: 10, req: 'f13', costs: [
