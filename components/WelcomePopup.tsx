@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabase'; // Supabase 클라이언트 연결
+import { supabase } from '@/lib/supabase';
 
 export default function WelcomePopup() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +12,6 @@ export default function WelcomePopup() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // 투표 참여 여부 확인
     const voted = localStorage.getItem('hasVotedSaveFeature');
     if (voted) setHasVoted(true);
 
@@ -41,7 +40,6 @@ export default function WelcomePopup() {
   const handleVote = async (voteType: 'agree' | 'disagree') => {
     setIsVoting(true);
     try {
-      // Supabase에 투표 결과 전송 (feature_votes 테이블 필요)
       await supabase.from('feature_votes').insert([{ vote_type: voteType }]);
     } catch (error) {
       console.error('투표 저장 실패:', error);
@@ -56,7 +54,6 @@ export default function WelcomePopup() {
 
   return (
     <div className="fixed top-20 left-4 md:top-24 md:left-8 z-[999] animate-fade-in pointer-events-auto max-w-[calc(100vw-2rem)] max-h-[calc(100vh-6rem)] flex flex-col transition-colors duration-300">
-      {/* 팝업 창 넓이를 기존 840px에서 1150px로 우측 확장 */}
       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[760px] lg:w-[1150px] shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-full overflow-hidden transition-colors">
         
         <div className="bg-gradient-to-r from-fuchsia-50 dark:from-fuchsia-600/10 via-fuchsia-100 dark:via-fuchsia-500/5 to-transparent border-b border-gray-200 dark:border-white/5 px-6 py-5 shrink-0 transition-colors">
@@ -64,11 +61,7 @@ export default function WelcomePopup() {
             올띵(All-Dding)에 오신 것을 환영합니다!
           </h2>
         </div>
-        
-        {/* lg 사이즈 이상에서 3단(3-column)으로 배치되도록 수정 */}
         <div className="flex flex-col lg:flex-row overflow-y-auto custom-scrollbar">
-          
-          {/* 첫 번째 단: 기존 공지 */}
           <div className="flex-1 p-6 space-y-5 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/5 transition-colors">
             <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 transition-colors">
               <p className="text-red-600 dark:text-red-400 text-sm font-bold leading-relaxed text-center break-keep transition-colors">
@@ -152,7 +145,6 @@ export default function WelcomePopup() {
             </div>
           </div>
 
-          {/* 세 번째 단: 신규 추가 (서버 이전 공지 및 투표) */}
           <div className="flex-1 p-6 space-y-6 bg-red-50/50 dark:bg-red-950/10 transition-colors">
             <div>
               <h3 className="text-base font-black text-red-600 dark:text-red-400 mb-2 flex items-center gap-2 transition-colors">
@@ -171,7 +163,7 @@ export default function WelcomePopup() {
                 클라우드 저장 기능 도입 투표
               </h4>
               <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep mb-5 transition-colors">
-                향후 커스텀 도메인 적용 등으로 또다시 데이터가 초기화되는 것을 막기 위해, 개인정보 수집 없이 <strong>'닉네임 + 숫자 6자리'</strong>만으로 설정을 서버에 저장하는 기능(로그인)을 개발하고자 합니다. 해당 기능이 도입되면 사용하실 의향이 있는지 하단 투표참여를 부탁드립니다.
+                향후 커스텀 도메인 적용 등으로 또다시 데이터가 초기화되는 것을 막기 위해, 개인정보 수집 없이 <strong>'닉네임(또는 개인이 식별할 수 있는 아이디) + 숫자 6자리'</strong>만으로 설정을 서버에 저장하는 기능(로그인)을 개발하고자 합니다. 해당 기능이 도입되면 사용하실 의향이 있는지 하단 투표참여를 부탁드립니다.
               </p>
               
               {!hasVoted ? (

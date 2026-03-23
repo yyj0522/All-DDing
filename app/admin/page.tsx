@@ -10,7 +10,7 @@ const VARIABLE_ITEMS = ["정제된 광석", "단단한 주괴", "스태미나 �
 
 export default function AdminPage() {
   const [isLocalhost, setIsLocalhost] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'prices' | 'release' | 'feedback' | 'statistics'>('prices');
+  const [activeTab, setActiveTab] = useState<'prices' | 'release' | 'feedback' | 'statistics' | 'votes'>('prices');
   const [prices, setPrices] = useState<Record<string, number>>({});
   
   const [isFoodSaving, setIsFoodSaving] = useState(false);
@@ -33,6 +33,9 @@ export default function AdminPage() {
   const [fabricCount, setFabricCount] = useState<number>(0);
   const [neoforgeCount, setNeoforgeCount] = useState<number>(0);
 
+  // 투표 결과 저장용 상태
+  const [voteResults, setVoteResults] = useState<{ agree: number; disagree: number; total: number }>({ agree: 0, disagree: 0, total: 0 });
+
   const currentCookingPeriod = getCookingPeriod();
   const currentCraftingPeriod = getCraftingPeriod();
 
@@ -44,6 +47,7 @@ export default function AdminPage() {
       fetchNotes();
       fetchFeedbacks();
       fetchStatistics();
+      fetchVotes(); // 투표 데이터 호출 추가
     } else {
       setIsLocalhost(false);
     }
@@ -75,30 +79,25 @@ export default function AdminPage() {
   };
 
   const fetchStatistics = async () => {
-    const { count: farmCount } = await supabase
-      .from('image_download_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('category', 'farming');
-      
-    const { count: ocCount } = await supabase
-      .from('image_download_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('category', 'ocean');
-
-    const { count: fbCount } = await supabase
-      .from('file_download_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('file_type', 'fabric');
-
-    const { count: neoCount } = await supabase
-      .from('file_download_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('file_type', 'neoforge');
+    const { count: farmCount } = await supabase.from('image_download_logs').select('*', { count: 'exact', head: true }).eq('category', 'farming');
+    const { count: ocCount } = await supabase.from('image_download_logs').select('*', { count: 'exact', head: true }).eq('category', 'ocean');
+    const { count: fbCount } = await supabase.from('file_download_logs').select('*', { count: 'exact', head: true }).eq('file_type', 'fabric');
+    const { count: neoCount } = await supabase.from('file_download_logs').select('*', { count: 'exact', head: true }).eq('file_type', 'neoforge');
 
     setFarmingCount(farmCount || 0);
     setOceanCount(ocCount || 0);
     setFabricCount(fbCount || 0);
     setNeoforgeCount(neoCount || 0);
+  };
+
+  // 투표 결과 가져오기 (향후 투표 항목이 늘어나면 poll_name 등의 조건으로 필터링하도록 확장 가능)
+  const fetchVotes = async () => {
+    const { data, error } = await supabase.from('feature_votes').select('vote_type');
+    if (data && !error) {
+      const agree = data.filter(v => v.vote_type === 'agree').length;
+      const disagree = data.filter(v => v.vote_type === 'disagree').length;
+      setVoteResults({ agree, disagree, total: data.length });
+    }
   };
 
   const handlePriceChange = (name: string, value: string) => {
@@ -214,10 +213,10 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-gray-100 font-sans p-6 md:p-12">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 gap-4">
+        <header className="mb-10 flex flex-col xl:flex-row xl:items-end justify-between border-b border-white/10 pb-6 gap-4">
           <div>
             <h1 className="text-4xl font-black text-rose-500 tracking-tighter mb-2">ALL-DDING ADMIN</h1>
-            <p className="text-gray-400 text-sm">글로벌 시세, 패치노트, 유저 의견 관리 시스템</p>
+            <p className="text-gray-400 text-sm">글로벌 시세, 패치노트, 투표 및 유저 의견 관리 시스템</p>
           </div>
           <div className="flex flex-wrap gap-2 bg-[#111] p-1.5 rounded-xl border border-white/5">
             <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${activeTab === 'prices' ? 'bg-white text-black' : 'text-gray-400 hover:text-white'}`}>서버 시세 관리</button>
@@ -228,10 +227,12 @@ export default function AdminPage() {
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full animate-pulse"></span>
               )}
             </button>
+            <button onClick={() => { setActiveTab('votes'); fetchVotes(); }} className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${activeTab === 'votes' ? 'bg-white text-black' : 'text-gray-400 hover:text-white'}`}>투표 현황</button>
             <button onClick={() => { setActiveTab('statistics'); fetchStatistics(); }} className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${activeTab === 'statistics' ? 'bg-white text-black' : 'text-gray-400 hover:text-white'}`}>통계 현황</button>
           </div>
         </header>
 
+        {/* --- [기존 시세 관리 탭 내용] --- */}
         {activeTab === 'prices' && (
           <div className="animate-fade-in-up space-y-12 max-w-5xl mx-auto pb-32">
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
@@ -323,6 +324,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* --- [기존 패치노트 관리 탭 내용] --- */}
         {activeTab === 'release' && (
           <div className="animate-fade-in-up flex flex-col xl:flex-row gap-8">
             <div className="flex-[2] bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl h-fit">
@@ -378,6 +380,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* --- [기존 의견 및 제보 탭 내용] --- */}
         {activeTab === 'feedback' && (
           <div className="animate-fade-in-up max-w-5xl mx-auto pb-32">
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl min-h-[600px] flex flex-col">
@@ -436,6 +439,65 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* --- [신규 추가: 투표 결과 확인 탭] --- */}
+        {activeTab === 'votes' && (
+          <div className="animate-fade-in-up max-w-5xl mx-auto pb-32">
+            <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
+              <h2 className="text-xl font-bold text-white border-l-4 border-purple-500 pl-3 mb-8">유저 투표 진행 결과</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                {/* 1. 클라우드 저장 기능 투표 (현재 진행 중) */}
+                <div className="bg-[#111] border border-white/10 rounded-2xl p-6 flex flex-col">
+                  <div className="flex justify-between items-start mb-4 border-b border-white/5 pb-4">
+                    <div>
+                      <h3 className="text-base font-bold text-white mb-1">클라우드 저장 기능 도입</h3>
+                      <p className="text-xs text-gray-500">닉네임+PIN 설정 저장 기능 선호도</p>
+                    </div>
+                    <span className="bg-purple-500/20 text-purple-400 text-[10px] font-bold px-2 py-1 rounded">진행 중</span>
+                  </div>
+                  
+                  <div className="flex items-end gap-2 mb-4">
+                    <span className="text-3xl font-black text-white">{voteResults.total}</span>
+                    <span className="text-sm text-gray-500 font-bold mb-1">명 참여</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-indigo-400 font-bold">찬성 (도입 희망)</span>
+                        <span className="text-white font-bold">{voteResults.agree}명 <span className="text-gray-500 text-xs font-normal">({voteResults.total > 0 ? Math.round((voteResults.agree/voteResults.total)*100) : 0}%)</span></span>
+                      </div>
+                      <div className="w-full bg-black rounded-full h-3">
+                        <div className="bg-indigo-500 h-3 rounded-full transition-all duration-1000" style={{ width: `${voteResults.total > 0 ? (voteResults.agree/voteResults.total)*100 : 0}%` }}></div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-400 font-bold">반대 (필요 없음)</span>
+                        <span className="text-white font-bold">{voteResults.disagree}명 <span className="text-gray-500 text-xs font-normal">({voteResults.total > 0 ? Math.round((voteResults.disagree/voteResults.total)*100) : 0}%)</span></span>
+                      </div>
+                      <div className="w-full bg-black rounded-full h-3">
+                        <div className="bg-gray-600 h-3 rounded-full transition-all duration-1000" style={{ width: `${voteResults.total > 0 ? (voteResults.disagree/voteResults.total)*100 : 0}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. 향후 새로운 투표를 추가할 자리 (더미 예시) */}
+                <div className="bg-[#111]/50 border border-white/5 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center opacity-50">
+                  <svg className="w-8 h-8 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                  <p className="text-sm font-bold text-gray-500">새로운 투표 공간</p>
+                  <p className="text-[10px] text-gray-600 mt-1">추후 DB에 poll_name 등 식별자가<br/>추가되면 여기에 배치됩니다.</p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- [기존 통계 현황 탭 내용] --- */}
         {activeTab === 'statistics' && (
           <div className="animate-fade-in-up max-w-5xl mx-auto pb-32">
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
