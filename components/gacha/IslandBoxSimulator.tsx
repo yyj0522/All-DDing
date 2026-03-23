@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import confetti from 'canvas-confetti';
+import { useTheme } from 'next-themes';
 
 const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
@@ -95,6 +97,7 @@ export default function IslandBoxSimulator() {
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const activeBox = BOX_DATA[selectedBoxKey];
+  const { theme } = useTheme();
 
   useEffect(() => {
     setIsOpening(false);
@@ -183,15 +186,15 @@ export default function IslandBoxSimulator() {
   }, [isOpening, showResult, selectedBoxKey, results]);
 
   return (
-    <div className="w-full space-y-6 animate-fade-in relative text-gray-200">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0a0a0a] border border-white/5 rounded-2xl p-5 shadow-lg gap-4">
+    <div className="w-full space-y-6 animate-fade-in relative text-gray-900 dark:text-gray-200 transition-colors duration-300">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/5 rounded-2xl p-5 shadow-sm dark:shadow-lg gap-4 transition-colors">
         <div>
-          <h2 className="text-xl font-bold text-blue-400">아일랜드 보물상자</h2>
-          <p className="text-sm text-gray-400 mt-1">아일랜드에서 획득한 보물상자를 개봉합니다.</p>
+          <h2 className="text-xl font-bold text-blue-600 dark:text-blue-400 transition-colors">아일랜드 보물상자</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors">아일랜드에서 획득한 보물상자를 개봉합니다.</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 border-b border-white/5 pb-4">
+      <div className="flex flex-wrap gap-2 border-b border-gray-200 dark:border-white/5 pb-4 transition-colors">
         {(Object.keys(BOX_DATA) as Array<keyof typeof BOX_DATA>).map(key => (
           <button
             key={key}
@@ -200,8 +203,8 @@ export default function IslandBoxSimulator() {
             }}
             className={`px-5 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
               selectedBoxKey === key
-                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                : 'bg-transparent text-gray-400 border border-white/5 hover:bg-white/5 hover:text-white'
+                ? 'bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-500/30'
+                : 'bg-transparent text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/5 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             {BOX_DATA[key].name}
@@ -211,13 +214,13 @@ export default function IslandBoxSimulator() {
         <div className="ml-auto flex items-center gap-3">
           <button 
             onClick={handleReset} 
-            className="px-4 py-2 bg-red-900/20 text-red-400 hover:bg-red-900/40 text-sm font-semibold border border-red-500/30 rounded-lg transition-colors"
+            className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-semibold border border-red-200 dark:border-red-500/30 rounded-lg transition-colors"
           >
             초기화
           </button>
           <button 
             onClick={() => setShowRates(true)} 
-            className="px-4 py-2 bg-white/5 text-gray-300 hover:bg-white/10 text-sm font-semibold border border-white/5 rounded-lg transition-colors"
+            className="px-4 py-2 bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 text-sm font-semibold border border-gray-200 dark:border-white/5 rounded-lg transition-colors"
           >
             확률표
           </button>
@@ -226,7 +229,7 @@ export default function IslandBoxSimulator() {
 
       <div className="w-full relative">
         <div 
-          className="border border-white/10 rounded-2xl relative overflow-hidden h-[500px] flex flex-col items-center justify-center shadow-inner w-full cursor-pointer bg-black"
+          className="border border-gray-200 dark:border-white/10 rounded-2xl relative overflow-hidden h-[500px] flex flex-col items-center justify-center shadow-sm dark:shadow-inner w-full cursor-pointer bg-gray-100 dark:bg-black transition-colors"
           onClick={handleCanvasClick}
         >
           <video
@@ -242,66 +245,66 @@ export default function IslandBoxSimulator() {
 
           {!isOpening && !showResult && (
             <div className="absolute bottom-6 z-20 pointer-events-none">
-              <p className="text-white/80 font-bold text-lg bg-black/40 px-6 py-2 rounded-full backdrop-blur-md animate-pulse">
+              <p className="text-white font-bold text-lg bg-black/60 dark:bg-black/40 px-6 py-2 rounded-full backdrop-blur-md animate-pulse shadow-md dark:shadow-none transition-colors">
                 화면을 클릭하여 상자 열기
               </p>
             </div>
           )}
 
           {showResult && (
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in p-6">
-              <h3 className="text-2xl font-bold text-white mb-8">획득 아이템</h3>
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 dark:bg-black/60 backdrop-blur-sm animate-fade-in p-6 transition-colors">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 transition-colors">획득 아이템</h3>
               <div className="flex flex-wrap justify-center gap-6">
                 {results.map((item, idx) => (
-                  <div key={idx} className="bg-white/10 border border-white/20 p-4 rounded-xl flex flex-col items-center justify-center min-w-[120px]">
-                    <img src={ITEM_IMAGES[item.name] || `${STORAGE_BASE_URL}/unknown.png`} alt={item.name} className="w-16 h-16 mb-3 object-contain" />
-                    <p className="text-white font-semibold text-sm text-center">{item.name}</p>
-                    <p className="text-blue-400 font-bold text-base mt-1">{item.count}개</p>
+                  <div key={idx} className="bg-white dark:bg-white/10 border border-gray-200 dark:border-white/20 p-4 rounded-xl flex flex-col items-center justify-center min-w-[120px] shadow-md dark:shadow-none transition-colors">
+                    <img src={ITEM_IMAGES[item.name] || `${STORAGE_BASE_URL}/unknown.png`} alt={item.name} className="w-16 h-16 mb-3 object-contain drop-shadow-sm dark:drop-shadow-none" />
+                    <p className="text-gray-900 dark:text-white font-semibold text-sm text-center transition-colors">{item.name}</p>
+                    <p className="text-blue-600 dark:text-blue-400 font-bold text-base mt-1 transition-colors">{item.count}개</p>
                   </div>
                 ))}
               </div>
-              <p className="absolute bottom-6 text-gray-400 text-sm animate-pulse">화면을 클릭하여 닫기</p>
+              <p className="absolute bottom-6 text-gray-600 dark:text-gray-400 text-sm animate-pulse transition-colors">화면을 클릭하여 닫기</p>
             </div>
           )}
         </div>
       </div>
 
       {showRates && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="flex justify-between items-center p-5 border-b border-white/10 bg-[#1a1a1a]">
-              <h3 className="text-xl font-bold text-white">{activeBox.name} 확률표</h3>
-              <button onClick={() => setShowRates(false)} className="text-gray-400 hover:text-white transition-colors">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden shadow-2xl transition-colors">
+            <div className="flex justify-between items-center p-5 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1a1a1a] transition-colors">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white transition-colors">{activeBox.name} 확률표</h3>
+              <button onClick={() => setShowRates(false)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="p-5 overflow-y-auto custom-scrollbar">
-              <div className="mb-4 p-3.5 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs text-yellow-100/90 leading-relaxed">
-                <span className="font-bold text-yellow-400">※ 확률 안내:</span><br/>
+              <div className="mb-4 p-3.5 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl text-xs text-yellow-800 dark:text-yellow-100/90 leading-relaxed transition-colors">
+                <span className="font-bold text-yellow-600 dark:text-yellow-400 transition-colors">※ 확률 안내:</span><br/>
                 공식 위키에 누락된 정보인 '개봉 시 등장하는 아이템 종류 수(1~3종)'의 확률 가중치와, 
                 '1~15개'처럼 수량 범위로 나타나는 아이템의 세부 개별 획득 확률은 일반적인 균등 분포를 임의로 적용하여 구현되었습니다.<br/>
                  따라서 실제 인게임 상자의 체감 획득 수량 및 확률과 다소 차이가 있을 수 있음을 알려드립니다.
               </div>
-              <table className="w-full text-left text-sm text-gray-300">
-                <thead className="text-xs text-gray-400 bg-white/5 uppercase">
+              <table className="w-full text-left text-sm text-gray-700 dark:text-gray-300 transition-colors">
+                <thead className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 uppercase transition-colors">
                   <tr>
                     <th className="px-4 py-3 rounded-tl-lg">아이템</th>
                     <th className="px-4 py-3 text-right">개수</th>
                     <th className="px-4 py-3 text-right rounded-tr-lg">확률</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-gray-200 dark:divide-white/5 transition-colors">
                   {activeBox.drops.map((drop, idx) => (
-                    <tr key={idx} className="hover:bg-white/5 transition-colors">
-                      <td className="px-4 py-3 font-medium text-white">{drop.name}</td>
-                      <td className="px-4 py-3 text-right">{drop.min === drop.max ? drop.min : `${drop.min}~${drop.max}`}개</td>
-                      <td className="px-4 py-3 text-right text-blue-400">{drop.chance}%</td>
+                    <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white transition-colors">{drop.name}</td>
+                      <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300 transition-colors">{drop.min === drop.max ? drop.min : `${drop.min}~${drop.max}`}개</td>
+                      <td className="px-4 py-3 text-right text-blue-600 dark:text-blue-400 transition-colors">{drop.chance}%</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <div className="mt-4 p-4 bg-blue-900/20 rounded-lg border border-blue-500/20 text-xs text-gray-400">
-                <p className="font-semibold text-blue-300 mb-1">상자 슬롯 확률</p>
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-500/20 text-xs text-gray-600 dark:text-gray-400 transition-colors">
+                <p className="font-semibold text-blue-600 dark:text-blue-300 mb-1 transition-colors">상자 슬롯 확률</p>
                 <ul className="list-disc list-inside pl-2">
                   {activeBox.slotWeights.map((w, i) => (
                     <li key={i}>{w.slots}종류 아이템 등장: {w.chance}%</li>

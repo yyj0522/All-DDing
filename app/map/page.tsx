@@ -29,7 +29,7 @@ const MARKERS = [
   { id: 'blue_4', name: '푸른석상 (성 옛터)', x: -357, z: 235, realX: -377, realZ: 178, cat: '푸른석상' },
   { id: 'blue_5', name: '푸른석상 (골짜기)', x: -338, z: 14, realX: -359, realZ: -37, cat: '푸른석상' },
   { id: 'white_1', name: '하얀석상 (산맥)', x: -60, z: -140, realX: -85, realZ: -187, cat: '하얀석상' },
-  { id: 'white_2', name: '하얀석상 (마을 옛터)', x: 26, z: 89, realX: -2, realZ: 35, cat: '하얀석상' },
+  { id: 'white_2', name: '하얀석상 (마일 옛터)', x: 26, z: 89, realX: -2, realZ: 35, cat: '하얀석상' },
   { id: 'white_3', name: '하얀석상 (계곡)', x: -71, z: 310, realX: -87, realZ: 253, cat: '하얀석상' },
 ];
 
@@ -104,15 +104,15 @@ export default function MapPage() {
             </svg>
           </div>
           <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 transition-all duration-200 ${isSel ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-            <div className={`bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 px-3 py-2 rounded-xl shadow-2xl flex flex-col items-center min-w-[115px] ring-2 ${colors.ring}`}>
+            <div className={`bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 px-3 py-2 rounded-xl shadow-2xl flex flex-col items-center min-w-[115px] ring-2 ${colors.ring} transition-colors`}>
               <span className={`text-[9px] font-black tracking-widest uppercase mb-0.5 ${colors.text}`}>{m.cat}</span>
-              <span className="text-xs font-bold text-white whitespace-nowrap">{m.name}</span>
-              <div className="w-full h-px bg-white/5 my-1.5"></div>
-              <div className="flex gap-2 text-[10px] font-mono font-bold text-gray-300">
+              <span className="text-xs font-bold text-gray-900 dark:text-white whitespace-nowrap transition-colors">{m.name}</span>
+              <div className="w-full h-px bg-gray-200 dark:bg-white/5 my-1.5 transition-colors"></div>
+              <div className="flex gap-2 text-[10px] font-mono font-bold text-gray-600 dark:text-gray-300 transition-colors">
                 <span>X: {m.realX}</span><span>Z: {m.realZ}</span>
               </div>
             </div>
-            <div className="w-2.5 h-2.5 bg-[#0a0a0a] border-r border-b border-white/10 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+            <div className="w-2.5 h-2.5 bg-white dark:bg-[#0a0a0a] border-r border-b border-gray-200 dark:border-white/10 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2 transition-colors"></div>
           </div>
         </div>
       );
@@ -120,16 +120,16 @@ export default function MapPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-100 flex flex-col relative overflow-x-hidden">
-      <div className="absolute top-[-10%] left-[-5%] w-full h-[40%] bg-emerald-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-gray-100 flex flex-col relative overflow-x-hidden transition-colors duration-300">
+      <div className="absolute top-[-10%] left-[-5%] w-full h-[40%] bg-emerald-100 dark:bg-emerald-600/5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300"></div>
       <Header />
       <main className="relative z-10 flex-1 max-w-[1200px] w-full mx-auto px-4 pt-28 md:pt-40 pb-20 flex flex-col items-center">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 w-full max-w-[1000px] mb-8 border-b border-white/5 pb-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 w-full max-w-[1000px] mb-8 border-b border-gray-200 dark:border-white/5 pb-6 transition-colors">
           <div className="text-center md:text-left">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">아일랜드 <span className="text-emerald-500">지도</span></h1>
-            <p className="text-gray-400 text-xs md:text-base max-w-lg break-keep px-2 italic opacity-80">지도를 클릭하여 확대하고 마커를 눌러 좌표를 확인하세요.</p>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-3 transition-colors">아일랜드 <span className="text-emerald-600 dark:text-emerald-500 transition-colors">지도</span></h1>
+            <p className="text-gray-500 dark:text-gray-400 text-xs md:text-base max-w-lg break-keep px-2 italic opacity-80 transition-colors">지도를 클릭하여 확대하고 마커를 눌러 좌표를 확인하세요.</p>
           </div>
-          <button onClick={handleFullscreen} className="md:hidden flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-5 py-3 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-95">
+          <button onClick={handleFullscreen} className="md:hidden flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-5 py-3 rounded-xl text-sm font-bold shadow-sm dark:shadow-lg transition-all active:scale-95">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
             모바일 전체화면
           </button>
@@ -138,18 +138,18 @@ export default function MapPage() {
         <div className="flex flex-col lg:flex-row gap-6 md:gap-8 items-start justify-center w-full relative max-w-[1100px]">
           <div className="w-full lg:w-44 flex-shrink-0 flex lg:flex-col gap-2 overflow-x-auto scrollbar-hide pb-2 px-1">
             {(['전체', '농장', '광산', '과수원', '양식장', '서식지', '푸른석상', '하얀석상'] as Category[]).map((cat) => (
-              <button key={cat} onClick={() => { setActiveCat(cat); setSelectedMarkerId(null); }} className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border-2 ${activeCat === cat ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/50 shadow-lg' : 'bg-[#0a0a0a] border-white/5 text-gray-500 hover:border-white/20'}`}>{cat}</button>
+              <button key={cat} onClick={() => { setActiveCat(cat); setSelectedMarkerId(null); }} className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border-2 ${activeCat === cat ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/50 shadow-sm dark:shadow-lg' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-white/5 text-gray-500 dark:text-gray-500 hover:border-gray-300 dark:hover:border-white/20 hover:text-gray-800 dark:hover:text-gray-300'}`}>{cat}</button>
             ))}
           </div>
 
-          <div ref={mapContainerRef} className={`flex-1 w-full relative flex justify-center bg-[#050505] rounded-[1.5rem] p-1 border border-white/5 ${isFullscreen ? 'flex items-center justify-center !p-0 bg-black' : ''}`}>
+          <div ref={mapContainerRef} className={`flex-1 w-full relative flex justify-center bg-gray-100 dark:bg-[#050505] rounded-[1.5rem] p-1 border border-gray-200 dark:border-white/5 transition-colors ${isFullscreen ? 'flex items-center justify-center !p-0 bg-black dark:bg-black' : ''}`}>
             <div className={`relative w-full max-w-[900px] transition-all duration-300 rounded-xl ${mag.active ? 'cursor-auto' : 'cursor-crosshair'}`} onClick={handleMapClick}>
-              <img src={`${STORAGE_BASE_URL}/map.png`} alt="Map" className="w-full h-auto block select-none rounded-lg" draggable={false} />
+              <img src={`${STORAGE_BASE_URL}/map.png`} alt="Map" className="w-full h-auto block select-none rounded-lg shadow-sm dark:shadow-none" draggable={false} />
               <div className="absolute inset-0 pointer-events-none">{renderMarkers(false)}</div>
               {mag.active && (
                 <>
-                  <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-[2px]" onClick={(e) => { e.stopPropagation(); setMag({ ...mag, active: false }); }} />
-                  <div className="absolute border-[2px] border-white/40 rounded-full shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden z-[120] bg-[#050505] pointer-events-none" style={{ width: 'min(240px, 55vw)', height: 'min(240px, 55vw)', left: mag.x, top: mag.y, transform: 'translate(-50%, -50%)', boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)' }}>
+                  <div className="fixed inset-0 z-[110] bg-white/40 dark:bg-black/40 backdrop-blur-[2px] transition-colors" onClick={(e) => { e.stopPropagation(); setMag({ ...mag, active: false }); }} />
+                  <div className="absolute border-[2px] border-gray-300 dark:border-white/40 rounded-full shadow-[0_0_50px_rgba(0,0,0,0.2)] dark:shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden z-[120] bg-white dark:bg-[#050505] pointer-events-none transition-colors" style={{ width: 'min(240px, 55vw)', height: 'min(240px, 55vw)', left: mag.x, top: mag.y, transform: 'translate(-50%, -50%)', boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)' }}>
                     <div className="absolute origin-top-left" style={{ width: mag.mapW * ZOOM_LEVEL, height: mag.mapH * ZOOM_LEVEL, left: `calc(min(120px, 27.5vw) - ${mag.x * ZOOM_LEVEL}px)`, top: `calc(min(120px, 27.5vw) - ${mag.y * ZOOM_LEVEL}px)` }}>
                       <img src={`${STORAGE_BASE_URL}/map.png`} className="w-full h-auto block" alt="" />
                       <div className="absolute inset-0">{renderMarkers(true)}</div>

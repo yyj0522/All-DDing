@@ -128,23 +128,23 @@ export default function ProfessionPage() {
     return { expectedIngots, expectedGems, expectedRelics, expectedRelicPoints, ingotRevenue, gemRevenue, totalRevenue };
   }, [userStats, targetZone]);
 
-  if (!isLoaded) return <div className="min-h-screen bg-[#050505]"></div>;
+  if (!isLoaded) return <div className="min-h-screen bg-gray-50 dark:bg-[#050505] transition-colors duration-300"></div>;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-amber-500/30 relative flex flex-col overflow-x-hidden">
-      <div className="absolute top-[-20%] left-[-10%] w-full h-[50%] bg-stone-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-gray-100 font-sans selection:bg-amber-200 dark:selection:bg-amber-500/30 relative flex flex-col overflow-x-hidden transition-colors duration-300">
+      <div className="absolute top-[-20%] left-[-10%] w-full h-[50%] bg-stone-300/30 dark:bg-stone-600/5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300"></div>
       <Header />
 
       <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 pt-28 md:pt-40 pb-20 flex flex-col items-center">
         <div className="mb-8 text-center w-full px-2">
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">전문가 기능</h1>
-          <p className="text-gray-400 text-xs md:text-base tracking-wide max-w-xl mx-auto break-keep opacity-80">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-3">전문가 기능</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-xs md:text-base tracking-wide max-w-xl mx-auto break-keep opacity-80">
             내 능력치 기반 수익률 계산 및 전용 조합법 확인
           </p>
         </div>
 
         <div className="w-full max-w-2xl mb-8 px-2">
-          <div className="grid grid-cols-4 gap-1.5 md:gap-4 bg-white/5 p-1.5 rounded-[20px] md:rounded-[24px] border border-white/5 shadow-2xl">
+          <div className="grid grid-cols-4 gap-1.5 md:gap-4 bg-white dark:bg-white/5 p-1.5 rounded-[20px] md:rounded-[24px] border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-2xl transition-colors">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -154,8 +154,8 @@ export default function ProfessionPage() {
                 }}
                 className={`flex items-center justify-center py-3 md:py-4 rounded-[14px] md:rounded-[18px] font-bold transition-all text-[11px] sm:text-sm md:text-base shadow-sm ${
                   activeTab === tab.id 
-                  ? `bg-white text-black scale-100 shadow-white/10` 
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                  ? `bg-gray-900 text-white dark:bg-white dark:text-black scale-100 shadow-gray-300 dark:shadow-white/10` 
+                  : 'text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'
                 }`}
               >
                 {tab.id}
@@ -164,11 +164,11 @@ export default function ProfessionPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-4 sm:gap-8 w-full mb-10 border-b border-white/10 px-2">
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-8 w-full mb-10 border-b border-gray-200 dark:border-white/10 px-2 transition-colors">
           <button 
             onClick={() => setSubTab('조합법')} 
             className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-              subTab === '조합법' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+              subTab === '조합법' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
             }`}
           >
             제작 & 조합법
@@ -178,7 +178,7 @@ export default function ProfessionPage() {
             <button 
               onClick={() => setSubTab('시세수익')} 
               className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                subTab === '시세수익' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                subTab === '시세수익' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
               }`}
             >
               예상 일일 수익
@@ -190,7 +190,7 @@ export default function ProfessionPage() {
               <button 
                 onClick={() => setSubTab('변동시세')} 
                 className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                  subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                  subTab === '변동시세' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
                 }`}
               >
                 3일 주기 시세
@@ -198,7 +198,7 @@ export default function ProfessionPage() {
               <button 
                 onClick={() => setSubTab('바리스타')} 
                 className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                  subTab === '바리스타' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                  subTab === '바리스타' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
                 }`}
               >
                 바리스타
@@ -211,7 +211,7 @@ export default function ProfessionPage() {
               <button 
                 onClick={() => setSubTab('변동시세')} 
                 className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                  subTab === '변동시세' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                  subTab === '변동시세' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
                 }`}
               >
                 공예품 시세
@@ -219,7 +219,7 @@ export default function ProfessionPage() {
               <button 
                 onClick={() => setSubTab('거래계산기')} 
                 className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                  subTab === '거래계산기' ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
+                  subTab === '거래계산기' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
                 }`}
               >
                 거래 계산기
@@ -250,13 +250,13 @@ export default function ProfessionPage() {
 
           {activeTab === '사냥' && subTab === '조합법' && <RecipeTab recipes={HUNT_RECIPES} />}
           {activeTab === '사냥' && subTab === '시세수익' && (
-            <div className="w-full bg-rose-950/20 border border-rose-500/20 rounded-[2.5rem] p-10 md:p-16 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden backdrop-blur-sm">
-              <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-rose-500/10 blur-3xl rounded-full"></div>
+            <div className="w-full bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/20 rounded-[2.5rem] p-10 md:p-16 flex flex-col items-center justify-center text-center shadow-sm dark:shadow-2xl relative overflow-hidden backdrop-blur-sm transition-colors">
+              <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-rose-200/50 dark:bg-rose-500/10 blur-3xl rounded-full"></div>
               <svg className="w-16 h-16 text-rose-500 mb-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <h2 className="text-2xl md:text-3xl font-black text-white mb-4">데이터 수집 중</h2>
-              <p className="text-rose-200/60 text-[13px] md:text-base max-w-md leading-relaxed break-keep">
+              <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-4">데이터 수집 중</h2>
+              <p className="text-rose-600 dark:text-rose-200/60 text-[13px] md:text-base max-w-md leading-relaxed break-keep">
                 사냥 전문가의 일일 수익을 정확하게 예측하기 위해 데이터를 수집하고 있습니다. <br className="hidden md:block"/>
                 충분한 데이터가 모이는 대로 업데이트될 예정입니다.
               </p>

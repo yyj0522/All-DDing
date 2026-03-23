@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import confetti from 'canvas-confetti';
+import { useTheme } from 'next-themes';
 
 interface Reward {
   id: string;
@@ -100,6 +101,7 @@ export default function RandomBadgeSimulator() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [testResults, setTestResults] = useState<Record<string, number>>({});
   const [testCount, setTestCount] = useState(0);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const initial: Reward[] = [];
@@ -282,47 +284,47 @@ export default function RandomBadgeSimulator() {
   };
 
   return (
-    <div className="w-full space-y-6 relative">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-black/40 border border-white/10 rounded-2xl p-5 shadow-lg gap-4">
+    <div className="w-full space-y-6 relative transition-colors duration-300">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-lg gap-4 transition-colors">
         <div className="flex items-center gap-4">
-          <img src={`${STORAGE_BASE_URL}/sailing/diamond_chest.png`} alt="랜덤 뱃지 보급품" className="w-16 h-16 object-contain drop-shadow-lg" />
+          <img src={`${STORAGE_BASE_URL}/sailing/diamond_chest.png`} alt="랜덤 뱃지 보급품" className="w-16 h-16 object-contain drop-shadow-md dark:drop-shadow-lg" />
           <div>
-            <h2 className="text-xl font-black text-white">랜덤 뱃지 보급품</h2>
-            <p className="text-sm text-gray-400 mt-1">1회 개봉 비용: <span className="text-blue-400 font-bold">5,000</span> 크리스탈</p>
+            <h2 className="text-xl font-black text-gray-900 dark:text-white transition-colors">랜덤 뱃지 보급품</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors">1회 개봉 비용: <span className="text-blue-600 dark:text-blue-400 font-bold transition-colors">5,000</span> 크리스탈</p>
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 w-full md:w-auto">
-          <div className="text-sm font-bold text-gray-400">누적 개봉: <span className="text-white text-base">{totalPulls.toLocaleString()}</span>회</div>
-          <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-500/20 px-4 py-2 rounded-xl">
-            <span className="text-xs font-bold text-gray-400">총 소모 재화</span>
+          <div className="text-sm font-bold text-gray-500 dark:text-gray-400 transition-colors">누적 개봉: <span className="text-gray-900 dark:text-white text-base transition-colors">{totalPulls.toLocaleString()}</span>회</div>
+          <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/20 px-4 py-2 rounded-xl transition-colors">
+            <span className="text-xs font-bold text-gray-600 dark:text-gray-400 transition-colors">총 소모 재화</span>
             <img src={`${STORAGE_BASE_URL}/crystal.png`} className="w-5 h-5 object-contain" alt="크리스탈" />
-            <span className="text-lg font-black text-blue-400">{totalCost.toLocaleString()}</span>
+            <span className="text-lg font-black text-blue-600 dark:text-blue-400 transition-colors">{totalCost.toLocaleString()}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 items-center justify-between border-b border-white/10 pb-4">
+      <div className="flex flex-wrap gap-4 items-center justify-between border-b border-gray-200 dark:border-white/10 pb-4 transition-colors">
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => setMode('normal')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'normal' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>일반 개봉</button>
-          <button onClick={() => setMode('test')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'test' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}>10,000번 검증</button>
-          <button onClick={() => setMode('snipe')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'snipe' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-gray-500 hover:text-gray-300'}`}>특정 다중 저격</button>
-          <button onClick={() => setMode('budget')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'budget' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-gray-500 hover:text-gray-300'}`}>예산 시뮬레이션</button>
+          <button onClick={() => setMode('normal')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'normal' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'}`}>일반 개봉</button>
+          <button onClick={() => setMode('test')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'test' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'}`}>10,000번 검증</button>
+          <button onClick={() => setMode('snipe')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'snipe' ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-500/30' : 'text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'}`}>특정 다중 저격</button>
+          <button onClick={() => setMode('budget')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${mode === 'budget' ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-500/30' : 'text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'}`}>예산 시뮬레이션</button>
         </div>
         
         <div className="flex items-center gap-3">
           {mode === 'normal' && (
             <div className="flex items-center gap-2 mr-2">
               <input type="checkbox" id="anim_badge" checked={showAnimation} onChange={(e) => setShowAnimation(e.target.checked)} className="accent-fuchsia-500 w-4 h-4 cursor-pointer" />
-              <label htmlFor="anim_badge" className="text-sm font-bold text-gray-300 cursor-pointer select-none hover:text-white transition-colors">룰렛 켜기</label>
+              <label htmlFor="anim_badge" className="text-sm font-bold text-gray-600 dark:text-gray-300 cursor-pointer select-none hover:text-gray-900 dark:hover:text-white transition-colors">룰렛 켜기</label>
             </div>
           )}
-          <button onClick={handleReset} className="px-4 py-2 bg-red-900/20 text-red-400 hover:bg-red-900/40 text-sm font-bold border border-red-500/30 rounded-lg transition-colors">
+          <button onClick={handleReset} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-bold border border-red-200 dark:border-red-500/30 rounded-lg transition-colors">
             초기화
           </button>
-          <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-blue-900/20 text-blue-400 hover:bg-blue-900/40 text-sm font-bold border border-blue-500/30 rounded-lg transition-colors">
+          <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-sm font-bold border border-blue-200 dark:border-blue-500/30 rounded-lg transition-colors">
             효과별 뱃지
           </button>
-          <button onClick={() => setShowProbModal(true)} className="px-4 py-2 bg-fuchsia-900/20 text-fuchsia-400 hover:bg-fuchsia-900/40 text-sm font-bold border border-fuchsia-500/30 rounded-lg transition-colors">
+          <button onClick={() => setShowProbModal(true)} className="px-4 py-2 bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/40 text-sm font-bold border border-fuchsia-200 dark:border-fuchsia-500/30 rounded-lg transition-colors">
             확률표 보기
           </button>
         </div>
@@ -330,10 +332,10 @@ export default function RandomBadgeSimulator() {
 
       {mode === 'normal' && (
         <div className="w-full space-y-8 animate-fade-in">
-          <div ref={containerRef} className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 relative overflow-hidden h-72 flex flex-col justify-center shadow-inner w-full">
+          <div ref={containerRef} className="bg-gray-100 dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl p-6 relative overflow-hidden h-72 flex flex-col justify-center shadow-inner w-full transition-colors">
             <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex gap-[20px] z-0">
               {Array.from({ length: 21 }).map((_, i) => (
-                <div key={i} className={`w-[100px] h-[92px] rounded-xl flex-shrink-0 border ${i === 10 ? 'bg-fuchsia-900/20 border-fuchsia-500/50 shadow-[inset_0_0_20px_rgba(217,70,239,0.3)]' : 'bg-gray-900/60 border-white/5'}`}></div>
+                <div key={i} className={`w-[100px] h-[92px] rounded-xl flex-shrink-0 border transition-colors ${i === 10 ? 'bg-fuchsia-100 dark:bg-fuchsia-900/20 border-fuchsia-300 dark:border-fuchsia-500/50 shadow-[inset_0_0_10px_rgba(217,70,239,0.1)] dark:shadow-[inset_0_0_20px_rgba(217,70,239,0.3)]' : 'bg-white/50 dark:bg-gray-900/60 border-gray-200 dark:border-white/5'}`}></div>
               ))}
             </div>
             <div ref={trackRef} className="absolute top-1/2 flex gap-[20px] z-10" style={{ left: '50%', transform: `translate(${offset}px, -50%)`, transition: 'none' }}>
@@ -341,26 +343,26 @@ export default function RandomBadgeSimulator() {
                 <div key={i} className="w-[100px] h-[92px] flex-shrink-0 flex flex-col items-center justify-center">
                   <div className="relative">
                     <img src={item.image} alt={item.name} className="w-12 h-12 object-contain drop-shadow-md relative z-10" />
-                    {item.grade === 'mythic' && <div className="absolute inset-0 bg-yellow-500/40 blur-lg rounded-full z-0"></div>}
+                    {item.grade === 'mythic' && <div className="absolute inset-0 bg-yellow-400/30 dark:bg-yellow-500/40 blur-lg rounded-full z-0 transition-colors"></div>}
                   </div>
-                  <span className="text-[10px] mt-2 text-center text-gray-300 font-bold line-clamp-1 px-1">{item.name}</span>
+                  <span className="text-[10px] mt-2 text-center text-gray-700 dark:text-gray-300 font-bold line-clamp-1 px-1 transition-colors">{item.name}</span>
                 </div>
               ))}
             </div>
-            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[116px] h-[108px] border-4 border-fuchsia-500 rounded-2xl z-20 shadow-[0_0_20px_rgba(217,70,239,0.5)] pointer-events-none"></div>
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[116px] h-[108px] border-4 border-fuchsia-400 dark:border-fuchsia-500 rounded-2xl z-20 shadow-[0_0_15px_rgba(217,70,239,0.3)] dark:shadow-[0_0_20px_rgba(217,70,239,0.5)] pointer-events-none transition-colors"></div>
             {!isSpinning && wonItem && (
-              <div className="absolute inset-0 bg-black/85 z-30 flex flex-col items-center justify-center backdrop-blur-sm animate-fade-in">
-                <span className="text-fuchsia-400 text-base font-bold mb-3 tracking-widest">획득!</span>
-                <img src={wonItem.image} alt={wonItem.name} className="w-28 h-28 object-contain drop-shadow-[0_0_40px_rgba(255,255,255,0.4)]" />
-                <h3 className="text-3xl font-black text-white mt-6 text-center px-4">
+              <div className="absolute inset-0 bg-white/80 dark:bg-black/85 z-30 flex flex-col items-center justify-center backdrop-blur-sm animate-fade-in transition-colors">
+                <span className="text-fuchsia-600 dark:text-fuchsia-400 text-base font-bold mb-3 tracking-widest transition-colors">획득!</span>
+                <img src={wonItem.image} alt={wonItem.name} className="w-28 h-28 object-contain drop-shadow-[0_0_20px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_0_40px_rgba(255,255,255,0.4)]" />
+                <h3 className="text-3xl font-black text-gray-900 dark:text-white mt-6 text-center px-4 transition-colors">
                   {wonItem.name}
-                  <span className="block mt-2 text-sm text-yellow-400 font-medium bg-yellow-500/10 border border-yellow-500/30 px-3 py-1 rounded-full w-fit mx-auto">효과: {wonItem.effect}</span>
+                  <span className="block mt-2 text-sm text-yellow-600 dark:text-yellow-400 font-medium bg-yellow-100 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 px-3 py-1 rounded-full w-fit mx-auto transition-colors">효과: {wonItem.effect}</span>
                 </h3>
               </div>
             )}
           </div>
           <div className="flex justify-center">
-            <button onClick={handleOpen} disabled={isSpinning} className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-black text-xl px-20 py-5 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.3)] hover:shadow-[0_0_30px_rgba(217,70,239,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95">
+            <button onClick={handleOpen} disabled={isSpinning} className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-black text-xl px-20 py-5 rounded-xl shadow-[0_0_15px_rgba(217,70,239,0.2)] dark:shadow-[0_0_20px_rgba(217,70,239,0.3)] hover:shadow-[0_0_25px_rgba(217,70,239,0.4)] dark:hover:shadow-[0_0_30px_rgba(217,70,239,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95">
               {isSpinning ? '개봉 중...' : '1회 개봉하기'}
             </button>
           </div>
@@ -369,24 +371,14 @@ export default function RandomBadgeSimulator() {
 
       {mode === 'test' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/5 p-6 rounded-2xl border border-white/10 gap-4">
-            <div>
-              <h3 className="text-xl font-black text-white">10,000번 대규모 시뮬레이션</h3>
-              <p className="text-sm text-gray-400 mt-1">서버의 공식 확률 데이터가 실제로 어떻게 적용되는지 대수의 법칙으로 검증합니다.</p>
-            </div>
-            <button onClick={handleMassTest} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] whitespace-nowrap">즉시 1만번 돌리기</button>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-50 dark:bg-white/5 p-6 rounded-2xl border border-gray-200 dark:border-white/10 gap-4 transition-colors">
+            <div className="text-center sm:text-left"><h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white transition-colors">대규모 시뮬레이션</h3><p className="text-xs text-gray-500 dark:text-gray-500 mt-1 transition-colors">1만번 시행을 통해 실제 확률을 검증합니다.</p></div>
+            <button onClick={handleMassTest} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl shadow-sm dark:shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all">즉시 1만번 실행</button>
           </div>
           {testCount > 0 && (
-            <div className="bg-black/40 border border-white/10 rounded-2xl p-6 overflow-x-auto">
-              <table className="w-full text-sm text-left whitespace-nowrap">
-                <thead className="text-xs text-gray-500 uppercase bg-white/5">
-                  <tr>
-                    <th className="px-4 py-3 rounded-tl-lg">보상 아이템</th>
-                    <th className="px-4 py-3">공식 확률</th>
-                    <th className="px-4 py-3">시뮬레이션 실제 확률</th>
-                    <th className="px-4 py-3 rounded-tr-lg">획득 횟수 (1만번 기준)</th>
-                  </tr>
-                </thead>
+            <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl overflow-x-auto shadow-sm dark:shadow-none transition-colors">
+              <table className="w-full text-xs md:text-sm text-left whitespace-nowrap">
+                <thead className="text-gray-500 dark:text-gray-500 bg-gray-50 dark:bg-white/5 uppercase transition-colors"><tr><th className="px-4 py-3">보상</th><th className="px-4 py-3">공식</th><th className="px-4 py-3">실제</th><th className="px-4 py-3">횟수</th></tr></thead>
                 <tbody>
                   {BADGE_REWARDS.map(reward => {
                     const count = testResults[reward.id] || 0;
@@ -394,14 +386,14 @@ export default function RandomBadgeSimulator() {
                     const diff = Math.abs(reward.prob - actualProb);
                     const isAccurate = diff < 1.0; 
                     return (
-                      <tr key={reward.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                        <td className="px-4 py-4 font-bold text-white flex items-center gap-3">
+                      <tr key={reward.id} className="border-b border-gray-200 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                        <td className="px-4 py-4 font-bold text-gray-900 dark:text-white flex items-center gap-3 transition-colors">
                           <img src={reward.image} className="w-6 h-6 object-contain" />
                           {reward.name}
                         </td>
-                        <td className="px-4 py-4 text-gray-400">{reward.prob.toFixed(4)}%</td>
-                        <td className={`px-4 py-4 font-black ${isAccurate ? 'text-green-400' : 'text-yellow-400'}`}>{actualProb.toFixed(4)}%</td>
-                        <td className="px-4 py-4 text-gray-300">{count.toLocaleString()}회</td>
+                        <td className="px-4 py-4 text-gray-500 dark:text-gray-400 transition-colors">{reward.prob.toFixed(4)}%</td>
+                        <td className={`px-4 py-4 font-black transition-colors ${isAccurate ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>{actualProb.toFixed(4)}%</td>
+                        <td className="px-4 py-4 text-gray-600 dark:text-gray-300 transition-colors">{count.toLocaleString()}회</td>
                       </tr>
                     );
                   })}
@@ -414,23 +406,23 @@ export default function RandomBadgeSimulator() {
 
       {mode === 'snipe' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="bg-[#0a0a0a] border border-rose-500/20 rounded-2xl p-6 sm:p-8 shadow-[0_0_30px_rgba(244,63,94,0.05)]">
-            <h3 className="text-xl font-black text-rose-400 mb-2">선택 다중 저격 모드</h3>
-            <p className="text-sm text-gray-400 mb-6">선택한 모든 뱃지들을 최소 1개씩 획득할 때까지 뒷단에서 무한으로 개봉합니다.</p>
+          <div className="bg-white dark:bg-[#0a0a0a] border border-rose-200 dark:border-rose-500/20 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-[0_0_30px_rgba(244,63,94,0.05)] transition-colors">
+            <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mb-2 transition-colors">선택 다중 저격 모드</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 transition-colors">선택한 모든 뱃지들을 최소 1개씩 획득할 때까지 뒷단에서 무한으로 개봉합니다.</p>
             <div className="flex flex-col gap-4 mb-6">
               <div className="flex justify-between items-end">
-                <span className="text-sm font-bold text-gray-300">목표 뱃지 선택 (다중 선택 가능)</span>
-                <span className="text-xs text-rose-400 font-bold">{snipeTargetIds.length}개 선택됨</span>
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-300 transition-colors">목표 뱃지 선택 (다중 선택 가능)</span>
+                <span className="text-xs text-rose-600 dark:text-rose-400 font-bold transition-colors">{snipeTargetIds.length}개 선택됨</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
                 {BADGE_REWARDS.map(r => {
                   const isSelected = snipeTargetIds.includes(r.id);
                   return (
-                    <div key={r.id} onClick={() => toggleSnipeTarget(r.id)} className={`cursor-pointer flex items-center gap-2 p-2 rounded-lg border transition-all select-none ${isSelected ? 'bg-rose-500/20 border-rose-500 shadow-[inset_0_0_10px_rgba(225,29,72,0.3)]' : 'bg-black/50 border-white/10 hover:bg-white/5'}`}>
+                    <div key={r.id} onClick={() => toggleSnipeTarget(r.id)} className={`cursor-pointer flex items-center gap-2 p-2 rounded-lg border transition-all select-none ${isSelected ? 'bg-rose-50 dark:bg-rose-500/20 border-rose-400 dark:border-rose-500 shadow-sm dark:shadow-[inset_0_0_10px_rgba(225,29,72,0.3)]' : 'bg-gray-50 dark:bg-black/50 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5'}`}>
                       <img src={r.image} className="w-8 h-8 object-contain" />
                       <div className="flex flex-col overflow-hidden">
-                        <span className={`text-[11px] font-bold truncate ${r.grade === 'mythic' ? 'text-yellow-400' : 'text-white'}`}>{r.name}</span>
-                        <span className="text-[9px] text-gray-400 truncate">{r.effect}</span>
+                        <span className={`text-[11px] font-bold truncate transition-colors ${r.grade === 'mythic' ? (isSelected ? 'text-yellow-600 dark:text-yellow-400' : 'text-yellow-600 dark:text-yellow-400') : (isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200')}`}>{r.name}</span>
+                        <span className="text-[9px] text-gray-500 dark:text-gray-400 truncate transition-colors">{r.effect}</span>
                       </div>
                     </div>
                   );
@@ -438,21 +430,21 @@ export default function RandomBadgeSimulator() {
               </div>
             </div>
             <div className="flex justify-center">
-              <button onClick={handleSnipe} disabled={snipeTargetIds.length === 0 || isSniping} className="bg-rose-600 hover:bg-rose-500 text-white font-black px-12 py-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(225,29,72,0.4)] transition-all">
+              <button onClick={handleSnipe} disabled={snipeTargetIds.length === 0 || isSniping} className="bg-rose-600 hover:bg-rose-500 text-white font-black px-12 py-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-md dark:shadow-[0_0_20px_rgba(225,29,72,0.4)] transition-all">
                 {isSniping ? '목표 획득을 위해 무한 개봉 중...' : '선택한 뱃지가 모두 나올 때까지 개봉'}
               </button>
             </div>
             <div ref={containerRef} className="relative w-full mt-8">
               {snipeResult && (
-                <div className="bg-black/60 border border-rose-500/30 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center animate-fade-in-up">
-                  <span className="text-rose-400 text-lg font-black tracking-widest mb-2">저격 성공!</span>
-                  <div className="text-gray-300 font-medium mb-8 text-center text-sm md:text-base">
-                    선택한 <span className="text-white font-bold">{snipeTargetIds.length}개</span>의 뱃지를 모두 뽑기 위해<br/>
-                    총 <span className="text-rose-400 font-black text-xl">{snipeResult.attempts.toLocaleString()}</span>회 개봉, <span className="text-blue-400 font-black text-xl mx-1">{snipeResult.cost.toLocaleString()}</span>크리스탈을 사용했습니다.
+                <div className="bg-gray-50 dark:bg-black/60 border border-rose-200 dark:border-rose-500/30 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center animate-fade-in-up transition-colors">
+                  <span className="text-rose-600 dark:text-rose-400 text-lg font-black tracking-widest mb-2 transition-colors">저격 성공!</span>
+                  <div className="text-gray-700 dark:text-gray-300 font-medium mb-8 text-center text-sm md:text-base transition-colors">
+                    선택한 <span className="text-gray-900 dark:text-white font-bold transition-colors">{snipeTargetIds.length}개</span>의 뱃지를 모두 뽑기 위해<br/>
+                    총 <span className="text-rose-600 dark:text-rose-400 font-black text-xl transition-colors">{snipeResult.attempts.toLocaleString()}</span>회 개봉, <span className="text-blue-600 dark:text-blue-400 font-black text-xl mx-1 transition-colors">{snipeResult.cost.toLocaleString()}</span>크리스탈을 사용했습니다.
                   </div>
                   <div className="w-full">
-                    <h4 className="text-sm font-bold text-gray-400 text-center border-b border-white/10 pb-2 mb-4">목표 달성 중 획득한 다른 신화(0.625%) 뱃지 수</h4>
-                    <div className="text-3xl font-black text-yellow-400 text-center mb-6">{snipeResult.extraMythics.toLocaleString()}개</div>
+                    <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400 text-center border-b border-gray-200 dark:border-white/10 pb-2 mb-4 transition-colors">목표 달성 중 획득한 다른 신화(0.625%) 뱃지 수</h4>
+                    <div className="text-3xl font-black text-yellow-600 dark:text-yellow-400 text-center mb-6 transition-colors">{snipeResult.extraMythics.toLocaleString()}개</div>
                   </div>
                 </div>
               )}
@@ -463,30 +455,30 @@ export default function RandomBadgeSimulator() {
 
       {mode === 'budget' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="bg-[#0a0a0a] border border-indigo-500/20 rounded-2xl p-6 sm:p-8 shadow-[0_0_30px_rgba(99,102,241,0.05)]">
-            <h3 className="text-xl font-black text-indigo-400 mb-2">예산 시뮬레이션 모드</h3>
-            <p className="text-sm text-gray-400 mb-6">입력한 크리스탈 한도 내에서 최대로 개봉했을 때의 전체 결과를 보여줍니다.</p>
+          <div className="bg-white dark:bg-[#0a0a0a] border border-indigo-200 dark:border-indigo-500/20 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-[0_0_30px_rgba(99,102,241,0.05)] transition-colors">
+            <h3 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mb-2 transition-colors">예산 시뮬레이션 모드</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 transition-colors">입력한 크리스탈 한도 내에서 최대로 개봉했을 때의 전체 결과를 보여줍니다.</p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8 items-end">
               <div className="flex-1 w-full flex flex-col gap-2">
-                <label className="text-xs font-bold text-gray-400 pl-1">보유 크리스탈 예산</label>
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 pl-1 transition-colors">보유 크리스탈 예산</label>
                 <div className="relative">
                   <img src={`${STORAGE_BASE_URL}/crystal.png`} className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 object-contain z-10" />
-                  <input type="number" value={budgetAmount} onChange={(e) => setBudgetAmount(Number(e.target.value))} step="5000" min="5000" className="w-full bg-black border border-white/10 text-white font-black text-lg rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:border-indigo-500" />
+                  <input type="number" value={budgetAmount} onChange={(e) => setBudgetAmount(Number(e.target.value))} step="5000" min="5000" className="w-full bg-gray-50 dark:bg-black border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white font-black text-lg rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors" />
                 </div>
               </div>
-              <button onClick={handleBudgetSimulate} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-3.5 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] transition-all whitespace-nowrap h-[52px]">예산 전부 사용하기</button>
+              <button onClick={handleBudgetSimulate} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-3.5 rounded-xl shadow-md dark:shadow-[0_0_15px_rgba(79,70,229,0.3)] transition-all whitespace-nowrap h-[52px]">예산 전부 사용하기</button>
             </div>
             {budgetResult && (
-              <div className="animate-fade-in-up border-t border-white/10 pt-8 mt-4">
+              <div className="animate-fade-in-up border-t border-gray-200 dark:border-white/10 pt-8 mt-4 transition-colors">
                 <div className="flex justify-between items-center mb-6">
-                  <h4 className="text-lg font-black text-white">결과 리포트 <span className="text-sm text-gray-400 font-medium ml-2">({budgetResult.pulls.toLocaleString()}회 개봉)</span></h4>
+                  <h4 className="text-lg font-black text-gray-900 dark:text-white transition-colors">결과 리포트 <span className="text-sm text-gray-500 dark:text-gray-400 font-medium ml-2 transition-colors">({budgetResult.pulls.toLocaleString()}회 개봉)</span></h4>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                   {budgetResult.results.map(([reward, count]) => (
-                    <div key={reward.id} className={`flex flex-col items-center justify-center p-4 rounded-xl border ${reward.grade === 'mythic' ? 'bg-yellow-500/10 border-yellow-500/50' : 'bg-black/50 border-white/10'}`}>
+                    <div key={reward.id} className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-colors ${reward.grade === 'mythic' ? 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-300 dark:border-yellow-500/50' : 'bg-gray-50 dark:bg-black/50 border-gray-200 dark:border-white/10'}`}>
                       <img src={reward.image} className="w-10 h-10 object-contain drop-shadow-md mb-2" />
-                      <span className={`text-[11px] font-bold text-center mb-1 line-clamp-1 ${reward.grade === 'mythic' ? 'text-yellow-400' : 'text-gray-300'}`}>{reward.name}</span>
-                      <span className="bg-white/10 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{count.toLocaleString()}개</span>
+                      <span className={`text-[11px] font-bold text-center mb-1 line-clamp-1 transition-colors ${reward.grade === 'mythic' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-700 dark:text-gray-300'}`}>{reward.name}</span>
+                      <span className="bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white text-[10px] font-black px-2 py-0.5 rounded-full transition-colors">{count.toLocaleString()}개</span>
                     </div>
                   ))}
                 </div>
@@ -497,25 +489,25 @@ export default function RandomBadgeSimulator() {
       )}
 
       {showCategoryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowCategoryModal(false)}>
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 max-w-4xl w-full shadow-2xl flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowCategoryModal(false)}>
+          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-6 max-w-4xl w-full shadow-2xl flex flex-col max-h-[80vh] transition-colors" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black text-blue-400">스탯(효과)별 뱃지 목록</h3>
-              <button onClick={() => setShowCategoryModal(false)} className="text-gray-400 hover:text-white">
+              <h3 className="text-xl font-black text-blue-600 dark:text-blue-400 transition-colors">스탯(효과)별 뱃지 목록</h3>
+              <button onClick={() => setShowCategoryModal(false)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto custom-scrollbar pr-2 flex-1">
               {categorizedBadges.map(([effect, items]) => (
-                <div key={effect} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3">
-                  <h4 className="text-sm font-black text-yellow-400 border-b border-white/10 pb-2">{effect}</h4>
+                <div key={effect} className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-4 flex flex-col gap-3 transition-colors">
+                  <h4 className="text-sm font-black text-yellow-600 dark:text-yellow-400 border-b border-gray-200 dark:border-white/10 pb-2 transition-colors">{effect}</h4>
                   <div className="flex flex-col gap-2">
                     {items.map(item => (
-                      <div key={item.id} className="flex items-center gap-3 bg-black/40 p-2 rounded-lg">
+                      <div key={item.id} className="flex items-center gap-3 bg-white dark:bg-black/40 p-2 rounded-lg border border-gray-200 dark:border-transparent transition-colors">
                         <img src={item.image} className="w-8 h-8 object-contain" />
                         <div className="flex flex-col">
-                          <span className={`text-xs font-bold ${item.grade === 'mythic' ? 'text-yellow-400' : 'text-gray-200'}`}>{item.name}</span>
-                          <span className="text-[10px] text-gray-500">{item.prob}%</span>
+                          <span className={`text-xs font-bold transition-colors ${item.grade === 'mythic' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-900 dark:text-gray-200'}`}>{item.name}</span>
+                          <span className="text-[10px] text-gray-500 dark:text-gray-500 transition-colors">{item.prob}%</span>
                         </div>
                       </div>
                     ))}
@@ -528,23 +520,23 @@ export default function RandomBadgeSimulator() {
       )}
 
       {showProbModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowProbModal(false)}>
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 max-w-3xl w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setShowProbModal(false)}>
+          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-6 max-w-3xl w-full shadow-2xl transition-colors" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-black text-fuchsia-400">랜덤 뱃지 보급품 확률표</h3>
-              <button onClick={() => setShowProbModal(false)} className="text-gray-400 hover:text-white">
+              <h3 className="text-lg font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">랜덤 뱃지 보급품 확률표</h3>
+              <button onClick={() => setShowProbModal(false)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
               {BADGE_REWARDS.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-white/5 p-2 rounded-lg text-sm">
+                <div key={idx} className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-2 rounded-lg text-sm transition-colors">
                   <img src={item.image} className="w-8 h-8 object-contain" />
                   <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-gray-200 font-medium truncate">{item.name}</span>
-                    <span className="text-[10px] text-yellow-500 font-bold">{item.effect}</span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium truncate transition-colors">{item.name}</span>
+                    <span className="text-[10px] text-yellow-600 dark:text-yellow-500 font-bold transition-colors">{item.effect}</span>
                   </div>
-                  <span className="text-white font-bold bg-fuchsia-500/20 text-fuchsia-300 px-2 py-1 rounded whitespace-nowrap">{item.prob.toFixed(4)}%</span>
+                  <span className="text-white font-bold bg-fuchsia-400 dark:bg-fuchsia-500/20 dark:text-fuchsia-300 px-2 py-1 rounded whitespace-nowrap transition-colors">{item.prob.toFixed(4)}%</span>
                 </div>
               ))}
             </div>

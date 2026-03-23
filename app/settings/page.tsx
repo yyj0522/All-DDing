@@ -157,41 +157,46 @@ export default function SettingsPage() {
   const dailyDrinkRecovery = drinkRoutine.reduce((sum, val) => sum + (STAMINA_DRINKS.find(d => d.value === val)?.recovery || 0), 0);
   const totalDailyStamina = currentMaxStamina + dailyDrinkRecovery;
 
-  if (!isLoaded) return <div className="min-h-screen bg-[#050505]"></div>;
+  if (!isLoaded) return <div className="min-h-screen bg-gray-50 dark:bg-[#050505] transition-colors duration-300"></div>;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-indigo-500/30 flex flex-col relative overflow-x-hidden">
-      <div className="absolute top-[-10%] left-[-5%] w-full h-[40%] bg-white/5 rounded-full blur-[120px] pointer-events-none"></div>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-200 dark:selection:bg-indigo-500/30 flex flex-col relative overflow-x-hidden transition-colors duration-300">
+      <div className="absolute top-[-10%] left-[-5%] w-full h-[40%] bg-indigo-100 dark:bg-white/5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300"></div>
       <Header />
       <style dangerouslySetInnerHTML={{__html: `
         .skill-tree { display: flex; justify-content: center; width: 100%; padding-bottom: 2rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .skill-tree ul { padding-top: 25px; position: relative; display: flex; justify-content: center; transition: all 0.3s; white-space: nowrap; }
         .skill-tree li { display: inline-block; vertical-align: top; text-align: center; list-style-type: none; position: relative; padding: 25px 5px 0 5px; transition: all 0.3s; }
-        .skill-tree li::before, .skill-tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #3f3f46; width: 50%; height: 25px; z-index: 1; }
-        .skill-tree li::after { right: auto; left: 50%; border-left: 2px solid #3f3f46; }
+        .skill-tree li::before, .skill-tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #9ca3af; width: 50%; height: 25px; z-index: 1; }
+        html.dark .skill-tree li::before, html.dark .skill-tree li::after { border-color: #3f3f46; }
+        .skill-tree li::after { right: auto; left: 50%; border-left: 2px solid #9ca3af; }
+        html.dark .skill-tree li::after { border-color: #3f3f46; }
         .skill-tree li:only-child::after, .skill-tree li:only-child::before { display: none; }
         .skill-tree li:only-child { padding-top: 0; }
         .skill-tree li:first-child::before, .skill-tree li:last-child::after { border: 0 none; }
-        .skill-tree li:last-child::before { border-right: 2px solid #3f3f46; border-radius: 0 10px 0 0; }
+        .skill-tree li:last-child::before { border-right: 2px solid #9ca3af; border-radius: 0 10px 0 0; }
+        html.dark .skill-tree li:last-child::before { border-color: #3f3f46; }
         .skill-tree li:first-child::after { border-radius: 10px 0 0 0; }
-        .skill-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #3f3f46; width: 0; height: 25px; margin-left: -1px; z-index: 1; }
+        .skill-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #9ca3af; width: 0; height: 25px; margin-left: -1px; z-index: 1; }
+        html.dark .skill-tree ul ul::before { border-color: #3f3f46; }
         input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
         .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
       `}} />
       <main className="relative z-10 flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-40 pb-20">
-        <div className="mb-8 md:mb-12 text-center md:text-left max-w-7xl mx-auto px-2">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white mb-3">개인 설정 <span className="text-indigo-500">보드</span></h1>
-          <p className="text-gray-400 text-xs sm:text-sm md:text-base tracking-wide max-w-2xl break-keep">전문가 스킬 트리, 세이지 도구 강화 현황 및 재료 단가를 통합 관리합니다.</p>
+        <div className="mb-8 md:mb-12 text-center md:text-left max-w-7xl mx-auto px-2 transition-colors">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-3 transition-colors">개인 설정 <span className="text-indigo-600 dark:text-indigo-500 transition-colors">보드</span></h1>
+          <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm md:text-base tracking-wide max-w-2xl break-keep transition-colors">전문가 스킬 트리, 세이지 도구 강화 현황 및 재료 단가를 통합 관리합니다.</p>
         </div>
-        <div className="w-full max-w-7xl mx-auto mb-8 md:mb-12 px-2">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white/5 p-1.5 rounded-2xl md:rounded-full border border-white/5 shadow-2xl">
-            <button onClick={() => setActiveTab('트리')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '트리' ? 'bg-amber-600 text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}>스킬 트리</button>
-            <button onClick={() => setActiveTab('도구')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '도구' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}>도구 강화</button>
-            <button onClick={() => setActiveTab('단가')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '단가' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}>단가 관리</button>
-            <button onClick={() => setActiveTab('기타')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '기타' ? 'bg-emerald-600 text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}>기타 설정</button>
+        <div className="w-full max-w-7xl mx-auto mb-8 md:mb-12 px-2 transition-colors">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white dark:bg-white/5 p-1.5 rounded-2xl md:rounded-full border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-2xl transition-colors">
+            <button onClick={() => setActiveTab('트리')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '트리' ? 'bg-amber-600 text-white shadow-md dark:shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'}`}>스킬 트리</button>
+            <button onClick={() => setActiveTab('도구')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '도구' ? 'bg-rose-600 text-white shadow-md dark:shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'}`}>도구 강화</button>
+            <button onClick={() => setActiveTab('단가')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '단가' ? 'bg-indigo-600 text-white shadow-md dark:shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'}`}>단가 관리</button>
+            <button onClick={() => setActiveTab('기타')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '기타' ? 'bg-emerald-600 text-white shadow-md dark:shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'}`}>기타 설정</button>
           </div>
         </div>
         <div className="w-full animate-fade-in px-1 sm:px-0">

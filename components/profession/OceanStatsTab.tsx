@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { getCachedPrices, supabase } from '@/lib/supabase';
 import { getImagePath, CRAFT_MAX_PRICES, getCraftingPeriod } from '@/lib/professionData';
 import { toPng } from 'html-to-image';
+import { useTheme } from 'next-themes';
 
 const FIXED_ORDER = [
   "조개껍데기 브로치",
@@ -19,6 +20,7 @@ export default function OceanStatsTab() {
   const [selectedCraft, setSelectedCraft] = useState(FIXED_ORDER[0]);
   const [latestPeriod, setLatestPeriod] = useState<string>(getCraftingPeriod());
   const captureRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -100,20 +102,25 @@ export default function OceanStatsTab() {
     const points = graphData.map((d: any, i: number) => `${getX(i)},${getY(d.price)}`).join(' ');
     const areaPoints = `${getX(0)},${height - paddingBottom} ${points} ${getX(graphData.length - 1)},${height - paddingBottom}`;
 
+    const isLight = theme === 'light';
+    const pointColor = isLight ? '#0891b2' : '#22d3ee';
+    const textColor = isLight ? '#111827' : 'white';
+    const circleFill = isLight ? '#ffffff' : '#0a0a0a';
+
     return (
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full drop-shadow-xl overflow-visible">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full drop-shadow-md dark:drop-shadow-xl overflow-visible">
         <defs>
           <linearGradient id="oceanAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
+            <stop offset="0%" stopColor={pointColor} stopOpacity="0.4" />
+            <stop offset="100%" stopColor={pointColor} stopOpacity="0" />
           </linearGradient>
         </defs>
         <polygon points={areaPoints} fill="url(#oceanAreaGrad)" />
-        <polyline points={points} fill="none" stroke="#22d3ee" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={points} fill="none" stroke={pointColor} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
         {graphData.map((d: any, i: number) => (
           <g key={i}>
-            <circle cx={getX(i)} cy={getY(d.price)} r="6" fill="#0a0a0a" stroke="#22d3ee" strokeWidth="3" />
-            <text x={getX(i)} y={getY(d.price) - 15} fill="white" fontSize="14" fontWeight="bold" textAnchor="middle">{d.price.toLocaleString()} G</text>
+            <circle cx={getX(i)} cy={getY(d.price)} r="6" fill={circleFill} stroke={pointColor} strokeWidth="3" />
+            <text x={getX(i)} y={getY(d.price) - 15} fill={textColor} fontSize="14" fontWeight="bold" textAnchor="middle">{d.price.toLocaleString()} G</text>
             <text x={getX(i)} y={height - 10} fill="#6b7280" fontSize="12" fontWeight="bold" textAnchor="middle">{d.period}</text>
           </g>
         ))}
@@ -122,17 +129,17 @@ export default function OceanStatsTab() {
   };
 
   return (
-    <div className="flex flex-col gap-8 w-full relative">
-      <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl flex flex-col min-h-[400px]">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10 border-b border-white/5 pb-6">
+    <div className="flex flex-col gap-8 w-full relative transition-colors duration-300">
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-sm dark:shadow-2xl flex flex-col min-h-[400px] transition-colors">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10 border-b border-gray-200 dark:border-white/5 pb-6 transition-colors">
           <div>
-            <h3 className="text-xl font-bold text-white mb-1">공예품 변동 시세 트렌드</h3>
-            <p className="text-sm text-gray-400">최근 5일 동안의 가격 변동폭입니다.</p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">공예품 변동 시세 트렌드</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors">최근 5일 동안의 가격 변동폭입니다.</p>
           </div>
-          <div className="flex items-center gap-3 bg-black border border-white/10 px-4 py-2.5 rounded-xl">
-            <span className="text-xs font-bold text-gray-500">품목 선택</span>
-            <select value={selectedCraft} onChange={(e) => setSelectedCraft(e.target.value)} className="bg-transparent text-cyan-400 text-sm font-bold focus:outline-none">
-              {FIXED_ORDER.map(name => <option key={name} value={name} className="bg-[#0a0a0a]">{name}</option>)}
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 px-4 py-2.5 rounded-xl transition-colors">
+            <span className="text-xs font-bold text-gray-600 dark:text-gray-500">품목 선택</span>
+            <select value={selectedCraft} onChange={(e) => setSelectedCraft(e.target.value)} className="bg-transparent text-cyan-600 dark:text-cyan-400 text-sm font-bold focus:outline-none transition-colors">
+              {FIXED_ORDER.map(name => <option key={name} value={name} className="bg-white dark:bg-[#0a0a0a]">{name}</option>)}
             </select>
           </div>
         </div>
@@ -141,15 +148,15 @@ export default function OceanStatsTab() {
         </div>
       </div>
 
-      <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-10 shadow-2xl">
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-white/5 pb-4">
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl p-6 md:p-10 shadow-sm dark:shadow-2xl transition-colors">
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-200 dark:border-white/5 pb-4 transition-colors">
           <div>
-            <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 mb-1">해양 공예품 시세 전광판</h3>
-            <p className="text-xs text-gray-500">현재 주기 기준, 직전 주기 대비 등락폭을 고정된 순서로 표시합니다.</p>
+            <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-400 dark:to-blue-600 mb-1">해양 공예품 시세 전광판</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-500">현재 주기 기준, 직전 주기 대비 등락폭을 고정된 순서로 표시합니다.</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-3 py-1 rounded-lg text-xs font-bold">{latestPeriod} 기준</span>
-            <button onClick={handleDownloadImage} className="flex items-center gap-2 bg-white/5 hover:bg-cyan-600 text-white border border-white/10 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300">
+            <span className="bg-cyan-100 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/20 px-3 py-1 rounded-lg text-xs font-bold transition-colors">{latestPeriod} 기준</span>
+            <button onClick={handleDownloadImage} className="flex items-center gap-2 bg-gray-100 dark:bg-white/5 hover:bg-cyan-500 dark:hover:bg-cyan-600 text-gray-700 dark:text-white hover:text-white border border-gray-200 dark:border-white/10 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               이미지로 저장
             </button>
@@ -160,26 +167,26 @@ export default function OceanStatsTab() {
             const isUp = craft.diff > 0;
             const imgPath = getImagePath(craft.name);
             return (
-              <div key={idx} className="flex items-center justify-between bg-black/40 border border-white/5 rounded-xl p-3 md:p-4 hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => setSelectedCraft(craft.name)}>
+              <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-xl p-3 md:p-4 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => setSelectedCraft(craft.name)}>
                 <div className="flex items-center gap-4 flex-1">
-                  <div className="w-10 h-10 bg-white/5 rounded border border-white/10 flex items-center justify-center overflow-hidden p-1">
-                    {imgPath ? <img src={imgPath} alt={craft.name} className="w-full h-full object-contain" style={{imageRendering: 'pixelated'}} onError={(e) => e.currentTarget.style.display='none'} /> : <span className="text-[8px] text-gray-500">IMG</span>}
+                  <div className="w-10 h-10 bg-white dark:bg-white/5 rounded border border-gray-200 dark:border-white/10 flex items-center justify-center overflow-hidden p-1 transition-colors">
+                    {imgPath ? <img src={imgPath} alt={craft.name} className="w-full h-full object-contain" style={{imageRendering: 'pixelated'}} onError={(e) => e.currentTarget.style.display='none'} /> : <span className="text-[8px] text-gray-400 dark:text-gray-500">IMG</span>}
                   </div>
-                  <span className="text-sm md:text-base font-bold text-white">{craft.name}</span>
+                  <span className="text-sm md:text-base font-bold text-gray-900 dark:text-white transition-colors">{craft.name}</span>
                 </div>
                 <div className="flex items-center gap-4 md:gap-8 flex-1 justify-end">
                   <div className="text-right min-w-[80px]">
-                    <span className="text-amber-400 font-black text-base md:text-lg">{craft.current.toLocaleString()}</span>
-                    <span className="text-amber-600 font-bold text-xs ml-1">Gold</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-black text-base md:text-lg transition-colors">{craft.current.toLocaleString()}</span>
+                    <span className="text-amber-700 dark:text-amber-600 font-bold text-xs ml-1 transition-colors">Gold</span>
                   </div>
-                  <div className={`flex items-center gap-1 min-w-[70px] justify-end ${isUp ? 'text-red-500' : craft.diff < 0 ? 'text-blue-500' : 'text-gray-500'}`}>
-                    <span className="font-bold text-sm">{Math.abs(craft.diff).toLocaleString()}</span>
+                  <div className={`flex items-center gap-1 min-w-[70px] justify-end font-bold text-sm ${isUp ? 'text-red-500' : craft.diff < 0 ? 'text-blue-500' : 'text-gray-500'}`}>
+                    <span>{Math.abs(craft.diff).toLocaleString()}</span>
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                       {isUp ? <path d="M12 4l8 8h-6v8h-4v-8H4l8-8z"/> : craft.diff < 0 ? <path d="M12 20l-8-8h6V4h4v8h6l-8 8z"/> : <path d="M5 11h14v2H5z"/>}
                     </svg>
                   </div>
                   <div className="hidden md:block min-w-[120px] text-right">
-                    <span className="text-gray-500 text-xs font-bold">( 최고가의 <span className="text-white">{craft.percent}%</span> )</span>
+                    <span className="text-gray-500 dark:text-gray-500 text-xs font-bold transition-colors">( 최고가의 <span className="text-gray-900 dark:text-white transition-colors">{craft.percent}%</span> )</span>
                   </div>
                 </div>
               </div>

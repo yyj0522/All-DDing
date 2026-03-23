@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { SAGE_TOOLS, ENHANCE_COSTS, SAGE_TOOL_EFFECTS } from '@/lib/reinforceData';
+import { useTheme } from 'next-themes';
 
 interface EnhanceHistory {
   from: number;
@@ -73,6 +74,7 @@ export default function SageSimulator() {
   const [currentTries, setCurrentTries] = useState(0);
   const [history, setHistory] = useState<EnhanceHistory[]>([]);
   const [expectedRange, setExpectedRange] = useState<{start: number | null, end: number | null}>({ start: null, end: null });
+  const { theme } = useTheme();
 
   const formatGold = (amount: number) => {
     if (amount < 10000) return amount.toLocaleString();
@@ -177,65 +179,65 @@ export default function SageSimulator() {
   const cumulativeCost = calculateCumulativeExpectedCost();
 
   return (
-    <div className="w-full space-y-8 animate-fade-in text-gray-100 flex flex-col xl:flex-row gap-8 xl:gap-12">
+    <div className="w-full space-y-8 animate-fade-in text-gray-900 dark:text-gray-100 flex flex-col xl:flex-row gap-8 xl:gap-12 transition-colors duration-300">
       <div className="w-full xl:w-[420px] shrink-0 flex flex-col gap-6">
-        <div className="bg-[#0f0f13]/80 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-xl">
-          <div className="flex gap-2 p-1 bg-black/40 rounded-xl mb-5">
+        <div className="bg-white/80 dark:bg-[#0f0f13]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-xl transition-colors">
+          <div className="flex gap-2 p-1 bg-gray-100 dark:bg-black/40 rounded-xl mb-5 transition-colors">
             {SAGE_TOOLS.map(tool => (
-              <button key={tool.id} onClick={() => { if(!isEnhancing) { setSelectedTool(tool.id); handleReset(); } }} className={`flex-1 py-2.5 text-[11px] font-black rounded-lg transition-all ${selectedTool === tool.id ? 'bg-gradient-to-t from-indigo-600/40 to-indigo-500/10 text-indigo-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>{tool.name}</button>
+              <button key={tool.id} onClick={() => { if(!isEnhancing) { setSelectedTool(tool.id); handleReset(); } }} className={`flex-1 py-2.5 text-[11px] font-black rounded-lg transition-all ${selectedTool === tool.id ? 'bg-indigo-100 text-indigo-600 dark:bg-gradient-to-t dark:from-indigo-600/40 dark:to-indigo-500/10 dark:text-indigo-300 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-white dark:hover:bg-white/5'}`}>{tool.name}</button>
             ))}
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setSkipAnim(!skipAnim)}>
-              <div className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${skipAnim ? 'bg-indigo-500' : 'bg-gray-700'}`}>
+              <div className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${skipAnim ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-700'}`}>
                 <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${skipAnim ? 'translate-x-6' : 'translate-x-0'}`}></div>
               </div>
-              <span className="text-sm font-bold text-gray-400 group-hover:text-gray-200 transition-colors">연출 스킵</span>
+              <span className="text-sm font-bold text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">연출 스킵</span>
             </div>
-            <button onClick={handleReset} disabled={isEnhancing} className="px-5 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold rounded-lg transition-colors disabled:opacity-50">⟲ 초기화</button>
+            <button onClick={handleReset} disabled={isEnhancing} className="px-5 py-2 bg-red-100 dark:bg-red-500/10 hover:bg-red-200 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 text-sm font-bold rounded-lg transition-colors disabled:opacity-50">⟲ 초기화</button>
           </div>
         </div>
 
-        <div className="relative w-full aspect-[4/5] flex items-center justify-center select-none bg-gradient-to-b from-[#1a1a24] to-[#0a0a0f] rounded-3xl border border-white/5 shadow-[0_20px_40px_rgba(0,0,0,0.6)] overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.1)_0%,transparent_60%)]"></div>
+        <div className="relative w-full aspect-[4/5] flex items-center justify-center select-none bg-gradient-to-b from-gray-100 to-gray-200 dark:from-[#1a1a24] dark:to-[#0a0a0f] rounded-3xl border border-gray-300 dark:border-white/5 shadow-inner dark:shadow-[0_20px_40px_rgba(0,0,0,0.6)] overflow-hidden transition-colors">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.2)_0%,transparent_60%)] dark:bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.1)_0%,transparent_60%)] transition-colors"></div>
           {nextCost && (
-            <div className="absolute top-5 left-5 z-30 flex flex-col items-center justify-center bg-black/70 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-md shadow-lg">
-              <span className="text-gray-400 text-[10px] font-bold mb-1">성공률</span>
-              <span className="text-yellow-400 text-lg font-black">{nextCost.prob}%</span>
+            <div className="absolute top-5 left-5 z-30 flex flex-col items-center justify-center bg-white/80 dark:bg-black/70 border border-gray-200 dark:border-white/10 px-4 py-2 rounded-xl backdrop-blur-md shadow-sm dark:shadow-lg transition-colors">
+              <span className="text-gray-500 dark:text-gray-400 text-[10px] font-bold mb-1 transition-colors">성공률</span>
+              <span className="text-yellow-600 dark:text-yellow-400 text-lg font-black transition-colors">{nextCost.prob}%</span>
             </div>
           )}
-          <img src={`${STORAGE_BASE_URL}/reinforce/reinforce.png`} alt="제단" className="relative w-[85%] h-auto object-contain pointer-events-none drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)]" style={{ imageRendering: 'pixelated' }} />
+          <img src={`${STORAGE_BASE_URL}/reinforce/reinforce.png`} alt="제단" className="relative w-[85%] h-auto object-contain pointer-events-none drop-shadow-md dark:drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)]" style={{ imageRendering: 'pixelated' }} />
           {nextCost && (
             <>
               <div className="absolute top-[46%] left-[34%] transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center transition-all duration-300 hover:scale-110">
                 <img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} className="w-5 h-5 object-contain opacity-90" />
-                <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-white px-1 bg-black/60 rounded border border-white/10">{nextCost.low}</span>
+                <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-gray-900 dark:text-white px-1 bg-white/80 dark:bg-black/60 rounded border border-gray-300 dark:border-white/10 transition-colors">{nextCost.low}</span>
               </div>
               <div className="absolute top-[39%] left-[52%] transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center transition-all duration-300 hover:scale-110">
                 <img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} className={`w-5 h-5 object-contain ${nextCost.high > 0 ? 'opacity-90' : 'opacity-20 grayscale'}`} /> 
-                {nextCost.high > 0 && <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-white px-1 bg-black/60 rounded border border-white/10">{nextCost.high}</span>}
+                {nextCost.high > 0 && <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-gray-900 dark:text-white px-1 bg-white/80 dark:bg-black/60 rounded border border-gray-300 dark:border-white/10 transition-colors">{nextCost.high}</span>}
               </div>
               <div className="absolute top-[46%] left-[69%] transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center transition-all duration-300 hover:scale-110">
                 <img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} className={`w-5 h-5 object-contain ${nextCost.mid > 0 ? 'opacity-90' : 'opacity-20 grayscale'}`} /> 
-                {nextCost.mid > 0 && <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-white px-1 bg-black/60 rounded border border-white/10">{nextCost.mid}</span>}
+                {nextCost.mid > 0 && <span className="absolute -bottom-2 -right-2 text-[11px] font-black text-gray-900 dark:text-white px-1 bg-white/80 dark:bg-black/60 rounded border border-gray-300 dark:border-white/10 transition-colors">{nextCost.mid}</span>}
               </div>
             </>
           )}
           <div className="absolute top-[51.5%] left-[51.5%] transform -translate-x-1/2 -translate-y-1/2 group z-20">
             <div className="w-12 h-12 flex items-center justify-center cursor-help relative transition-transform">
-               <img src={getToolImage(selectedTool, currentLevel)} className="w-10 h-10 object-contain drop-shadow-[0_0_20px_rgba(99,102,241,0.6)]" style={{ imageRendering: 'pixelated' }} />
+               <img src={getToolImage(selectedTool, currentLevel)} className="w-10 h-10 object-contain drop-shadow-md dark:drop-shadow-[0_0_20px_rgba(99,102,241,0.6)]" style={{ imageRendering: 'pixelated' }} />
                {currentLevel > 0 && (
-                 <span className="absolute -top-3 -right-4 text-xs font-black text-yellow-300 bg-black/60 px-1.5 rounded-full border border-yellow-500/30">+{currentLevel}</span>
+                 <span className="absolute -top-3 -right-4 text-xs font-black text-yellow-600 dark:text-yellow-300 bg-white/90 dark:bg-black/60 px-1.5 rounded-full border border-yellow-400 dark:border-yellow-500/30 transition-colors">+{currentLevel}</span>
                )}
             </div>
-            <div className="absolute bottom-full mb-3 left-1/2 transform -translate-x-1/2 w-52 bg-[#1a1a24]/95 backdrop-blur-xl border border-indigo-500/30 rounded-xl p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] scale-95 group-hover:scale-100">
-              <h4 className="text-[13px] font-black text-white mb-2 border-b border-white/10 pb-1.5 flex justify-between items-center">
+            <div className="absolute bottom-full mb-3 left-1/2 transform -translate-x-1/2 w-52 bg-white/95 dark:bg-[#1a1a24]/95 backdrop-blur-xl border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 shadow-lg dark:shadow-[0_10px_30px_rgba(0,0,0,0.8)] scale-95 group-hover:scale-100">
+              <h4 className="text-[13px] font-black text-gray-900 dark:text-white mb-2 border-b border-gray-200 dark:border-white/10 pb-1.5 flex justify-between items-center transition-colors">
                 <span>{SAGE_TOOLS.find(t=>t.id===selectedTool)?.name}</span>
-                <span className="text-yellow-400 bg-yellow-500/10 px-1.5 py-0.5 rounded text-[10px]">+{currentLevel}</span>
+                <span className="text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-500/10 px-1.5 py-0.5 rounded text-[10px] transition-colors">+{currentLevel}</span>
               </h4>
-              <ul className="space-y-1 text-[11px] text-gray-300">
+              <ul className="space-y-1 text-[11px] text-gray-600 dark:text-gray-300 transition-colors">
                 {Object.entries(currentStats).map(([key, val]) => (
-                  <li key={key} className="flex justify-between items-center"><span className="text-gray-400">{key}</span><span className="font-bold text-indigo-300">{val}</span></li>
+                  <li key={key} className="flex justify-between items-center"><span className="text-gray-500 dark:text-gray-400 transition-colors">{key}</span><span className="font-bold text-indigo-600 dark:text-indigo-300 transition-colors">{val}</span></li>
                 ))}
               </ul>
             </div>
@@ -251,56 +253,56 @@ export default function SageSimulator() {
       </div>
 
       <div className="flex-1 flex flex-col gap-4 min-w-0">
-        <div className="bg-[#0f0f13]/80 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-xl">
-          <h3 className="text-sm font-black text-gray-300 mb-3 flex items-center gap-2">현재까지 누적 소모 재화</h3>
+        <div className="bg-white/80 dark:bg-[#0f0f13]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 p-4 rounded-2xl shadow-sm dark:shadow-xl transition-colors">
+          <h3 className="text-sm font-black text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2 transition-colors">현재까지 누적 소모 재화</h3>
           <div className="flex flex-col gap-3">
             <div className="flex gap-3">
-              <div className="flex-1 flex items-center justify-between bg-black/40 p-3 rounded-xl border border-yellow-500/20">
-                <div className="flex items-center gap-2"><img src={`${STORAGE_BASE_URL}/coin.png`} className="w-5 h-5 object-contain" /><span className="text-xs text-gray-400 font-bold">골드</span></div>
-                <span className="text-sm font-black text-yellow-400">{formatGold(totalCost.coin)}</span>
+              <div className="flex-1 flex items-center justify-between bg-gray-50 dark:bg-black/40 p-3 rounded-xl border border-yellow-200 dark:border-yellow-500/20 transition-colors">
+                <div className="flex items-center gap-2"><img src={`${STORAGE_BASE_URL}/coin.png`} className="w-5 h-5 object-contain" /><span className="text-xs text-gray-500 dark:text-gray-400 font-bold transition-colors">골드</span></div>
+                <span className="text-sm font-black text-yellow-600 dark:text-yellow-400 transition-colors">{formatGold(totalCost.coin)}</span>
               </div>
-              <div className="flex-1 flex items-center justify-between bg-black/40 p-3 rounded-xl border border-red-500/20">
-                <div className="flex items-center gap-2"><img src={`${STORAGE_BASE_URL}/ruby.png`} className="w-5 h-5 object-contain" /><span className="text-xs text-gray-400 font-bold">루비</span></div>
-                <span className="text-sm font-black text-red-400">{totalCost.ruby.toLocaleString()}</span>
+              <div className="flex-1 flex items-center justify-between bg-gray-50 dark:bg-black/40 p-3 rounded-xl border border-red-200 dark:border-red-500/20 transition-colors">
+                <div className="flex items-center gap-2"><img src={`${STORAGE_BASE_URL}/ruby.png`} className="w-5 h-5 object-contain" /><span className="text-xs text-gray-500 dark:text-gray-400 font-bold transition-colors">루비</span></div>
+                <span className="text-sm font-black text-red-600 dark:text-red-400 transition-colors">{totalCost.ruby.toLocaleString()}</span>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col items-center justify-center bg-black/40 p-2 rounded-xl border border-white/5"><img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} className="w-5 h-5 object-contain mb-1" /><span className="text-xs font-bold text-gray-200">{totalCost.low.toLocaleString()}</span></div>
-              <div className="flex flex-col items-center justify-center bg-black/40 p-2 rounded-xl border border-white/5"><img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} className="w-5 h-5 object-contain mb-1" /><span className="text-xs font-bold text-gray-200">{totalCost.mid.toLocaleString()}</span></div>
-              <div className="flex flex-col items-center justify-center bg-black/40 p-2 rounded-xl border border-white/5"><img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} className="w-5 h-5 object-contain mb-1" /><span className="text-xs font-bold text-gray-200">{totalCost.high.toLocaleString()}</span></div>
+              <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-black/40 p-2 rounded-xl border border-gray-200 dark:border-white/5 transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} className="w-5 h-5 object-contain mb-1" /><span className="text-xs font-bold text-gray-900 dark:text-gray-200 transition-colors">{totalCost.low.toLocaleString()}</span></div>
+              <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-black/40 p-2 rounded-xl border border-gray-200 dark:border-white/5 transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} className="w-5 h-5 object-contain mb-1" /><span className="text-xs font-bold text-gray-900 dark:text-gray-200 transition-colors">{totalCost.mid.toLocaleString()}</span></div>
+              <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-black/40 p-2 rounded-xl border border-gray-200 dark:border-white/5 transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} className="w-5 h-5 object-contain mb-1" /><span className="text-xs font-bold text-gray-900 dark:text-gray-200 transition-colors">{totalCost.high.toLocaleString()}</span></div>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 bg-[#0f0f13]/80 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl flex flex-col">
-          <div className="flex border-b border-white/5">
-            <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-sm font-black transition-colors relative ${activeTab === 'history' ? 'text-indigo-400' : 'text-gray-500 hover:text-gray-300'}`}>실제 강화 기록{activeTab === 'history' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500"></div>}</button>
-            <button onClick={() => setActiveTab('expected')} className={`flex-1 py-3 text-sm font-black transition-colors relative ${activeTab === 'expected' ? 'text-indigo-400' : 'text-gray-500 hover:text-gray-300'}`}>구간별 기댓값 표{activeTab === 'expected' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500"></div>}</button>
+        <div className="flex-1 bg-white/80 dark:bg-[#0f0f13]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-xl flex flex-col transition-colors">
+          <div className="flex border-b border-gray-200 dark:border-white/5 transition-colors">
+            <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-sm font-black transition-colors relative ${activeTab === 'history' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>실제 강화 기록{activeTab === 'history' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500"></div>}</button>
+            <button onClick={() => setActiveTab('expected')} className={`flex-1 py-3 text-sm font-black transition-colors relative ${activeTab === 'expected' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>구간별 기댓값 표{activeTab === 'expected' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500"></div>}</button>
           </div>
           <div className="p-4 flex-1 overflow-y-auto custom-scrollbar h-[400px]">
             {activeTab === 'history' && (
               <div className="flex justify-end mb-3">
-                 <div className="flex items-center bg-black/50 border border-indigo-500/30 rounded-xl overflow-hidden h-8 shadow-inner">
-                  <span className="text-[10px] text-gray-400 px-3 font-bold">자동 타겟 설정</span>
-                  <select value={targetLevel} onChange={(e) => setTargetLevel(Number(e.target.value))} className="bg-transparent text-indigo-300 text-xs font-black px-2 h-full outline-none cursor-pointer">
-                    {[...Array(15)].map((_, i) => (<option key={i+1} value={i+1} className="bg-gray-900">+{i+1}강</option>))}
+                 <div className="flex items-center bg-gray-100 dark:bg-black/50 border border-indigo-200 dark:border-indigo-500/30 rounded-xl overflow-hidden h-8 shadow-inner transition-colors">
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400 px-3 font-bold transition-colors">자동 타겟 설정</span>
+                  <select value={targetLevel} onChange={(e) => setTargetLevel(Number(e.target.value))} className="bg-transparent text-indigo-600 dark:text-indigo-300 text-xs font-black px-2 h-full outline-none cursor-pointer transition-colors">
+                    {[...Array(15)].map((_, i) => (<option key={i+1} value={i+1} className="bg-white dark:bg-gray-900">+{i+1}강</option>))}
                   </select>
-                  <button onClick={executeTargetEnhance} disabled={isEnhancing || currentLevel >= targetLevel} className="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-bold px-4 h-full border-l border-indigo-500/30">즉시 돌파</button>
+                  <button onClick={executeTargetEnhance} disabled={isEnhancing || currentLevel >= targetLevel} className="bg-indigo-100 dark:bg-indigo-600/20 hover:bg-indigo-200 dark:hover:bg-indigo-600/40 text-indigo-600 dark:text-indigo-300 text-xs font-bold px-4 h-full border-l border-indigo-200 dark:border-indigo-500/30 transition-colors">즉시 돌파</button>
                 </div>
               </div>
             )}
             {activeTab === 'history' ? (
               <div className="flex flex-col gap-2">
-                {history.length === 0 ? (<div className="flex flex-col items-center justify-center py-16 text-gray-600"><span className="text-sm font-bold">아직 돌파 기록이 없습니다.</span></div>) : 
+                {history.length === 0 ? (<div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-600 transition-colors"><span className="text-sm font-bold">아직 돌파 기록이 없습니다.</span></div>) : 
                 history.map((h, i) => (
-                  <div key={i} className="flex flex-row items-center justify-between bg-black/40 border border-white/5 p-2 rounded-lg hover:bg-black/60 transition-colors">
-                    <div className="flex items-center gap-3 shrink-0"><div className="flex items-center justify-center bg-gray-900 border border-gray-700 px-3 py-1.5 rounded-lg min-w-[80px]"><span className="text-indigo-300 font-black text-xs">{h.from} ➔ {h.to}</span></div><span className="text-gray-400 text-[11px] font-black">{h.tries}번 시도</span></div>
-                    <div className="flex items-center justify-end gap-1.5 text-[10px] font-bold text-gray-400 flex-1 flex-wrap pl-2">
-                      <span className="text-yellow-400 bg-yellow-950/30 px-1.5 py-0.5 rounded border border-yellow-500/10 flex items-center gap-1"><img src={`${STORAGE_BASE_URL}/coin.png`} className="w-3 h-3" />{formatGold(h.cost.coin)}</span>
-                      {h.cost.ruby > 0 && <span className="text-red-400 bg-red-950/30 px-1.5 py-0.5 rounded border border-red-500/10 flex items-center gap-1"><img src={`${STORAGE_BASE_URL}/ruby.png`} className="w-3 h-3" />{h.cost.ruby.toLocaleString()}</span>}
-                      {h.cost.low > 0 && <span className="text-gray-300 bg-gray-800/50 px-1.5 py-0.5 rounded border border-white/5 flex items-center gap-1"><img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} className="w-3 h-3" />{h.cost.low.toLocaleString()}</span>}
-                      {h.cost.mid > 0 && <span className="text-gray-300 bg-gray-800/50 px-1.5 py-0.5 rounded border border-white/5 flex items-center gap-1"><img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} className="w-3 h-3" />{h.cost.mid.toLocaleString()}</span>}
-                      {h.cost.high > 0 && <span className="text-gray-300 bg-gray-800/50 px-1.5 py-0.5 rounded border border-white/5 flex items-center gap-1"><img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} className="w-3 h-3" />{h.cost.high.toLocaleString()}</span>}
+                  <div key={i} className="flex flex-row items-center justify-between bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-black/60 transition-colors">
+                    <div className="flex items-center gap-3 shrink-0"><div className="flex items-center justify-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-1.5 rounded-lg min-w-[80px] transition-colors"><span className="text-indigo-600 dark:text-indigo-300 font-black text-xs transition-colors">{h.from} ➔ {h.to}</span></div><span className="text-gray-500 dark:text-gray-400 text-[11px] font-black transition-colors">{h.tries}번 시도</span></div>
+                    <div className="flex items-center justify-end gap-1.5 text-[10px] font-bold text-gray-600 dark:text-gray-400 flex-1 flex-wrap pl-2 transition-colors">
+                      <span className="text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-950/30 px-1.5 py-0.5 rounded border border-yellow-200 dark:border-yellow-500/10 flex items-center gap-1 transition-colors"><img src={`${STORAGE_BASE_URL}/coin.png`} className="w-3 h-3" />{formatGold(h.cost.coin)}</span>
+                      {h.cost.ruby > 0 && <span className="text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/30 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-500/10 flex items-center gap-1 transition-colors"><img src={`${STORAGE_BASE_URL}/ruby.png`} className="w-3 h-3" />{h.cost.ruby.toLocaleString()}</span>}
+                      {h.cost.low > 0 && <span className="text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800/50 px-1.5 py-0.5 rounded border border-gray-300 dark:border-white/5 flex items-center gap-1 transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} className="w-3 h-3" />{h.cost.low.toLocaleString()}</span>}
+                      {h.cost.mid > 0 && <span className="text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800/50 px-1.5 py-0.5 rounded border border-gray-300 dark:border-white/5 flex items-center gap-1 transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} className="w-3 h-3" />{h.cost.mid.toLocaleString()}</span>}
+                      {h.cost.high > 0 && <span className="text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800/50 px-1.5 py-0.5 rounded border border-gray-300 dark:border-white/5 flex items-center gap-1 transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} className="w-3 h-3" />{h.cost.high.toLocaleString()}</span>}
                     </div>
                   </div>
                 ))}
@@ -308,35 +310,35 @@ export default function SageSimulator() {
             ) : (
               <div className="w-full flex flex-col gap-4">
                 {expectedRange.start !== null && expectedRange.end !== null && cumulativeCost && (
-                  <div className="bg-indigo-900/30 border border-indigo-500/50 p-4 rounded-xl flex flex-col gap-3 sticky top-0 z-10 backdrop-blur-md shadow-lg">
-                    <div className="flex items-center justify-between"><h4 className="text-indigo-300 font-black text-sm">{expectedRange.start}강 ➔ {expectedRange.end + 1}강 누적 기댓값</h4><button onClick={() => setExpectedRange({start: null, end: null})} className="text-gray-400 text-xs font-bold">선택 취소</button></div>
+                  <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-500/50 p-4 rounded-xl flex flex-col gap-3 sticky top-0 z-10 backdrop-blur-md shadow-sm dark:shadow-lg transition-colors">
+                    <div className="flex items-center justify-between"><h4 className="text-indigo-600 dark:text-indigo-300 font-black text-sm transition-colors">{expectedRange.start}강 ➔ {expectedRange.end + 1}강 누적 기댓값</h4><button onClick={() => setExpectedRange({start: null, end: null})} className="text-gray-500 dark:text-gray-400 text-xs font-bold transition-colors">선택 취소</button></div>
                     <div className="flex items-center gap-2 flex-wrap text-xs">
-                      <span className="flex items-center gap-1 text-yellow-400 font-bold bg-black/40 px-2 py-1 rounded"><img src={`${STORAGE_BASE_URL}/coin.png`} className="w-4 h-4" />{formatGold(cumulativeCost.coin)}</span>
-                      {cumulativeCost.ruby > 0 && <span className="flex items-center gap-1 text-red-400 font-bold bg-black/40 px-2 py-1 rounded"><img src={`${STORAGE_BASE_URL}/ruby.png`} className="w-4 h-4" />{cumulativeCost.ruby.toLocaleString()}</span>}
-                      {cumulativeCost.low > 0 && <span className="flex items-center gap-1 text-gray-300 font-bold bg-black/40 px-2 py-1 rounded"><img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} className="w-4 h-4" />{cumulativeCost.low.toLocaleString()}</span>}
-                      {cumulativeCost.mid > 0 && <span className="flex items-center gap-1 text-gray-300 font-bold bg-black/40 px-2 py-1 rounded"><img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} className="w-4 h-4" />{cumulativeCost.mid.toLocaleString()}</span>}
-                      {cumulativeCost.high > 0 && <span className="flex items-center gap-1 text-gray-300 font-bold bg-black/40 px-2 py-1 rounded"><img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} className="w-4 h-4" />{cumulativeCost.high.toLocaleString()}</span>}
+                      <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-bold bg-white dark:bg-black/40 px-2 py-1 rounded transition-colors"><img src={`${STORAGE_BASE_URL}/coin.png`} className="w-4 h-4" />{formatGold(cumulativeCost.coin)}</span>
+                      {cumulativeCost.ruby > 0 && <span className="flex items-center gap-1 text-red-600 dark:text-red-400 font-bold bg-white dark:bg-black/40 px-2 py-1 rounded transition-colors"><img src={`${STORAGE_BASE_URL}/ruby.png`} className="w-4 h-4" />{cumulativeCost.ruby.toLocaleString()}</span>}
+                      {cumulativeCost.low > 0 && <span className="flex items-center gap-1 text-gray-700 dark:text-gray-300 font-bold bg-white dark:bg-black/40 px-2 py-1 rounded transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} className="w-4 h-4" />{cumulativeCost.low.toLocaleString()}</span>}
+                      {cumulativeCost.mid > 0 && <span className="flex items-center gap-1 text-gray-700 dark:text-gray-300 font-bold bg-white dark:bg-black/40 px-2 py-1 rounded transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} className="w-4 h-4" />{cumulativeCost.mid.toLocaleString()}</span>}
+                      {cumulativeCost.high > 0 && <span className="flex items-center gap-1 text-gray-700 dark:text-gray-300 font-bold bg-white dark:bg-black/40 px-2 py-1 rounded transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} className="w-4 h-4" />{cumulativeCost.high.toLocaleString()}</span>}
                     </div>
                   </div>
                 )}
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-gray-900/80 text-gray-400"><tr><th className="px-2 py-2 text-center w-8">선택</th><th className="px-3 py-2">단계</th><th className="px-2 py-2 text-center">확률</th><th className="px-2 py-2 text-center">평균시도</th><th className="px-3 py-2 text-right">단계별 기댓값</th></tr></thead>
+                  <thead className="bg-gray-100 dark:bg-gray-900/80 text-gray-600 dark:text-gray-400 transition-colors"><tr><th className="px-2 py-2 text-center w-8">선택</th><th className="px-3 py-2">단계</th><th className="px-2 py-2 text-center">확률</th><th className="px-2 py-2 text-center">평균시도</th><th className="px-3 py-2 text-right">단계별 기댓값</th></tr></thead>
                   <tbody>{ENHANCE_COSTS.map((c, i) => {
                     const tries = Math.ceil(100 / c.prob); const isChecked = expectedRange.start !== null && expectedRange.end !== null && i >= expectedRange.start && i <= expectedRange.end;
                     return (
-                      <tr key={i} className={`border-b border-white/5 last:border-0 hover:bg-white/10 cursor-pointer transition-colors ${isChecked ? 'bg-indigo-900/20' : ''}`} onClick={() => handleExpectedRowClick(i)}>
+                      <tr key={i} className={`border-b border-gray-200 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/10 cursor-pointer transition-colors ${isChecked ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`} onClick={() => handleExpectedRowClick(i)}>
                         <td className="px-2 py-2 text-center"><input type="checkbox" checked={isChecked} readOnly className="accent-indigo-500 w-3.5 h-3.5 pointer-events-none" /></td>
-                        <td className={`px-3 py-2 font-black ${isChecked ? 'text-indigo-200' : 'text-indigo-300'}`}>{i} ➔ {i+1}</td>
-                        <td className="px-2 py-2 font-bold text-white text-center bg-white/5">{c.prob}%</td>
-                        <td className="px-2 py-2 text-gray-400 text-center">{tries}회</td>
+                        <td className={`px-3 py-2 font-black transition-colors ${isChecked ? 'text-indigo-600 dark:text-indigo-200' : 'text-indigo-500 dark:text-indigo-300'}`}>{i} ➔ {i+1}</td>
+                        <td className="px-2 py-2 font-bold text-gray-900 dark:text-white text-center bg-gray-50 dark:bg-white/5 transition-colors">{c.prob}%</td>
+                        <td className="px-2 py-2 text-gray-500 dark:text-gray-400 text-center transition-colors">{tries}회</td>
                         <td className="px-3 py-2 text-right">
                           <div className="flex items-center justify-end gap-1 flex-wrap">
-                            <span className="flex items-center gap-1 text-yellow-400 font-bold bg-yellow-900/20 px-1.5 py-0.5 rounded text-[10px]"><img src={`${STORAGE_BASE_URL}/coin.png`} className="w-3 h-3" />{formatGold(c.coin * tries)}</span>
-                            {c.ruby > 0 && <span className="flex items-center gap-1 text-red-400 font-bold bg-red-900/20 px-1.5 py-0.5 rounded text-[10px]"><img src={`${STORAGE_BASE_URL}/ruby.png`} className="w-3 h-3" />{(c.ruby * tries).toLocaleString()}</span>}
-                            <div className="flex gap-1 ml-1 bg-gray-800/50 px-1.5 py-0.5 rounded">
-                              {c.low > 0 && <span className="flex items-center gap-0.5 text-gray-300 font-bold text-[10px]"><img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} className="w-3 h-3" />{(c.low * tries).toLocaleString()}</span>}
-                              {c.mid > 0 && <span className="flex items-center gap-0.5 text-gray-300 font-bold text-[10px]"><img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} className="w-3 h-3" />{(c.mid * tries).toLocaleString()}</span>}
-                              {c.high > 0 && <span className="flex items-center gap-0.5 text-gray-300 font-bold text-[10px]"><img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} className="w-3 h-3" />{(c.high * tries).toLocaleString()}</span>}
+                            <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-bold bg-yellow-50 dark:bg-yellow-900/20 px-1.5 py-0.5 rounded text-[10px] transition-colors"><img src={`${STORAGE_BASE_URL}/coin.png`} className="w-3 h-3" />{formatGold(c.coin * tries)}</span>
+                            {c.ruby > 0 && <span className="flex items-center gap-1 text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded text-[10px] transition-colors"><img src={`${STORAGE_BASE_URL}/ruby.png`} className="w-3 h-3" />{(c.ruby * tries).toLocaleString()}</span>}
+                            <div className="flex gap-1 ml-1 bg-gray-100 dark:bg-gray-800/50 px-1.5 py-0.5 rounded transition-colors">
+                              {c.low > 0 && <span className="flex items-center gap-0.5 text-gray-600 dark:text-gray-300 font-bold text-[10px] transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} className="w-3 h-3" />{(c.low * tries).toLocaleString()}</span>}
+                              {c.mid > 0 && <span className="flex items-center gap-0.5 text-gray-600 dark:text-gray-300 font-bold text-[10px] transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} className="w-3 h-3" />{(c.mid * tries).toLocaleString()}</span>}
+                              {c.high > 0 && <span className="flex items-center gap-0.5 text-gray-600 dark:text-gray-300 font-bold text-[10px] transition-colors"><img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} className="w-3 h-3" />{(c.high * tries).toLocaleString()}</span>}
                             </div>
                           </div>
                         </td>

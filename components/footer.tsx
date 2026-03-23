@@ -45,28 +45,28 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="relative z-10 w-full border-t border-white/5 bg-[#050505] mt-auto">
+      <footer className="relative z-10 w-full border-t border-gray-200 dark:border-white/5 bg-white dark:bg-[#050505] mt-auto transition-colors">
         <div className="max-w-5xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex flex-col items-center md:items-start text-center md:text-left flex-1">
-            <span className="text-xl font-black text-white tracking-widest mb-1" style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>
+            <span className="text-xl font-black text-black dark:text-white tracking-widest mb-1 drop-shadow-md dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
               올띵
             </span>
-            <span className="text-xs font-medium text-fuchsia-500/80 tracking-wide mb-4">
+            <span className="text-xs font-medium text-fuchsia-600 dark:text-fuchsia-500/80 tracking-wide mb-4">
               띵타이쿤 플레이어를 위한 비공식 종합 도구 모음
             </span>
             
-            <div className="text-[10px] text-gray-500/70 space-y-1.5 font-medium leading-relaxed">
+            <div className="text-[10px] text-gray-500 dark:text-gray-500/70 space-y-1.5 font-medium leading-relaxed">
               <p>
-                올띵(All-Dding)은 띵타이쿤 유저가 제작한 <span className="font-bold text-gray-400">비공식 사이트</span>이며 공식 운영진과 무관합니다.
+                올띵(All-Dding)은 띵타이쿤 유저가 제작한 <span className="font-bold text-gray-700 dark:text-gray-400">비공식 사이트</span>이며 공식 운영진과 무관합니다.
               </p>
               <p>
-                사이트 내 사용된 모든 게임 관련 이미지 및 리소스의 출처와 저작권은 <span className="font-bold text-gray-400">'띵타이쿤 온라인'</span>에 있습니다.
+                사이트 내 사용된 모든 게임 관련 이미지 및 리소스의 출처와 저작권은 <span className="font-bold text-gray-700 dark:text-gray-400">'띵타이쿤 온라인'</span>에 있습니다.
               </p>
               <div className="mt-3 flex items-center justify-center md:justify-start gap-3">
-                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors font-bold underline underline-offset-4 decoration-white/20">
+                <Link href="/privacy" className="text-gray-700 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-bold underline underline-offset-4 decoration-gray-300 dark:decoration-white/20">
                   개인정보 처리방침
                 </Link>
-                <span className="w-1 h-1 bg-white/10 rounded-full"></span>
+                <span className="w-1 h-1 bg-gray-300 dark:bg-white/10 rounded-full"></span>
                 <span className="text-[9px]">© 2026 All-Dding</span>
               </div>
             </div>
@@ -74,10 +74,10 @@ export default function Footer() {
 
           <div className="flex flex-col items-center md:items-end text-sm shrink-0 gap-4">
             <div className="flex flex-col items-center md:items-end">
-              <span className="text-gray-400 font-bold mb-1 text-xs">문의 및 오류/제보/건의</span>
+              <span className="text-gray-700 dark:text-gray-400 font-bold mb-1 text-xs">문의 및 오류/제보/건의</span>
               <button 
                 onClick={() => setIsFeedbackModalOpen(true)}
-                className="text-gray-300 hover:text-white transition-colors font-medium text-xs bg-white/5 px-4 py-2 rounded-lg border border-white/5 hover:bg-white/10 flex items-center gap-2"
+                className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium text-xs bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-lg border border-gray-200 dark:border-white/5 hover:bg-gray-200 dark:hover:bg-white/10 flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 의견 남기기
@@ -88,15 +88,15 @@ export default function Footer() {
       </footer>
 
       {isFeedbackModalOpen && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsFeedbackModalOpen(false)}>
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 dark:bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsFeedbackModalOpen(false)}>
+          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="p-6">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-xl font-black text-white mb-1">의견 보내기</h3>
-                  <p className="text-xs text-gray-400">버그 제보, 기능 건의 등 자유롭게 남겨주세요.</p>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white mb-1">의견 보내기</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">버그 제보, 기능 건의 등 자유롭게 남겨주세요.</p>
                 </div>
-                <button onClick={() => setIsFeedbackModalOpen(false)} className="text-gray-500 hover:text-white transition-colors">
+                <button onClick={() => setIsFeedbackModalOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -109,9 +109,9 @@ export default function Footer() {
                     maxLength={200}
                     rows={5}
                     placeholder="내용을 입력해주세요 (최대 200자)"
-                    className="w-full bg-black border border-white/10 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-blue-500 resize-none custom-scrollbar"
+                    className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl p-4 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 resize-none custom-scrollbar"
                   />
-                  <div className="text-right text-[10px] text-gray-500 mt-1">{feedbackContent.length} / 200</div>
+                  <div className="text-right text-[10px] text-gray-400 dark:text-gray-500 mt-1">{feedbackContent.length} / 200</div>
                 </div>
 
                 <label className="flex items-center gap-2 cursor-pointer group">
@@ -120,13 +120,13 @@ export default function Footer() {
                       type="checkbox" 
                       checked={wantsReply}
                       onChange={(e) => setWantsReply(e.target.checked)}
-                      className="peer appearance-none w-4 h-4 border border-gray-600 rounded bg-transparent checked:bg-blue-600 checked:border-blue-600 transition-all cursor-pointer"
+                      className="peer appearance-none w-4 h-4 border border-gray-400 dark:border-gray-600 rounded bg-transparent checked:bg-blue-600 checked:border-blue-600 transition-all cursor-pointer"
                     />
                     <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-xs font-bold text-gray-300 select-none">답변을 받고 싶습니다 (선택)</span>
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300 select-none">답변을 받고 싶습니다 (선택)</span>
                 </label>
 
                 {wantsReply && (
@@ -136,9 +136,9 @@ export default function Footer() {
                       value={userEmail}
                       onChange={(e) => setUserEmail(e.target.value)}
                       placeholder="이메일 주소 입력"
-                      className="w-full bg-black border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-lg p-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
                     />
-                    <p className="text-[10px] text-gray-500 mt-1.5 ml-1">입력하신 이메일은 답변 용도로만 사용되며 안전하게 파기됩니다.</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 ml-1">입력하신 이메일은 답변 용도로만 사용되며 안전하게 파기됩니다.</p>
                   </div>
                 )}
 

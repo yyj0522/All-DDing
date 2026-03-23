@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import WelcomePopup from "@/components/WelcomePopup"; 
+import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,31 +29,33 @@ export default function RootLayout({
   const isDev = process.env.NODE_ENV === 'development';
 
   return (
-    <html lang="ko">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {!isDev && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-                window.addEventListener('dragstart', function (e) { e.preventDefault(); });
-                window.addEventListener('keydown', function (e) {
-                  if (
-                    e.key === 'F12' || 
-                    (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
-                    (e.ctrlKey && e.key === 'U')
-                  ) {
-                    e.preventDefault();
-                  }
-                });
-              `,
-            }}
-          />
-        )}
-        <WelcomePopup />
-        {children}
-        <Analytics />
-        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
+    <html lang="ko" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          {!isDev && (
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+                  window.addEventListener('dragstart', function (e) { e.preventDefault(); });
+                  window.addEventListener('keydown', function (e) {
+                    if (
+                      e.key === 'F12' || 
+                      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+                      (e.ctrlKey && e.key === 'U')
+                    ) {
+                      e.preventDefault();
+                    }
+                  });
+                `,
+              }}
+            />
+          )}
+          <WelcomePopup />
+          {children}
+          <Analytics />
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
+        </ThemeProvider>
       </body>
     </html>
   );
