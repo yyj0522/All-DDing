@@ -163,7 +163,7 @@ export default function MiscSettingsTab({ townRank, setTownRank, drinkRoutine, a
       </div>
 
       <div className="w-full xl:w-80 flex flex-col gap-5 flex-shrink-0 transition-colors duration-300">
-        <div className="bg-white dark:bg-gradient-to-br dark:from-indigo-900/20 dark:to-black border border-gray-200 dark:border-indigo-500/20 rounded-3xl p-6 shadow-sm dark:shadow-2xl transition-colors">
+        <div className="bg-white dark:bg-[#0a0a0a] dark:bg-gradient-to-br dark:from-indigo-900/20 dark:to-black border border-gray-200 dark:border-indigo-500/20 rounded-3xl p-6 shadow-sm dark:shadow-2xl transition-colors">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 transition-colors">일일 가용 스태미나</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-5 transition-colors">투자 등급과 드링크를 합산한 총량</p>
           <div className="space-y-3">
@@ -177,7 +177,7 @@ export default function MiscSettingsTab({ townRank, setTownRank, drinkRoutine, a
             </div>
             <div className="flex justify-between items-center pt-2 transition-colors">
               <span className="text-sm font-black text-gray-900 dark:text-white transition-colors">총 스태미나</span>
-              <span className="font-black text-indigo-600 dark:text-indigo-400 text-2xl drop-shadow-sm dark:drop-shadow-[0_0_8px_rgba(99,102,241,0.5)] transition-colors">
+              <span className="font-black text-indigo-600 dark:text-indigo-400 text-2xl transition-colors">
                 {totalDailyStamina.toLocaleString()}
               </span>
             </div>
