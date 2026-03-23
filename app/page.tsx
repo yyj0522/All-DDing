@@ -364,7 +364,7 @@ export default function Home() {
           content: isMain ? renderMyStatsFull() : (
             <div className="flex flex-col h-full items-center justify-center text-center">
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center mb-3"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-              <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">마일 등급: <span className="text-gray-900 dark:text-white">{userStats.townRank}</span></p>
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">마을 등급: <span className="text-gray-900 dark:text-white">{userStats.townRank}</span></p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">보유 스태미나: {userStats.stamina.toLocaleString()}</p>
               <Link href="/settings" className="mt-auto w-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-white py-2.5 rounded-xl text-xs font-bold transition-colors">상세 스펙 확인 및 설정</Link>
             </div>
@@ -375,13 +375,13 @@ export default function Home() {
         return {
           title: '통합 조합법 사전',
           content: isMain ? (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col">
               <div className="flex gap-1 mb-4 border-b border-gray-200 dark:border-white/10 pb-2 shrink-0">
                 {['채광', '재배', '해양', '사냥'].map(tab => (
                   <button key={tab} onClick={() => setRecipeTab(tab as any)} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${recipeTab === tab ? 'bg-gray-900 dark:bg-white text-white dark:text-black shadow-lg shadow-gray-200 dark:shadow-white/10' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10'}`}>{tab}</button>
                 ))}
               </div>
-              <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2">
+              <div className="-mx-2 px-2">
                 {recipeTab === '채광' && <RecipeTab recipes={MINE_RECIPES} />}
                 {recipeTab === '재배' && <RecipeTab recipes={FARMING_RECIPES} />}
                 {recipeTab === '해양' && <RecipeTab recipes={OCEAN_RECIPES} />}
@@ -402,12 +402,12 @@ export default function Home() {
         return {
           title: '통합 변동 시세표',
           content: isMain ? (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col">
               <div className="flex gap-2 mb-4 border-b border-gray-200 dark:border-white/10 pb-2 shrink-0">
                 <button onClick={() => setMarketTab('요리')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${marketTab === '요리' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10'}`}>요리 (3일 주기)</button>
                 <button onClick={() => setMarketTab('해양')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${marketTab === '해양' ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10'}`}>해양 공예품 (1일 주기)</button>
               </div>
-              <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2">
+              <div className="-mx-2 px-2">
                 {marketTab === '요리' ? <FarmingStatsTab /> : <OceanStatsTab />}
               </div>
             </div>
@@ -425,13 +425,13 @@ export default function Home() {
         return {
           title: '전문가 일일 예상 수익',
           content: isMain ? (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col">
               <div className="flex gap-2 mb-4 border-b border-gray-200 dark:border-white/10 pb-2 shrink-0">
                 <button onClick={() => setRevenueTab('채광')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${revenueTab === '채광' ? 'bg-stone-600 text-white shadow-lg shadow-stone-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10'}`}>채광</button>
                 <button onClick={() => setRevenueTab('해양')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${revenueTab === '해양' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10'}`}>해양</button>
                 <button onClick={() => setRevenueTab('사냥')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${revenueTab === '사냥' ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10'}`}>사냥</button>
               </div>
-              <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2">
+              <div className="-mx-2 px-2">
                 {revenueTab === '채광' && <MiningStatsTab userStats={userStats} targetZone={targetZone} setTargetZone={setTargetZone} results={miningResults} />}
                 {revenueTab === '해양' && <OceanRevenueTab userStats={userStats} />}
                 {revenueTab === '사냥' && (
@@ -457,7 +457,7 @@ export default function Home() {
         return {
           title: '해양 종합 거래 계산기',
           content: isMain ? (
-            <div className="h-full overflow-y-auto custom-scrollbar -mx-2 px-2"><OceanTradeCalcTab userStats={userStats} /></div>
+            <div className="-mx-2 px-2"><OceanTradeCalcTab userStats={userStats} /></div>
           ) : (
             <div className="flex flex-col h-full items-center justify-center text-center">
               <div className="w-12 h-12 rounded-full bg-cyan-100 dark:bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 flex items-center justify-center mb-3"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg></div>
@@ -472,7 +472,7 @@ export default function Home() {
         return {
           title: '바리스타 시뮬레이터',
           content: isMain ? (
-            <div className="h-full overflow-y-auto custom-scrollbar -mx-2 px-2"><BaristaTab /></div>
+            <div className="-mx-2 px-2"><BaristaTab /></div>
           ) : (
             <div className="flex flex-col h-full items-center justify-center text-center">
               <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-700/20 text-amber-600 dark:text-amber-500 flex items-center justify-center mb-3"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 8h-3V4H3c-1.103 0-2 .897-2 2v11c0 1.103.897 2 2 2h15c1.103 0 2-.897 2-2v-5c0-1.103-.897-2-2-2zm-2 9H4V6h12v11zm2-2h-2V10h2v5z" /></svg></div>
@@ -487,7 +487,7 @@ export default function Home() {
         return {
           title: '타이머 모드 퀵 다운',
           content: isMain ? (
-            <div className="flex flex-col h-full items-center justify-center text-center p-6">
+            <div className="flex flex-col items-center justify-center text-center p-6">
                <div className="w-20 h-20 bg-rose-100 dark:bg-rose-500/20 rounded-full flex items-center justify-center mb-6 shadow-sm dark:shadow-[0_0_30px_rgba(244,63,94,0.3)]">
                  <svg className="w-10 h-10 text-rose-500 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                </div>
@@ -590,15 +590,19 @@ export default function Home() {
                   <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
                   <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
                 </div>
-                <div className="flex-1 bg-white dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-lg py-1.5 px-4 text-center max-w-sm mx-auto shadow-sm dark:shadow-none">
+                <div className="flex-1 bg-white dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-lg py-1.5 px-4 text-center max-w-sm mx-auto shadow-sm dark:shadow-none flex items-center justify-center gap-2">
                   <span className="text-xs font-bold text-gray-600 dark:text-gray-400 font-mono">{getWidgetContent(mainWidget, true).title}</span>
                 </div>
                 <div className="w-20 sm:w-24 flex justify-end pr-1">
                   <button 
                     onClick={toggleMainWidgetCollapse}
-                    className="text-[10px] sm:text-xs font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 px-2 sm:px-3 py-1 rounded transition-colors"
+                    className="text-[10px] sm:text-xs font-bold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 px-2 sm:px-3 py-1 rounded transition-colors flex items-center gap-1"
                   >
-                    {isMainWidgetCollapsed ? '펼치기' : '접기'}
+                    {isMainWidgetCollapsed ? (
+                      <>펼치기 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg></>
+                    ) : (
+                      <>접기 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg></>
+                    )}
                   </button>
                 </div>
               </div>
@@ -642,7 +646,7 @@ export default function Home() {
             </h2>
             <span className="text-xs text-gray-600 dark:text-gray-500 font-bold bg-gray-100 dark:bg-white/5 px-2 py-1 rounded">{cookingPeriod} 기준</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 relative z-10">
             {top3Recipes.map((item, index) => {
               const colors = [
                 { border: 'border-yellow-500/20', shadow: 'shadow-md dark:shadow-[0_0_15px_rgba(234,179,8,0.1)]', numBg: 'from-yellow-300 to-yellow-600', numText: 'text-black', percentText: 'text-yellow-600 dark:text-yellow-400' },
@@ -650,17 +654,19 @@ export default function Home() {
                 { border: 'border-gray-200 dark:border-white/5', shadow: 'shadow-sm dark:shadow-none', numBg: 'from-amber-600 to-amber-800', numText: 'text-white', percentText: 'text-amber-600' }
               ][index];
               return (
-                <div key={item.name} className={`flex items-center justify-between p-4 md:p-5 rounded-2xl bg-gray-50 dark:bg-black/40 border ${colors.border} ${colors.shadow} hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${colors.numBg} flex items-center justify-center shrink-0`}>
-                      <span className={`text-sm font-black ${colors.numText}`}>{index + 1}</span>
+                <div key={item.name} className={`flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center justify-center sm:justify-between lg:justify-center xl:justify-between p-4 md:p-5 rounded-2xl bg-gray-50 dark:bg-black/40 border ${colors.border} ${colors.shadow} hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group gap-4 sm:gap-2 lg:gap-4 xl:gap-2`}>
+                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center gap-3 xl:gap-4 text-center sm:text-left lg:text-center xl:text-left">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${colors.numBg} flex items-center justify-center shrink-0`}>
+                        <span className={`text-sm font-black ${colors.numText}`}>{index + 1}</span>
+                      </div>
+                      <div className="w-12 h-12 bg-white dark:bg-black/60 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-center shrink-0 p-2 group-hover:scale-110 transition-transform shadow-sm dark:shadow-none">
+                        <img src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[item.name]}.png`} alt={item.name} className="w-full h-full object-contain drop-shadow-md" style={{ imageRendering: 'pixelated' }} />
+                      </div>
                     </div>
-                    <div className="w-12 h-12 bg-white dark:bg-black/60 rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-center shrink-0 p-2 group-hover:scale-110 transition-transform shadow-sm dark:shadow-none">
-                      <img src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[item.name]}.png`} alt={item.name} className="w-full h-full object-contain drop-shadow-md" style={{ imageRendering: 'pixelated' }} />
-                    </div>
-                    <span className={`font-bold text-sm md:text-base ${index === 0 ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}`}>{item.name}</span>
+                    <span className={`font-bold text-sm lg:text-base whitespace-nowrap break-keep ${index === 0 ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}`}>{item.name}</span>
                   </div>
-                  <div className="text-right flex flex-col items-end pl-4">
+                  <div className="text-center sm:text-right lg:text-center xl:text-right flex flex-col items-center sm:items-end lg:items-center xl:items-end shrink-0">
                     <div className={`font-black whitespace-nowrap text-lg md:text-xl ${colors.percentText}`}>{item.currentMarketPrice.toLocaleString()} G</div>
                     <div className="text-[11px] text-gray-500 font-bold whitespace-nowrap mt-1 bg-white dark:bg-white/5 px-2 py-0.5 rounded border border-gray-200 dark:border-transparent">효율 {item.percentToMax.toFixed(1)}%</div>
                   </div>
@@ -671,7 +677,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-white dark:bg-gradient-to-r dark:from-[#111113] dark:to-[#0a0a0a] border border-gray-200 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-sm dark:shadow-2xl relative overflow-hidden transition-colors">
+        <section className="bg-white dark:bg-gradient-to-r dark:from-[#111113] dark:to-[#0a0a0c] border border-gray-200 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-sm dark:shadow-2xl relative overflow-hidden transition-colors">
           <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 dark:bg-white/5 rounded-bl-[100px] blur-2xl pointer-events-none"></div>
           <div className="flex items-center justify-between mb-6 border-b border-gray-200 dark:border-white/5 pb-4 relative z-10">
             <div className="flex items-center gap-3">
@@ -694,16 +700,16 @@ export default function Home() {
       </main>
 
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)}></div>
-          <div className="relative bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-3xl p-6 md:p-8 w-full max-w-lg md:max-w-2xl shadow-2xl animate-fade-in-up flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="relative bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-3xl p-6 md:p-8 w-full max-w-[800px] shadow-2xl animate-fade-in-up flex flex-col max-h-[90vh] overflow-hidden m-4">
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2 shrink-0">대시보드 편집</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-6 shrink-0">나만의 메인 화면을 구성해 보세요.</p>
             
             <div className="flex flex-col md:flex-row gap-6 min-h-0 flex-1">
               <div className="flex-1 flex flex-col min-h-0 shrink-0">
                 <label className="block text-xs font-bold text-cyan-600 dark:text-cyan-400 mb-2">화면 중앙 메인 위젯 (1개)</label>
-                <select value={mainWidget || 'none'} onChange={(e) => handleMainWidgetChange(e.target.value)} className="w-full bg-gray-50 dark:bg-black/50 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-cyan-500">
+                <select value={mainWidget || 'none'} onChange={(e) => handleMainWidgetChange(e.target.value)} className="w-full bg-gray-50 dark:bg-black/50 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 cursor-pointer">
                   <option value="none">사용 안 함 (창 닫기)</option>
                   {WIDGET_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
                 </select>
