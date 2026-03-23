@@ -2,8 +2,14 @@
   "redirects": [
     {
       "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "all-d-ding.vercel.app"
+        }
+      ],
       "destination": "https://all-dding.pages.dev/$1",
-      "permanent": true
+      "permanent": false
     }
   ]
 }
