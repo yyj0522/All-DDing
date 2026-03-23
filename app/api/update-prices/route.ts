@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getCookingPeriod, getCraftingPeriod, FOOD_NAMES, CRAFT_NAMES } from '@/lib/professionData';
 
+export const runtime = 'edge';
+
 const SECRET_TOKEN = process.env.NEXT_PUBLIC_SCANNER_TOKEN || 'alldding123';
 
 export async function POST(request: Request) {
