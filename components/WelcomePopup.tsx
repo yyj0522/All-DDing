@@ -160,7 +160,7 @@ export default function WelcomePopup() {
                 서버 이전 및 설정 초기화 안내
               </h3>
               <p className="text-[12px] text-gray-800 dark:text-gray-300 break-keep leading-relaxed transition-colors">
-                이용자 급증으로 기존 무료 서버의 <strong>트래픽 한도(월 100만 회)를 초과</strong>하여 사이트 차단을 막고자 긴급하게 무제한 서버로 이전하였습니다.
+                이용자 급증으로 기존 무료 서버의 <strong>트래픽 한도를 초과</strong>하여 사이트 차단을 막고자 트래픽 한도가 널널한 서버로 이전하였습니다.
                 <br /><br />
                 이 과정에서 도메인이 변경되어 <strong>기존 개인 설정(스탯, 스킬 등)이 초기화</strong>되었습니다. 번거로우시겠지만 설정을 다시 진행해 주시길 부탁드립니다. (자세한 내용은 공지사항 참조)
               </p>
@@ -171,7 +171,7 @@ export default function WelcomePopup() {
                 클라우드 저장 기능 도입 투표
               </h4>
               <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep mb-5 transition-colors">
-                향후 커스텀 도메인 적용 등으로 또다시 데이터가 초기화되는 것을 막기 위해, 개인정보 수집 없이 <strong>'닉네임 + 숫자 6자리'</strong>만으로 설정을 서버에 저장하는 기능을 개발하고자 합니다. 해당 기능이 도입되면 사용하실 의향이 있으신가요?
+                향후 커스텀 도메인 적용 등으로 또다시 데이터가 초기화되는 것을 막기 위해, 개인정보 수집 없이 <strong>'닉네임 + 숫자 6자리'</strong>만으로 설정을 서버에 저장하는 기능(로그인)을 개발하고자 합니다. 해당 기능이 도입되면 사용하실 의향이 있는지 하단 투표참여를 부탁드립니다.
               </p>
               
               {!hasVoted ? (
