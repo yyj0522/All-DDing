@@ -2,19 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 
 export default function WelcomePopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [dontShowToday, setDontShowToday] = useState(false);
-  const [hasVoted, setHasVoted] = useState(false);
-  const [isVoting, setIsVoting] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    const voted = localStorage.getItem('hasVotedSaveFeature');
-    if (voted) setHasVoted(true);
-
     const hideUntil = localStorage.getItem('hideWelcomePopup');
     if (hideUntil) {
       const now = new Date().getTime();
@@ -37,30 +31,19 @@ export default function WelcomePopup() {
     setIsOpen(false);
   };
 
-  const handleVote = async (voteType: 'agree' | 'disagree') => {
-    setIsVoting(true);
-    try {
-      await supabase.from('feature_votes').insert([{ vote_type: voteType }]);
-    } catch (error) {
-      console.error('투표 저장 실패:', error);
-    } finally {
-      localStorage.setItem('hasVotedSaveFeature', 'true');
-      setHasVoted(true);
-      setIsVoting(false);
-    }
-  };
-
   if (!isOpen || pathname !== '/') return null;
 
   return (
     <div className="fixed top-20 left-4 md:top-24 md:left-8 z-[999] animate-fade-in pointer-events-auto max-w-[calc(100vw-2rem)] max-h-[calc(100vh-6rem)] flex flex-col transition-colors duration-300">
       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[760px] lg:w-[1150px] shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-full overflow-hidden transition-colors">
         
-        <div className="bg-gradient-to-r from-fuchsia-50 dark:from-fuchsia-600/10 via-fuchsia-100 dark:via-fuchsia-500/5 to-transparent border-b border-gray-200 dark:border-white/5 px-6 py-5 shrink-0 transition-colors">
-          <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight transition-colors">
+        {/* 상단바 배경을 검은색(bg-black), 텍스트를 흰색(text-white)으로 고정 */}
+        <div className="bg-black border-b border-white/10 px-6 py-5 shrink-0 transition-colors">
+          <h2 className="text-lg font-black text-white tracking-tight transition-colors">
             올띵(All-Dding)에 오신 것을 환영합니다!
           </h2>
         </div>
+        
         <div className="flex flex-col lg:flex-row overflow-y-auto custom-scrollbar">
           <div className="flex-1 p-6 space-y-5 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/5 transition-colors">
             <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 transition-colors">
@@ -145,49 +128,47 @@ export default function WelcomePopup() {
             </div>
           </div>
 
-          <div className="flex-1 p-6 space-y-6 bg-red-50/50 dark:bg-red-950/10 transition-colors">
+          {/* 세 번째 단: 투표 결과 및 업데이트 계획 안내 */}
+          <div className="flex-1 p-6 space-y-6 bg-indigo-50/50 dark:bg-indigo-950/10 transition-colors">
             <div>
-              <h3 className="text-base font-black text-red-600 dark:text-red-400 mb-2 flex items-center gap-2 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                서버 이전 및 설정 초기화 안내
+              <h3 className="text-base font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+                로그인 기능 도입 투표 결과
               </h3>
-              <p className="text-[12px] text-gray-800 dark:text-gray-300 break-keep leading-relaxed transition-colors">
-                이용자 급증으로 기존 무료 서버의 <strong>트래픽 한도를 초과</strong>하여 사이트 차단을 막고자 트래픽 한도가 널널한 서버로 이전하였습니다.
-                <br /><br />
-                이 과정에서 도메인이 변경되어 <strong>기존 개인 설정(스탯, 스킬 등)이 초기화</strong>되었습니다. 번거로우시겠지만 설정을 다시 진행해 주시길 부탁드립니다. (자세한 내용은 공지사항 참조)
+              <p className="text-[12px] text-gray-800 dark:text-gray-300 break-keep leading-relaxed transition-colors mb-3">
+                지난 2일간 진행된 '로그인 기능 도입' 투표에 총 <strong>139명</strong>의 유저분들이 참여해 주셨으며, 그중 약 <strong>88%(122명)</strong>가 찬성해 주셨습니다. 참여해 주셔서 감사합니다!
               </p>
+
+              <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-3 transition-colors">
+                <p className="text-[11px] text-amber-800 dark:text-amber-200 font-bold leading-relaxed break-keep transition-colors">
+                  ※ 로그인을 하지 않아도 사이트의 모든 기능은 그대로 이용하실 수 있습니다. 단, 이번처럼 부득이하게 도메인이 변경되는 경우 <span className="text-red-600 dark:text-red-400 underline underline-offset-2">저장했던 개인 설정이 초기화되며, 미로그인 상태의 데이터는 보호 및 복구가 불가능</span>하다는 점 양해 부탁드립니다.
+                </p>
+              </div>
             </div>
 
-            <div className="bg-white dark:bg-[#111] border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-5 shadow-sm transition-colors">
-              <h4 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-2 transition-colors">
-                클라우드 저장 기능 도입 투표
+            <div className="bg-white dark:bg-[#111] border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-5 shadow-sm transition-colors">
+              <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3 flex items-center gap-2 transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                향후 업데이트 우선순위 안내
               </h4>
-              <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep mb-5 transition-colors">
-                향후 커스텀 도메인 적용 등으로 또다시 데이터가 초기화되는 것을 막기 위해, 개인정보 수집 없이 <strong>'닉네임(또는 개인이 식별할 수 있는 아이디) + 숫자 6자리'</strong>만으로 설정을 서버에 저장하는 기능(로그인)을 개발하고자 합니다. 해당 기능이 도입되면 사용하실 의향이 있는지 하단 투표참여를 부탁드립니다.
+              <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep mb-4 transition-colors">
+                로그인 기능은 사이트 코드를 전반적으로 재설계해야 하는 큰 작업입니다. 따라서 오늘 진행되는 인게임 대규모 업데이트 내용을 사이트에 먼저 반영한 후 순차적으로 개발할 예정입니다.
               </p>
               
-              {!hasVoted ? (
-                <div className="flex flex-col gap-2">
-                  <button 
-                    onClick={() => handleVote('agree')}
-                    disabled={isVoting}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg text-[13px] transition-colors shadow-sm disabled:opacity-50"
-                  >
-                    {isVoting ? '처리 중...' : '사용하겠습니다 (찬성)'}
-                  </button>
-                  <button 
-                    onClick={() => handleVote('disagree')}
-                    disabled={isVoting}
-                    className="w-full bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 font-bold py-2.5 rounded-lg text-[13px] transition-colors"
-                  >
-                    필요 없습니다 (반대)
-                  </button>
-                </div>
-              ) : (
-                <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-lg p-3 text-center text-[12px] font-bold text-indigo-600 dark:text-indigo-400 transition-colors">
-                  소중한 의견이 제출되었습니다. 감사합니다!
-                </div>
-              )}
+              <ul className="space-y-2 text-[11px] font-bold">
+                <li className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-500/20 transition-colors">
+                  <span className="bg-emerald-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px]">1</span>
+                  RPG 대규모 업데이트 데이터 동기화
+                </li>
+                <li className="flex items-center gap-2 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 rounded-lg border border-amber-100 dark:border-amber-500/20 transition-colors">
+                  <span className="bg-amber-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px]">2</span>
+                  사냥꾼 전문가 일일 수익 계산기 구현
+                </li>
+                <li className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-2 rounded-lg border border-indigo-100 dark:border-indigo-500/20 transition-colors">
+                  <span className="bg-indigo-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px]">3</span>
+                  개인 설정 데이터 보호용 로그인 기능 추가
+                </li>
+              </ul>
             </div>
           </div>
 
