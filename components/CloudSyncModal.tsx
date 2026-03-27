@@ -32,6 +32,16 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
 
   if (!isOpen) return null;
 
+  // 💡 보안 강화를 위한 브라우저 내장 일방향 암호화 함수 (아이디를 소금(Salt)으로 사용하여 보안성 극대화)
+  const hashPassword = async (user: string, pass: string) => {
+    const encoder = new TextEncoder();
+    // 아이디와 고정 텍스트, 비밀번호를 섞어서 암호화
+    const data = encoder.encode(user.toLowerCase() + "alldding_secret" + pass);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
   const generateRecoveryKey = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let key = '';
@@ -70,9 +80,12 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
         }
       });
 
+      // 💡 평문 대신 해시된 비밀번호를 생성하여 저장
+      const hashedPassword = await hashPassword(username, password);
+
       const { error } = await supabase.from('alldding_users').insert([{
         username,
-        password,
+        password: hashedPassword, // 암호화된 값 전송
         recovery_key: newKey,
         settings: currentSettings
       }]);
@@ -101,7 +114,10 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
     try {
       const { data: user, error } = await supabase.from('alldding_users').select('password, settings').eq('username', username).single();
 
-      if (error || !user || user.password !== password) {
+      // 💡 유저가 입력한 비밀번호를 똑같이 해시 변환하여 DB 값과 비교
+      const hashedInputPassword = await hashPassword(username, password);
+
+      if (error || !user || user.password !== hashedInputPassword) {
         setErrorMsg('아이디 또는 비밀번호가 일치하지 않습니다.');
         setIsLoading(false);
         return;
@@ -192,7 +208,9 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
         return;
       }
 
-      const { error: updateError } = await supabase.from('alldding_users').update({ password: newPassword }).eq('username', username);
+      // 💡 새 비밀번호도 해시하여 업데이트
+      const hashedNewPassword = await hashPassword(username, newPassword);
+      const { error: updateError } = await supabase.from('alldding_users').update({ password: hashedNewPassword }).eq('username', username);
 
       if (updateError) throw updateError;
 
