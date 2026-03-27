@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import WelcomePopup from "@/components/WelcomePopup"; 
 import { ThemeProvider } from "@/components/ThemeProvider";
+import AutoCloudSync from "@/components/AutoCloudSync";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
               }}
             />
           )}
+          <AutoCloudSync />
           <WelcomePopup />
           {children}
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
