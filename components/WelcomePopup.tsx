@@ -37,7 +37,6 @@ export default function WelcomePopup() {
     <div className="fixed top-20 left-4 md:top-24 md:left-8 z-[999] animate-fade-in pointer-events-auto max-w-[calc(100vw-2rem)] max-h-[calc(100vh-6rem)] flex flex-col transition-colors duration-300">
       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[760px] lg:w-[1150px] shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-full overflow-hidden transition-colors">
         
-        {/* 상단바 배경을 검은색(bg-black), 텍스트를 흰색(text-white)으로 고정 */}
         <div className="bg-black border-b border-white/10 px-6 py-5 shrink-0 transition-colors">
           <h2 className="text-lg font-black text-white tracking-tight transition-colors">
             올띵(All-Dding)에 오신 것을 환영합니다!
@@ -88,7 +87,6 @@ export default function WelcomePopup() {
             </ul>
           </div>
 
-          {/* 두 번째 단: 기존 업데이트 안내 */}
           <div className="flex-1 p-6 space-y-6 bg-gray-50 dark:bg-black/20 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/5 transition-colors">
             <div>
               <h3 className="text-base font-black text-gray-900 dark:text-white mb-2 flex items-center gap-2 transition-colors">
@@ -128,47 +126,33 @@ export default function WelcomePopup() {
             </div>
           </div>
 
-          {/* 세 번째 단: 투표 결과 및 업데이트 계획 안내 */}
           <div className="flex-1 p-6 space-y-6 bg-indigo-50/50 dark:bg-indigo-950/10 transition-colors">
             <div>
               <h3 className="text-base font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
-                로그인 기능 도입 투표 결과
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
+                03/27 올띵 업데이트 안내
               </h3>
               <p className="text-[12px] text-gray-800 dark:text-gray-300 break-keep leading-relaxed transition-colors mb-3">
-                지난 2일간 진행된 '로그인 기능 도입' 투표에 총 <strong>139명</strong>의 유저분들이 참여해 주셨으며, 그중 약 <strong>88%(122명)</strong>가 찬성해 주셨습니다. 참여해 주셔서 감사합니다!
+                새로운 기능과 변경사항이 포함된 <strong>03/27 올띵 업데이트</strong>가 적용되었습니다!
               </p>
 
-              <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-3 transition-colors">
+              <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-3 transition-colors mb-4">
                 <p className="text-[11px] text-amber-800 dark:text-amber-200 font-bold leading-relaxed break-keep transition-colors">
-                  ※ 로그인을 하지 않아도 사이트의 모든 기능은 그대로 이용하실 수 있습니다. 단, 이번처럼 부득이하게 도메인이 변경되는 경우 <span className="text-red-600 dark:text-red-400 underline underline-offset-2">저장했던 개인 설정이 초기화되며, 미로그인 상태의 데이터는 보호 및 복구가 불가능</span>하다는 점 양해 부탁드립니다.
+                  ※ 개인 설정 데이터 보호용 클라우드 동기화(로그인) 기능이 추가되었습니다.
                 </p>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#111] border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-5 shadow-sm transition-colors">
-              <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3 flex items-center gap-2 transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                향후 업데이트 우선순위 안내
+            <div className="bg-white dark:bg-[#111] border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-5 shadow-sm transition-colors text-center">
+              <h4 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-2 transition-colors">
+                자세한 내용은 패치노트에서 확인하세요
               </h4>
-              <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep mb-4 transition-colors">
-                로그인 기능은 사이트 코드를 전반적으로 재설계해야 하는 큰 작업입니다. 따라서 오늘 진행되는 인게임 대규모 업데이트 내용을 사이트에 먼저 반영한 후 순차적으로 개발할 예정입니다.
+              <p className="text-[11px] text-gray-600 dark:text-gray-400 break-keep mb-4 transition-colors">
+                상단 메뉴의 '패치노트' 게시판을 통해 이번 업데이트의 모든 상세 내역을 확인하실 수 있습니다.
               </p>
-              
-              <ul className="space-y-2 text-[11px] font-bold">
-                <li className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-500/20 transition-colors">
-                  <span className="bg-emerald-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px]">1</span>
-                  RPG 대규모 업데이트 데이터 동기화
-                </li>
-                <li className="flex items-center gap-2 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 rounded-lg border border-amber-100 dark:border-amber-500/20 transition-colors">
-                  <span className="bg-amber-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px]">2</span>
-                  사냥꾼 전문가 일일 수익 계산기 구현
-                </li>
-                <li className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-2 rounded-lg border border-indigo-100 dark:border-indigo-500/20 transition-colors">
-                  <span className="bg-indigo-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px]">3</span>
-                  개인 설정 데이터 보호용 로그인 기능 추가
-                </li>
-              </ul>
+              <a href="/note" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg transition-colors">
+                패치노트 바로가기
+              </a>
             </div>
           </div>
 
