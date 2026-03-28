@@ -11,6 +11,7 @@ import BigHeadCapsuleSimulator from '@/components/gacha/BigHeadCapsuleSimulator'
 import RandomBadgeSimulator from '@/components/gacha/RandomBadgeSimulator';
 import DinoPetSimulator from '@/components/gacha/DinoPetSimulator';
 import IslandBoxSimulator from '@/components/gacha/IslandBoxSimulator';
+import EngravingSimulator from '@/components/gacha/EngravingSimulator';
 
 const GACHA_CATEGORIES = [
   '인챈트 캡슐', 
@@ -20,7 +21,8 @@ const GACHA_CATEGORIES = [
   '랜덤 뱃지 보급품', 
   '랜덤 공룡펫 보급품', 
   '한글 닉네임 변경 캡슐', 
-  '대두 치장 캡슐'
+  '대두 치장 캡슐',
+  '각인석'
 ];
 
 export default function GachaPage() {
@@ -81,6 +83,7 @@ export default function GachaPage() {
               {activeCategory === '랜덤 공룡펫 보급품' && <DinoPetSimulator />}
               {activeCategory === '한글 닉네임 변경 캡슐' && <NicknameCapsuleSimulator />}
               {activeCategory === '대두 치장 캡슐' && <BigHeadCapsuleSimulator />}
+              {activeCategory === '각인석' && <EngravingSimulator />}
             </div>
           </div>
         </div>
