@@ -213,13 +213,11 @@ export default function WelcomePopup() {
 
       {isOpenRpg && (
         <div className="pointer-events-auto animate-fade-in bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[400px] h-fit shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden shrink-0 transition-colors relative">
-          
-          <div className="border-b border-gray-100 dark:border-white/5 px-6 py-5 shrink-0 transition-colors">
-            <h2 className="text-base font-black text-gray-900 dark:text-white tracking-tight">
-              RPG 업데이트 제보 안내
+          <div className="bg-black border-b border-white/10 px-6 py-5 shrink-0 transition-colors">
+          <h2 className="text-base font-black text-white tracking-tight transition-colors">
+            RPG 업데이트 제보 안내
             </h2>
-          </div>
-          
+            </div>
           <div className="flex-1 px-8 py-10 flex flex-col justify-center text-center space-y-8">
             <div className="space-y-4">
               <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight break-keep">

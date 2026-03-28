@@ -681,7 +681,6 @@ export default function Home() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 dark:bg-white/5 rounded-bl-[100px] blur-2xl pointer-events-none"></div>
           <div className="flex items-center justify-between mb-6 border-b border-gray-200 dark:border-white/5 pb-4 relative z-10">
             <div className="flex items-center gap-3">
-              <svg className="w-6 h-6 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
               <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">올띵 업데이트 노트</h2>
             </div>
             <Link href="/note" className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1 text-xs md:text-sm font-bold group bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-transparent">전체보기<svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></Link>
