@@ -18,6 +18,7 @@ import OceanStatsTab from '@/components/profession/OceanStatsTab';
 import OceanRevenueTab from '@/components/profession/OceanRevenueTab';
 import BaristaTab from '@/components/profession/BaristaTab';
 import OceanTradeCalcTab from '@/components/profession/OceanTradeCalcTab';
+import HuntRevenueTab from '@/components/profession/HuntRevenueTab';
 
 const TABS = [
   { id: '재배', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/50' },
@@ -40,8 +41,10 @@ export default function ProfessionPage() {
   const [targetZone, setTargetZone] = useState<'코룸' | '리프톤' | '세렌트'>('코룸');
 
   const [userStats, setUserStats] = useState({
-    stamina: 3000, pickaxeLv: 0, rodLv: 0, luckyHitLv: 0, gemDropLv: 0, flamingPickLv: 0, ingotBuffLv: 0, gemBuffLv: 0,
-    o11Lv: 0, o12Lv: 0, o14Lv: 0, o16Lv: 0, o17Lv: 0
+    stamina: 3000, pickaxeLv: 0, rodLv: 0, swordLv: 0, 
+    luckyHitLv: 0, gemDropLv: 0, flamingPickLv: 0, ingotBuffLv: 0, gemBuffLv: 0,
+    o11Lv: 0, o12Lv: 0, o14Lv: 0, o16Lv: 0, o17Lv: 0,
+    h2Lv: 0, h5Lv: 0, h6Lv: 0, h12Lv: 0, h13Lv: 0, h14Lv: 0, h15Lv: 0
   });
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -52,9 +55,10 @@ export default function ProfessionPage() {
     const sMisc = localStorage.getItem('alldding_misc_settings');
     
     let parsedStamina = 3000;
-    let parsedPickaxe = 0, parsedRod = 0;
+    let parsedPickaxe = 0, parsedRod = 0, parsedSword = 0;
     let parsedLuckyHit = 0, parsedGemDrop = 0, parsedFlaming = 0, parsedIngotBuff = 0, parsedGemBuff = 0;
     let parsedO11 = 0, parsedO12 = 0, parsedO14 = 0, parsedO16 = 0, parsedO17 = 0;
+    let parsedH2 = 0, parsedH5 = 0, parsedH6 = 0, parsedH12 = 0, parsedH13 = 0, parsedH14 = 0, parsedH15 = 0;
 
     if (sLevels) {
       const p = JSON.parse(sLevels);
@@ -69,12 +73,21 @@ export default function ProfessionPage() {
       parsedO14 = p['o14'] || 0;
       parsedO16 = p['o16'] || 0;
       parsedO17 = p['o17'] || 0;
+
+      parsedH2 = p['h2'] || 0;
+      parsedH5 = p['h5'] || 0;
+      parsedH6 = p['h6'] || 0;
+      parsedH12 = p['h12'] || 0;
+      parsedH13 = p['h13'] || 0;
+      parsedH14 = p['h14'] || 0;
+      parsedH15 = p['h15'] || 0;
     }
 
     if (sTools) {
       const t = JSON.parse(sTools);
       parsedPickaxe = t['pickaxe'] || 0;
       parsedRod = t['rod'] || 0;
+      parsedSword = t['sword'] || 0;
     }
     
     if (sMisc) {
@@ -88,9 +101,10 @@ export default function ProfessionPage() {
     }
     
     setUserStats({
-      stamina: parsedStamina, pickaxeLv: parsedPickaxe, rodLv: parsedRod,
+      stamina: parsedStamina, pickaxeLv: parsedPickaxe, rodLv: parsedRod, swordLv: parsedSword,
       luckyHitLv: parsedLuckyHit, gemDropLv: parsedGemDrop, flamingPickLv: parsedFlaming, ingotBuffLv: parsedIngotBuff, gemBuffLv: parsedGemBuff,
-      o11Lv: parsedO11, o12Lv: parsedO12, o14Lv: parsedO14, o16Lv: parsedO16, o17Lv: parsedO17
+      o11Lv: parsedO11, o12Lv: parsedO12, o14Lv: parsedO14, o16Lv: parsedO16, o17Lv: parsedO17,
+      h2Lv: parsedH2, h5Lv: parsedH5, h6Lv: parsedH6, h12Lv: parsedH12, h13Lv: parsedH13, h14Lv: parsedH14, h15Lv: parsedH15
     });
 
     setIsLoaded(true);
@@ -249,19 +263,7 @@ export default function ProfessionPage() {
           {activeTab === '해양' && subTab === '거래계산기' && <OceanTradeCalcTab userStats={userStats} />}
 
           {activeTab === '사냥' && subTab === '조합법' && <RecipeTab recipes={HUNT_RECIPES} />}
-          {activeTab === '사냥' && subTab === '시세수익' && (
-            <div className="w-full bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/20 rounded-[2.5rem] p-10 md:p-16 flex flex-col items-center justify-center text-center shadow-sm dark:shadow-2xl relative overflow-hidden backdrop-blur-sm transition-colors">
-              <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-rose-200/50 dark:bg-rose-500/10 blur-3xl rounded-full"></div>
-              <svg className="w-16 h-16 text-rose-500 mb-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-4">데이터 수집 중</h2>
-              <p className="text-rose-600 dark:text-rose-200/60 text-[13px] md:text-base max-w-md leading-relaxed break-keep">
-                사냥 전문가의 일일 수익을 정확하게 예측하기 위해 데이터를 수집하고 있습니다. <br className="hidden md:block"/>
-                충분한 데이터가 모이는 대로 업데이트될 예정입니다.
-              </p>
-            </div>
-          )}
+          {activeTab === '사냥' && subTab === '시세수익' && <HuntRevenueTab userStats={userStats} />}
         </div>
       </main>
 

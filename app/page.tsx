@@ -491,11 +491,11 @@ export default function Home() {
                <div className="w-20 h-20 bg-rose-100 dark:bg-rose-500/20 rounded-full flex items-center justify-center mb-6 shadow-sm dark:shadow-[0_0_30px_rgba(244,63,94,0.3)]">
                  <svg className="w-10 h-10 text-rose-500 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                </div>
-               <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3">Timer-Mod v1.0.1</h3>
+               <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3">Timer-Mod v1.0.2</h3>
                <p className="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-md leading-relaxed">띵타이쿤 내의 각종 제작, 가공, 제련 소요 시간을 화면에 직관적으로 띄워주는 필수 편의성 모드입니다.</p>
                <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
-                 <a href="https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-fabric-1.0.1.jar" className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-black py-4 rounded-2xl transition-colors shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 text-lg">Fabric 다운로드</a>
-                 <a href="https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-neoforge-1.0.1.jar" className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 text-lg">NeoForge 다운로드</a>
+                 <a href="https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-fabric-1.0.2.jar" className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-black py-4 rounded-2xl transition-colors shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 text-lg">Fabric 다운로드</a>
+                 <a href="https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-neoforge-1.0.2.jar" className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 text-lg">NeoForge 다운로드</a>
                </div>
             </div>
           ) : (
@@ -504,8 +504,8 @@ export default function Home() {
               <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Timer-Mod</p>
               <p className="text-xs text-gray-500 dark:text-gray-500 mb-4 px-2 leading-relaxed">제작/가공 시간을 화면에 띄워주는 필수 모드를 빠르게 다운로드하세요.</p>
               <div className="mt-auto w-full grid grid-cols-2 gap-2">
-                <a href="https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-fabric-1.0.1.jar" className="bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-white py-2 rounded-lg text-[11px] font-bold transition-colors">Fabric 용</a>
-                <a href="https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-neoforge-1.0.1.jar" className="bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-white py-2 rounded-lg text-[11px] font-bold transition-colors">NeoForge 용</a>
+                <a href="https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-fabric-1.0.2.jar" className="bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-white py-2 rounded-lg text-[11px] font-bold transition-colors">Fabric 용</a>
+                <a href="https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-neoforge-1.0.2.jar" className="bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-white py-2 rounded-lg text-[11px] font-bold transition-colors">NeoForge 용</a>
               </div>
             </div>
           )
