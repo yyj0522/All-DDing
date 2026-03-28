@@ -56,9 +56,9 @@ export default function WelcomePopup() {
   if ((!isOpenMain && !isOpenRpg) || pathname !== '/') return null;
 
   return (
-    <div className="fixed top-20 left-4 md:top-24 md:left-8 z-[999] pointer-events-none flex flex-col xl:flex-row gap-4 lg:gap-6 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-6rem)] overflow-y-auto xl:overflow-hidden custom-scrollbar">
+    <div className="fixed top-20 left-4 md:top-24 md:left-8 z-[999] pointer-events-none flex flex-col xl:flex-row gap-4 lg:gap-6 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-6rem)] overflow-y-auto xl:overflow-x-hidden custom-scrollbar">
       
-      {isOpenMain && (
+      {isOpenMain ? (
         <div className="pointer-events-auto animate-fade-in bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[760px] lg:w-[1150px] shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[calc(100vh-6rem)] overflow-hidden shrink-0 transition-colors">
           <div className="bg-black border-b border-white/10 px-6 py-5 shrink-0 transition-colors">
             <h2 className="text-lg font-black text-white tracking-tight transition-colors">
@@ -178,7 +178,6 @@ export default function WelcomePopup() {
                 </a>
               </div>
             </div>
-
           </div>
 
           <div className="bg-gray-100 dark:bg-[#050505] border-t border-gray-200 dark:border-white/5 px-6 py-4 flex items-center justify-between shrink-0 transition-colors">
@@ -207,10 +206,13 @@ export default function WelcomePopup() {
             </button>
           </div>
         </div>
+      ) : (
+        // xl 화면에서 메인 팝업이 닫혔을 때 공간 유지용 플레이스홀더
+        <div className="hidden xl:block w-[1150px] shrink-0 pointer-events-none" />
       )}
 
       {isOpenRpg && (
-        <div className="pointer-events-auto animate-fade-in bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[400px] aspect-square shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden shrink-0 transition-colors relative">
+        <div className="pointer-events-auto animate-fade-in bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[400px] h-fit shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden shrink-0 transition-colors relative">
           
           <div className="border-b border-gray-100 dark:border-white/5 px-6 py-5 shrink-0 transition-colors">
             <h2 className="text-base font-black text-gray-900 dark:text-white tracking-tight">
@@ -218,7 +220,7 @@ export default function WelcomePopup() {
             </h2>
           </div>
           
-          <div className="flex-1 px-8 py-6 flex flex-col justify-center text-center space-y-8 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 px-8 py-10 flex flex-col justify-center text-center space-y-8">
             <div className="space-y-4">
               <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight break-keep">
                 필요한 툴 및 기능 제보 요청
