@@ -19,15 +19,12 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   const [cost, setCost] = useState<Record<string, number>>({});
   const [stock, setStock] = useState<Record<string, number>>({});
   const [blacklist, setBlacklist] = useState<string[]>([]);
-  
   const [tradeQty, setTradeQty] = useState<Record<string, number>>({});
-  const [costUnit, setCostUnit] = useState<Record<string, 'ea' | 'set'>>({});
-  const [qtyUnit, setQtyUnit] = useState<Record<string, 'ea' | 'set'>>({});
   
+  const [globalSetMode, setGlobalSetMode] = useState<boolean>(false);
   const [targetItem, setTargetItem] = useState<string>(OCEAN_FIXED_PRICES[0].name);
   const [targetQtyStr, setTargetQtyStr] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState(false);
-
   const [expandedRec, setExpandedRec] = useState<Record<string, boolean>>({});
 
   const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
@@ -40,6 +37,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         setCost(parsed.cost || {});
         setStock(parsed.stock || {});
         setBlacklist(parsed.blacklist || []);
+        if (parsed.globalSetMode !== undefined) setGlobalSetMode(parsed.globalSetMode);
       } catch (e) {}
     }
     setIsLoaded(true);
@@ -47,37 +45,27 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
 
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('ocean_trade_v2', JSON.stringify({ cost, stock, blacklist }));
+      localStorage.setItem('ocean_trade_v2', JSON.stringify({ cost, stock, blacklist, globalSetMode }));
     }
-  }, [cost, stock, blacklist, isLoaded]);
+  }, [cost, stock, blacklist, globalSetMode, isLoaded]);
 
   const handleCostChange = (item: string, val: string) => {
     const num = parseFloat(val);
-    const unit = costUnit[item] || 'ea';
-    setCost(prev => ({ ...prev, [item]: isNaN(num) ? 0 : (unit === 'set' ? num / 64 : num) }));
+    setCost(prev => ({ ...prev, [item]: isNaN(num) ? 0 : (globalSetMode ? num / 64 : num) }));
   };
 
   const handleTradeQtyChange = (item: string, val: string) => {
     const num = parseFloat(val);
-    const unit = qtyUnit[item] || 'ea';
-    setTradeQty(prev => ({ ...prev, [item]: isNaN(num) ? 0 : (unit === 'set' ? num * 64 : num) }));
+    setTradeQty(prev => ({ ...prev, [item]: isNaN(num) ? 0 : (globalSetMode ? num * 64 : num) }));
   };
 
   const handleStockChange = (item: string, val: string) => {
-    const num = parseInt(val, 10);
-    setStock(prev => ({ ...prev, [item]: isNaN(num) ? 0 : num }));
+    const num = parseFloat(val);
+    setStock(prev => ({ ...prev, [item]: isNaN(num) ? 0 : Math.round(num * (globalSetMode ? 64 : 1)) }));
   };
 
   const toggleBlacklist = (item: string) => {
     setBlacklist(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
-  };
-
-  const toggleCostUnit = (item: string) => {
-    setCostUnit(prev => ({ ...prev, [item]: prev[item] === 'set' ? 'ea' : 'set' }));
-  };
-
-  const toggleQtyUnit = (item: string) => {
-    setQtyUnit(prev => ({ ...prev, [item]: prev[item] === 'set' ? 'ea' : 'set' }));
   };
 
   const toggleExpand = (name: string) => {
@@ -87,7 +75,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   const clearTradeQty = () => setTradeQty({});
 
   const saveCostData = () => {
-    localStorage.setItem('ocean_trade_v2', JSON.stringify({ cost, stock, blacklist }));
+    localStorage.setItem('ocean_trade_v2', JSON.stringify({ cost, stock, blacklist, globalSetMode }));
     alert('입력된 단가가 성공적으로 저장되었습니다.');
   };
 
@@ -196,10 +184,11 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   }, [cost, stock, blacklist, o16Bonus]);
 
   const simulatorResult = useMemo(() => {
-    const parsedTargetQty = Math.max(1, parseInt(targetQtyStr) || 1);
-    const materials = resolveMaterials(targetItem, parsedTargetQty);
+    const parsedTargetQty = Math.max(1, Math.round((parseFloat(targetQtyStr) || 0) * (globalSetMode ? 64 : 1)));
+    const actualTargetQty = parsedTargetQty === 0 ? 1 : parsedTargetQty;
+    const materials = resolveMaterials(targetItem, actualTargetQty);
     let totalCost = 0;
-    let expectedRevenue = Math.ceil((OCEAN_FIXED_PRICES.find(i => i.name === targetItem)?.base || 0) * (1 + o16Bonus)) * parsedTargetQty;
+    let expectedRevenue = Math.ceil((OCEAN_FIXED_PRICES.find(i => i.name === targetItem)?.base || 0) * (1 + o16Bonus)) * actualTargetQty;
     const missing: Record<string, number> = {};
     let hasBlacklist = false;
 
@@ -214,9 +203,19 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     });
 
     return { materials, missing, totalCost, expectedRevenue, profit: expectedRevenue - totalCost, hasBlacklist };
-  }, [targetItem, targetQtyStr, stock, cost, blacklist, o16Bonus]);
+  }, [targetItem, targetQtyStr, stock, cost, blacklist, o16Bonus, globalSetMode]);
 
   const validRecommendations = recommendations.filter(r => !r.hasBlacklist);
+
+  const formatQty = (qty: number) => {
+    if (qty === 0) return '0개';
+    if (!globalSetMode) return `${qty.toLocaleString()}개`;
+    const sets = Math.floor(qty / 64);
+    const rem = qty % 64;
+    if (sets === 0) return `${rem}개`;
+    if (rem === 0) return `${sets.toLocaleString()}셋`;
+    return `${sets.toLocaleString()}셋 ${rem}개`;
+  };
 
   if (!isLoaded) return <div className="bg-gray-100 dark:bg-white/5 h-64 rounded-3xl animate-pulse w-full"></div>;
 
@@ -225,11 +224,8 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     const q = tradeQty[item] || 0;
     const lineTotal = c * q;
     
-    const cUnit = costUnit[item] || 'ea';
-    const qUnit = qtyUnit[item] || 'ea';
-    
-    const displayCost = c === 0 ? '' : (cUnit === 'set' ? Number((c * 64).toFixed(4)) : Number(c.toFixed(4)));
-    const displayQty = q === 0 ? '' : (qUnit === 'set' ? Number((q / 64).toFixed(4)) : Number(q.toFixed(4)));
+    const displayCost = c === 0 ? '' : (globalSetMode ? Number((c * 64).toFixed(4)) : Number(c.toFixed(4)));
+    const displayQty = q === 0 ? '' : (globalSetMode ? Number((q / 64).toFixed(4)) : Number(q.toFixed(4)));
     
     return (
       <div key={item} className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-3 flex flex-col gap-2.5 hover:bg-gray-50 dark:hover:bg-[#16161a] hover:border-cyan-300 dark:hover:border-cyan-500/40 shadow-sm dark:shadow-none hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(34,211,238,0.1)] transition-all duration-300 group">
@@ -243,17 +239,11 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
           <span className="text-xs font-black text-cyan-600 dark:text-cyan-400 drop-shadow-sm dark:drop-shadow-[0_0_3px_rgba(34,211,238,0.3)] transition-colors">{lineTotal > 0 ? lineTotal.toLocaleString() : '0'} G</span>
         </div>
         <div className="flex gap-2">
-          <div className="flex-1 relative flex">
-            <input type="number" step="any" value={displayCost} onChange={(e) => handleCostChange(item, e.target.value)} placeholder="단가" className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-lg pl-2 py-1.5 text-gray-900 dark:text-white text-[11px] focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 pr-9 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium" />
-            <button onClick={() => toggleCostUnit(item)} className="absolute right-1 top-1 bottom-1 text-[10px] font-black bg-cyan-100 dark:bg-cyan-950/80 hover:bg-cyan-200 dark:hover:bg-cyan-800 text-cyan-600 dark:text-cyan-300 px-1.5 rounded-md transition-colors flex items-center justify-center">
-              {cUnit === 'set' ? '셋' : '개'}
-            </button>
+          <div className="flex-1 relative">
+            <input type="number" step="any" value={displayCost} onChange={(e) => handleCostChange(item, e.target.value)} placeholder={globalSetMode ? "단가(1셋)" : "단가(1개)"} className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium" />
           </div>
-          <div className="flex-1 relative flex">
-            <input type="number" step="any" value={displayQty} onChange={(e) => handleTradeQtyChange(item, e.target.value)} placeholder="수량" className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-lg pl-2 py-1.5 text-gray-900 dark:text-white text-[11px] focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500 pr-9 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium" />
-            <button onClick={() => toggleQtyUnit(item)} className="absolute right-1 top-1 bottom-1 text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-800 text-emerald-600 dark:text-emerald-300 px-1.5 rounded-md transition-colors flex items-center justify-center">
-              {qUnit === 'set' ? '셋' : '개'}
-            </button>
+          <div className="flex-1 relative">
+            <input type="number" step="any" value={displayQty} onChange={(e) => handleTradeQtyChange(item, e.target.value)} placeholder={globalSetMode ? "수량(셋)" : "수량(개)"} className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium" />
           </div>
         </div>
       </div>
@@ -287,11 +277,20 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         }
       `}} />
 
-      <div className="flex gap-1 p-1.5 bg-gray-100/80 dark:bg-black/40 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl w-full overflow-x-auto custom-scrollbar shadow-sm dark:shadow-lg transition-colors">
-        <SubTabButton id="trade" label="거래 계산기" />
-        <SubTabButton id="inventory" label="재고 & 바닐라 설정" />
-        <SubTabButton id="recommend" label="최적 제작 추천" />
-        <SubTabButton id="simulator" label="제작 시뮬레이터" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-1.5 bg-gray-100/80 dark:bg-black/40 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl w-full shadow-sm dark:shadow-lg transition-colors">
+        <div className="flex gap-1 overflow-x-auto custom-scrollbar w-full md:w-auto">
+          <SubTabButton id="trade" label="거래 계산기" />
+          <SubTabButton id="inventory" label="재고 & 바닐라 설정" />
+          <SubTabButton id="recommend" label="최적 제작 추천" />
+          <SubTabButton id="simulator" label="제작 시뮬레이터" />
+        </div>
+        <label className="flex items-center justify-end gap-2 px-3 py-2 cursor-pointer shrink-0 w-full md:w-auto">
+          <input type="checkbox" className="hidden" checked={globalSetMode} onChange={(e) => setGlobalSetMode(e.target.checked)} />
+          <span className="text-xs font-black text-gray-700 dark:text-gray-300 select-none">세트(64개) 단위 모드</span>
+          <div className={`relative w-10 h-5 rounded-full transition-colors ${globalSetMode ? 'bg-cyan-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+            <div className={`absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${globalSetMode ? 'translate-x-5' : 'translate-x-0'}`}></div>
+          </div>
+        </label>
       </div>
 
       {activeSubTab === 'trade' && (
@@ -303,7 +302,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
               </div>
               <p className="text-xs text-cyan-800 dark:text-cyan-100/70 leading-relaxed font-medium transition-colors">
                 단가는 브라우저에 자동 저장되며 수량은 1회성입니다.<br className="hidden sm:block"/>
-                입력창 우측의 <strong className="text-cyan-600 dark:text-cyan-300 bg-cyan-100 dark:bg-black/30 px-1 py-0.5 rounded transition-colors">[개/셋]</strong> 버튼을 눌러 단위를 자유롭게 변경하세요.
+                상단의 <strong className="text-cyan-600 dark:text-cyan-300 transition-colors">세트 단위 모드</strong>를 켜면 입력과 표시가 모두 64개 기준으로 변경됩니다.
               </p>
             </div>
             
@@ -372,7 +371,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
               <h3 className="text-base font-black text-gray-900 dark:text-white mb-1.5 flex items-center gap-2 transition-colors">
                 <div className="w-1.5 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full transition-colors"></div>창고 재고 설정
               </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 ml-3.5 transition-colors">제작 시뮬레이터에서 사용할 현재 보유 재고량을 입력해 주세요.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 ml-3.5 transition-colors">제작 시뮬레이터에서 사용할 현재 보유 재고량을 {globalSetMode ? '세트 단위로' : '개수 단위로'} 입력해 주세요.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {[...TIER1, ...TIER2, ...TIER3, ...FISH].map(item => (
@@ -381,7 +380,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                     <img src={getImagePath(item)||''} alt="" className="w-5 h-5 object-contain shrink-0 drop-shadow-sm dark:drop-shadow-md group-hover:scale-110 transition-transform"/>
                     <span className="text-[11px] text-gray-700 dark:text-gray-200 font-bold truncate transition-colors">{item}</span>
                   </div>
-                  <input type="number" value={stock[item] === 0 ? '' : stock[item] || ''} onChange={(e) => handleStockChange(item, e.target.value)} placeholder="0" className="w-14 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-medium text-right focus:outline-none focus:border-emerald-500 shrink-0 transition-colors placeholder:text-gray-400" />
+                  <input type="number" step="any" value={stock[item] === 0 ? '' : (globalSetMode ? Number((stock[item] / 64).toFixed(4)) : stock[item]) || ''} onChange={(e) => handleStockChange(item, e.target.value)} placeholder={globalSetMode ? "0셋" : "0개"} className="w-16 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-medium text-right focus:outline-none focus:border-emerald-500 shrink-0 transition-colors placeholder:text-gray-400" />
                 </div>
               ))}
             </div>
@@ -412,8 +411,8 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                       </label>
                     </div>
                     <div className={`flex gap-1.5 transition-all duration-300 ${isBlack ? 'h-0 opacity-0 pointer-events-none overflow-hidden mt-0' : 'h-8 opacity-100 mt-1'}`}>
-                      <input type="number" value={stock[item] === 0 ? '' : stock[item] || ''} onChange={(e) => handleStockChange(item, e.target.value)} placeholder="재고량" className="w-full bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1 text-gray-900 dark:text-white text-[11px] font-medium focus:outline-none focus:border-amber-500 transition-colors placeholder:text-gray-400" />
-                      <input type="number" value={cost[item] === 0 ? '' : cost[item] || ''} onChange={(e) => handleCostChange(item, e.target.value)} placeholder="매입가(0)" className="w-full bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1 text-gray-900 dark:text-white text-[11px] font-medium focus:outline-none focus:border-amber-500 transition-colors placeholder:text-gray-400" />
+                      <input type="number" step="any" value={stock[item] === 0 ? '' : (globalSetMode ? Number((stock[item] / 64).toFixed(4)) : stock[item]) || ''} onChange={(e) => handleStockChange(item, e.target.value)} placeholder={globalSetMode ? "재고(셋)" : "재고(개)"} className="w-full bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1 text-gray-900 dark:text-white text-[11px] font-medium focus:outline-none focus:border-amber-500 transition-colors placeholder:text-gray-400" />
+                      <input type="number" step="any" value={cost[item] === 0 ? '' : (globalSetMode ? Number((cost[item] * 64).toFixed(4)) : cost[item]) || ''} onChange={(e) => handleCostChange(item, e.target.value)} placeholder={globalSetMode ? "매입가(셋)" : "매입가(개)"} className="w-full bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1 text-gray-900 dark:text-white text-[11px] font-medium focus:outline-none focus:border-amber-500 transition-colors placeholder:text-gray-400" />
                     </div>
                   </div>
                 )
@@ -491,7 +490,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                           <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold flex items-center gap-2 transition-colors">
                             재고 전량 소모 시 부족분
                           </p>
-                          <span className="bg-cyan-100 dark:bg-cyan-500/20 border border-cyan-200 dark:border-cyan-500/30 px-2 py-0.5 rounded text-[10px] font-black text-cyan-600 dark:text-cyan-400 drop-shadow-sm transition-colors">총 {rec.maxCrafts}개 제작</span>
+                          <span className="bg-cyan-100 dark:bg-cyan-500/20 border border-cyan-200 dark:border-cyan-500/30 px-2 py-0.5 rounded text-[10px] font-black text-cyan-600 dark:text-cyan-400 drop-shadow-sm transition-colors">총 {formatQty(rec.maxCrafts)} 제작</span>
                         </div>
                         
                         {Object.keys(rec.missingForMax).length === 0 ? (
@@ -507,7 +506,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                                   <img src={getImagePath(mat)||''} className="w-4 h-4 object-contain shrink-0" />
                                   <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 truncate max-w-[60px] sm:max-w-[80px] transition-colors">{mat}</span>
                                 </div>
-                                <span className="text-[10px] font-black text-rose-500 dark:text-rose-400 shrink-0 transition-colors">{q.toLocaleString()} 부족</span>
+                                <span className="text-[10px] font-black text-rose-500 dark:text-rose-400 shrink-0 transition-colors">{formatQty(q)} 부족</span>
                               </div>
                             ))}
                           </div>
@@ -533,8 +532,8 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                 {OCEAN_FIXED_PRICES.map(item => <option key={item.name} value={item.name} className="bg-white dark:bg-[#0a0a0a]">{item.name}</option>)}
               </select>
               <div className="flex-1 relative">
-                <input type="number" value={targetQtyStr} onChange={(e) => setTargetQtyStr(e.target.value)} placeholder="수량 직접 입력" className="w-full h-full bg-gray-50 dark:bg-[#1a1a1e] border border-gray-200 dark:border-white/10 rounded-xl pl-4 pr-8 py-3.5 text-gray-900 dark:text-white text-sm font-black focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 transition-colors shadow-inner placeholder:text-gray-400 dark:placeholder:text-gray-600 placeholder:font-medium" />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 dark:text-gray-500 transition-colors">개</span>
+                <input type="number" step="any" value={targetQtyStr} onChange={(e) => setTargetQtyStr(e.target.value)} placeholder={globalSetMode ? "수량(셋)" : "수량(개)"} className="w-full h-full bg-gray-50 dark:bg-[#1a1a1e] border border-gray-200 dark:border-white/10 rounded-xl pl-4 pr-8 py-3.5 text-gray-900 dark:text-white text-sm font-black focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 transition-colors shadow-inner placeholder:text-gray-400 dark:placeholder:text-gray-600 placeholder:font-medium" />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 dark:text-gray-500 transition-colors">{globalSetMode ? "셋" : "개"}</span>
               </div>
             </div>
 
@@ -563,7 +562,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                           </div>
                           <span className={`text-[11px] font-bold truncate transition-colors ${isBlack ? 'text-red-500 dark:text-red-400' : 'text-gray-700 dark:text-gray-200'}`}>{mat}</span>
                         </div>
-                        <span className={`text-[11px] font-black shrink-0 transition-colors ${isBlack ? 'text-red-400 dark:text-red-500/70' : 'text-rose-500 dark:text-rose-400'}`}>{qty.toLocaleString()} 부족</span>
+                        <span className={`text-[11px] font-black shrink-0 transition-colors ${isBlack ? 'text-red-400 dark:text-red-500/70' : 'text-rose-500 dark:text-rose-400'}`}>{formatQty(qty)} 부족</span>
                       </div>
                     )
                   })}

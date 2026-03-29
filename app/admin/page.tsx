@@ -211,18 +211,56 @@ export default function AdminPage() {
   const saveReleaseNote = async () => {
     if (!noteVersion || !noteTitle || !noteContent) return alert('입력해주세요.');
     setIsReleaseSaving(true);
-    if (editingNoteId) {
-      const { error } = await supabase.from('release_notes').update({ version: noteVersion, title: noteTitle, content: noteContent }).eq('id', editingNoteId);
-      if (error) alert('수정 실패: ' + error.message); else alert('수정되었습니다.');
-    } else {
-      const { error } = await supabase.from('release_notes').insert([{ version: noteVersion, title: noteTitle, content: noteContent }]);
-      if (error) alert('등록 실패: ' + error.message); else alert('등록되었습니다.');
+    try {
+      if (editingNoteId) {
+        const res = await fetch('/api/admin/action', {
+          method: 'POST',
+          body: JSON.stringify({ 
+            action: 'update_note', 
+            id: editingNoteId, 
+            payload: { version: noteVersion, title: noteTitle, content: noteContent } 
+          })
+        });
+        if (!res.ok) throw new Error('수정 실패');
+        alert('수정되었습니다.');
+      } else {
+        const res = await fetch('/api/admin/action', {
+          method: 'POST',
+          body: JSON.stringify({ 
+            action: 'create_note', 
+            payload: { version: noteVersion, title: noteTitle, content: noteContent } 
+          })
+        });
+        if (!res.ok) throw new Error('등록 실패');
+        alert('등록되었습니다.');
+      }
+      cancelEdit();
+      fetchNotes();
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setIsReleaseSaving(false);
     }
-    setIsReleaseSaving(false); cancelEdit(); fetchNotes();
   };
 
   const editNote = (note: any) => { setEditingNoteId(note.id); setNoteVersion(note.version); setNoteTitle(note.title); setNoteContent(note.content); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  const deleteNote = async (id: number) => { if (!confirm('삭제하시겠습니까?')) return; const { error } = await supabase.from('release_notes').delete().eq('id', id); if (!error) { alert('삭제되었습니다.'); if (editingNoteId === id) cancelEdit(); fetchNotes(); } };
+  
+  const deleteNote = async (id: number) => {
+    if (!confirm('삭제하시겠습니까?')) return;
+    try {
+      const res = await fetch('/api/admin/action', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'delete_note', id })
+      });
+      if (!res.ok) throw new Error('삭제 실패');
+      alert('삭제되었습니다.');
+      if (editingNoteId === id) cancelEdit();
+      fetchNotes();
+    } catch (e: any) {
+      alert(e.message);
+    }
+  };
+  
   const cancelEdit = () => { setEditingNoteId(null); setNoteVersion(''); setNoteTitle(''); setNoteContent(''); };
 
   const markAsRead = async (id: number) => {
@@ -248,7 +286,7 @@ export default function AdminPage() {
   if (isLocalhost === false) {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-4 text-center">
-        <h1 className="text-4xl font-black text-rose-500 mb-4">403 FORBIDDEN</h1>
+        <h1 className="text-4xl font-black text-rose-50 mb-4">403 FORBIDDEN</h1>
         <p className="text-gray-400">관리자 로컬 환경에서만 접근 가능합니다.</p>
         <a href="/" className="mt-8 text-cyan-400 hover:text-cyan-300 font-bold underline underline-offset-4">메인으로 돌아가기</a>
       </div>
