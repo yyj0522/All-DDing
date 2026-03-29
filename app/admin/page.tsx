@@ -33,7 +33,6 @@ export default function AdminPage() {
   const [fabricCount, setFabricCount] = useState<number>(0);
   const [neoforgeCount, setNeoforgeCount] = useState<number>(0);
 
-  // [신규] 다중 투표 관리용 상태
   const [polls, setPolls] = useState<any[]>([]);
   const [showPollForm, setShowPollForm] = useState(false);
   const [newPollTitle, setNewPollTitle] = useState('');
@@ -78,23 +77,28 @@ export default function AdminPage() {
   };
 
   const fetchFeedbacks = async () => {
-    const { data, error } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false });
-    if (data && !error) setFeedbacks(data);
+    try {
+      const res = await fetch('/api/admin/fetch?target=feedbacks');
+      const data = await res.json();
+      if (Array.isArray(data)) setFeedbacks(data);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const fetchStatistics = async () => {
-    const { count: farmCount } = await supabase.from('image_download_logs').select('*', { count: 'exact', head: true }).eq('category', 'farming');
-    const { count: ocCount } = await supabase.from('image_download_logs').select('*', { count: 'exact', head: true }).eq('category', 'ocean');
-    const { count: fbCount } = await supabase.from('file_download_logs').select('*', { count: 'exact', head: true }).eq('file_type', 'fabric');
-    const { count: neoCount } = await supabase.from('file_download_logs').select('*', { count: 'exact', head: true }).eq('file_type', 'neoforge');
-
-    setFarmingCount(farmCount || 0);
-    setOceanCount(ocCount || 0);
-    setFabricCount(fbCount || 0);
-    setNeoforgeCount(neoCount || 0);
+    try {
+      const res = await fetch('/api/admin/fetch?target=statistics');
+      const data = await res.json();
+      setFarmingCount(data.farmCount || 0);
+      setOceanCount(data.ocCount || 0);
+      setFabricCount(data.fbCount || 0);
+      setNeoforgeCount(data.neoCount || 0);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  // [신규] 확장된 투표 가져오기 (다중 옵션 계산 포함)
   const fetchVotes = async () => {
     const { data: pollsData } = await supabase.from('polls').select('*').order('created_at', { ascending: false });
     const { data: votesData } = await supabase.from('feature_votes').select('poll_id, vote_type');
@@ -117,33 +121,40 @@ export default function AdminPage() {
 
   const togglePollStatus = async (pollId: number, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'closed' : 'active';
-    const { error } = await supabase.from('polls').update({ status: newStatus }).eq('id', pollId);
-    if (!error) fetchVotes();
+    await fetch('/api/admin/action', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'toggle_poll', id: pollId, payload: { status: newStatus } })
+    });
+    fetchVotes();
   };
 
   const deletePoll = async (pollId: number) => {
     if (!confirm('정말 이 투표를 삭제하시겠습니까? 관련된 투표 데이터도 모두 삭제됩니다.')) return;
-    await supabase.from('feature_votes').delete().eq('poll_id', pollId); // 종속 데이터 먼저 삭제
-    const { error } = await supabase.from('polls').delete().eq('id', pollId);
-    if (!error) fetchVotes();
+    await fetch('/api/admin/action', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete_poll', id: pollId })
+    });
+    fetchVotes();
   };
 
   const submitNewPoll = async () => {
     if (!newPollTitle || newPollOptions.some(opt => !opt.trim())) return alert('제목과 옵션을 모두 입력해주세요.');
-    const { error } = await supabase.from('polls').insert([{ 
-      title: newPollTitle, 
-      description: newPollDesc, 
-      options: newPollOptions, 
-      status: 'active' 
-    }]);
-    if (!error) {
+    const res = await fetch('/api/admin/action', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        action: 'create_poll', 
+        payload: { title: newPollTitle, description: newPollDesc, options: newPollOptions, status: 'active' } 
+      })
+    });
+    
+    if (res.ok) {
       setShowPollForm(false);
       setNewPollTitle('');
       setNewPollDesc('');
       setNewPollOptions(['찬성', '반대']);
       fetchVotes();
     } else {
-      alert('투표 생성 실패: ' + error.message);
+      alert('투표 생성에 실패했습니다.');
     }
   };
 
@@ -152,7 +163,7 @@ export default function AdminPage() {
     setPrices(prev => ({ ...prev, [name]: isNaN(num) ? 0 : num }));
   };
 
-  const saveFoodPrices = async () => { /* 생략 없이 기존 코드 유지 */
+  const saveFoodPrices = async () => {
     if (!confirm(`현재 시간 기준 주기로 요리 시세를 저장하시겠습니까?\n적용 주기: ${currentCookingPeriod}`)) return;
     setIsFoodSaving(true);
     const updates = Object.entries(prices).filter(([name]) => FOOD_NAMES.includes(name)).map(([name, price]) => ({ item_name: name, price: price, category: 'food', period: currentCookingPeriod }));
@@ -162,7 +173,7 @@ export default function AdminPage() {
     else alert('요리 시세가 성공적으로 업데이트되었습니다.');
   };
 
-  const saveCraftPrices = async () => { /* 생략 없이 기존 코드 유지 */
+  const saveCraftPrices = async () => {
     if (!confirm(`현재 시간 기준 주기로 공예품 시세를 저장하시겠습니까?\n적용 주기: ${currentCraftingPeriod}`)) return;
     setIsCraftSaving(true);
     const updates = Object.entries(prices).filter(([name]) => CRAFT_NAMES.includes(name)).map(([name, price]) => ({ item_name: name, price: price, category: 'craft', period: currentCraftingPeriod }));
@@ -172,7 +183,7 @@ export default function AdminPage() {
     else alert('공예품 시세가 성공적으로 업데이트되었습니다.');
   };
 
-  const saveVariablePrices = async () => { /* 생략 없이 기존 코드 유지 */
+  const saveVariablePrices = async () => {
     if (!confirm('전문가 변동 시세를 현재 시세로 업데이트 하시겠습니까?')) return;
     setIsVariableSaving(true);
     const updates = Object.entries(prices).filter(([name]) => VARIABLE_ITEMS.includes(name)).map(([name, price]) => ({ item_name: name, price: price, category: 'ingredient', period: 'current' }));
@@ -182,7 +193,7 @@ export default function AdminPage() {
     else alert('전문가 시세가 성공적으로 업데이트되었습니다.');
   };
 
-  const saveIngredientsOnly = async () => { /* 생략 없이 기존 코드 유지 */
+  const saveIngredientsOnly = async () => {
     if (!confirm('기본 재료 시세만 현재 글로벌 시세로 업데이트 하시겠습니까?')) return;
     setIsIngredientSaving(true);
     const ingredientNames = Object.values(INGREDIENTS).flat();
@@ -197,7 +208,7 @@ export default function AdminPage() {
     else alert('기본 재료 시세만 성공적으로 업데이트되었습니다.');
   };
 
-  const saveReleaseNote = async () => { /* 생략 없이 기존 코드 유지 */
+  const saveReleaseNote = async () => {
     if (!noteVersion || !noteTitle || !noteContent) return alert('입력해주세요.');
     setIsReleaseSaving(true);
     if (editingNoteId) {
@@ -214,8 +225,22 @@ export default function AdminPage() {
   const deleteNote = async (id: number) => { if (!confirm('삭제하시겠습니까?')) return; const { error } = await supabase.from('release_notes').delete().eq('id', id); if (!error) { alert('삭제되었습니다.'); if (editingNoteId === id) cancelEdit(); fetchNotes(); } };
   const cancelEdit = () => { setEditingNoteId(null); setNoteVersion(''); setNoteTitle(''); setNoteContent(''); };
 
-  const markAsRead = async (id: number) => { const { error } = await supabase.from('feedbacks').update({ is_read: true }).eq('id', id); if (!error) fetchFeedbacks(); };
-  const deleteFeedback = async (id: number) => { if (!confirm('해당 문의를 완전히 삭제하시겠습니까?')) return; const { error } = await supabase.from('feedbacks').delete().eq('id', id); if (!error) fetchFeedbacks(); };
+  const markAsRead = async (id: number) => {
+    await fetch('/api/admin/action', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'read_feedback', id })
+    });
+    fetchFeedbacks();
+  };
+
+  const deleteFeedback = async (id: number) => {
+    if (!confirm('해당 문의를 완전히 삭제하시겠습니까?')) return;
+    await fetch('/api/admin/action', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete_feedback', id })
+    });
+    fetchFeedbacks();
+  };
 
   const filteredFeedbacks = feedbacks.filter(fb => feedbackFilter === 'unread' ? !fb.is_read : fb.is_read);
 
@@ -271,7 +296,7 @@ export default function AdminPage() {
                  ))}
                </div>
              </div>
-             {/* 나머지 가격 탭 UI 생략 없이 동일 */}
+             
              <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">
                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-6">
                  <div>
@@ -325,10 +350,9 @@ export default function AdminPage() {
            </div>
         )}
 
-        {/* --- [기존 패치노트 관리, 의견제보, 통계 탭 생략 없이 전체 유지] --- */}
         {activeTab === 'release' && (
           <div className="animate-fade-in-up flex flex-col xl:flex-row gap-8 max-w-7xl mx-auto">
-            {/* 패치노트 코드 동일 */}
+            
             <div className="flex-[2] bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl h-fit">
               <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
                 <h2 className="text-xl font-bold text-white border-l-4 border-rose-500 pl-3">{editingNoteId ? '패치노트 수정' : '신규 패치노트 작성'}</h2>
@@ -417,11 +441,9 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* --- [업데이트: 동적 투표 관리 탭] --- */}
         {activeTab === 'votes' && (
           <div className="animate-fade-in-up max-w-5xl mx-auto pb-32">
             
-            {/* 투표 생성 폼 모달처럼 상단에 표시 */}
             {showPollForm && (
               <div className="bg-[#111] border border-purple-500/30 rounded-2xl p-6 mb-8 shadow-[0_0_20px_rgba(168,85,247,0.1)]">
                 <h3 className="text-lg font-bold text-white mb-4">새로운 투표 생성</h3>
@@ -501,7 +523,6 @@ export default function AdminPage() {
                       <div className="space-y-3 z-20 relative">
                         {poll.results.map((res: any, idx: number) => {
                           const percentage = poll.total > 0 ? Math.round((res.count / poll.total) * 100) : 0;
-                          // 색상을 다채롭게 (간단한 로직)
                           const colorClass = idx === 0 ? 'bg-indigo-500' : idx === 1 ? 'bg-rose-500' : idx === 2 ? 'bg-emerald-500' : 'bg-amber-500';
                           const textColorClass = idx === 0 ? 'text-indigo-400' : idx === 1 ? 'text-rose-400' : idx === 2 ? 'text-emerald-400' : 'text-amber-400';
                           
@@ -526,7 +547,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 통계 탭 생략 없이 동일 */}
         {activeTab === 'statistics' && (
           <div className="animate-fade-in-up max-w-5xl mx-auto pb-32">
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl">

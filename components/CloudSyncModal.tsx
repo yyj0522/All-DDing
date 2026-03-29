@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface CloudSyncModalProps {
   isOpen: boolean;
@@ -32,14 +31,6 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
 
   if (!isOpen) return null;
 
-  const hashData = async (user: string, data: string) => {
-    const encoder = new TextEncoder();
-    const encodedData = encoder.encode(user.toLowerCase() + "alldding_secret" + data);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', encodedData);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  };
-
   const generateRecoveryKey = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let key = '';
@@ -59,14 +50,6 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
     setErrorMsg('');
 
     try {
-      const { data: existingUser } = await supabase.from('alldding_users').select('username').eq('username', username).single();
-      
-      if (existingUser) {
-        setErrorMsg('이미 사용 중인 아이디입니다.');
-        setIsLoading(false);
-        return;
-      }
-
       const newKey = generateRecoveryKey();
       const currentSettings: Record<string, any> = {};
       
@@ -78,20 +61,26 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
         }
       });
 
-      const hashedPassword = await hashData(username, password);
-      const hashedRecoveryKey = await hashData(username, newKey);
+      const res = await fetch('/api/auth/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'register',
+          username,
+          password,
+          recoveryKey: newKey,
+          settings: currentSettings
+        })
+      });
 
-      const { error } = await supabase.from('alldding_users').insert([{
-        username,
-        password: hashedPassword,
-        recovery_key: hashedRecoveryKey, // DB에는 암호화된 키 저장
-        settings: currentSettings
-      }]);
+      const data = await res.json();
 
-      if (error) throw error;
+      if (!res.ok) {
+        throw new Error(data.error || '회원가입에 실패했습니다.');
+      }
 
       localStorage.setItem('alldding_logged_in_user', username);
-      setRecoveryKey(newKey); // 유저에게 보여주는 화면에는 평문 키(newKey) 세팅
+      setRecoveryKey(newKey);
       setMode('showKey');
 
     } catch (err: any) {
@@ -110,14 +99,16 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
     setErrorMsg('');
 
     try {
-      const { data: user, error } = await supabase.from('alldding_users').select('password, settings').eq('username', username).single();
+      const res = await fetch('/api/auth/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', username, password })
+      });
 
-      const hashedInputPassword = await hashData(username, password);
+      const data = await res.json();
 
-      if (error || !user || user.password !== hashedInputPassword) {
-        setErrorMsg('아이디 또는 비밀번호가 일치하지 않습니다.');
-        setIsLoading(false);
-        return;
+      if (!res.ok) {
+        throw new Error(data.error || '로그인에 실패했습니다.');
       }
 
       localStorage.setItem('alldding_logged_in_user', username);
@@ -129,8 +120,8 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
         }
       });
 
-      if (user.settings && Object.keys(user.settings).length > 0) {
-        Object.entries(user.settings).forEach(([key, value]) => {
+      if (data.settings && Object.keys(data.settings).length > 0) {
+        Object.entries(data.settings).forEach(([key, value]) => {
           localStorage.setItem(key, JSON.stringify(value));
         });
         alert('클라우드 데이터를 성공적으로 불러왔습니다! 화면이 새로고침됩니다.');
@@ -197,21 +188,22 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
     setErrorMsg('');
 
     try {
-      const { data: user, error } = await supabase.from('alldding_users').select('recovery_key').eq('username', username).single();
+      const res = await fetch('/api/auth/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'recover',
+          username,
+          recoveryKey: fullRecoveryKey,
+          newPassword
+        })
+      });
 
-      // 💡 유저가 입력한 평문 복구 키를 암호화하여 DB 값과 비교
-      const hashedInputKey = await hashData(username, fullRecoveryKey);
+      const data = await res.json();
 
-      if (error || !user || user.recovery_key !== hashedInputKey) {
-        setErrorMsg('아이디 또는 복구 키가 일치하지 않습니다.');
-        setIsLoading(false);
-        return;
+      if (!res.ok) {
+        throw new Error(data.error || '비밀번호 재설정에 실패했습니다.');
       }
-
-      const hashedNewPassword = await hashData(username, newPassword);
-      const { error: updateError } = await supabase.from('alldding_users').update({ password: hashedNewPassword }).eq('username', username);
-
-      if (updateError) throw updateError;
 
       alert('비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 로그인해주세요.');
       setMode('login');
@@ -245,7 +237,6 @@ export default function CloudSyncModal({ isOpen, onClose }: CloudSyncModalProps)
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-[#111] border border-indigo-200 dark:border-indigo-500/30 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col relative">
-        
         <button onClick={handleClose} className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors bg-gray-100 dark:bg-white/5 p-1.5 rounded-lg">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
 
 const SYNC_KEYS = [
   'ocean_trade_v2', 
@@ -42,15 +41,25 @@ export default function AutoCloudSync() {
 
         setIsSaving(true);
         
-        await supabase.from('alldding_users').update({
-          settings: currentSettings,
-          updated_at: new Date().toISOString()
-        }).eq('username', loggedInUser);
+        try {
+          const res = await fetch('/api/auth/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'sync',
+              username: loggedInUser,
+              settings: currentSettings
+            })
+          });
 
-        lastSyncedDataRef.current = currentDataString;
-
-        const now = new Date();
-        setLastSavedTime(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+          if (res.ok) {
+            lastSyncedDataRef.current = currentDataString;
+            const now = new Date();
+            setLastSavedTime(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+          }
+        } catch (error) {
+          console.error('동기화 오류:', error);
+        }
 
         setTimeout(() => {
           setIsSaving(false);
