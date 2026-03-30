@@ -10,7 +10,6 @@ import { getCachedPrices } from '@/lib/supabase';
 
 const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
-const SKILL_BONUS = [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.1, 0.15, 0.3, 0.5];
 const F8_EXPECTED_EXTRA = [0, 0.01, 0.02, 0.03, 0.04, 0.10, 0.14, 0.30];
 const F9_GIANT_CHANCE = [0, 0.005, 0.01, 0.03, 0.05];
 const F12_SEED_RETURN = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.10, 0.20, 0.30];
@@ -38,7 +37,6 @@ const RECIPES = [
 ];
 
 export default function EfficiencySimulatorPage() {
-  const [skillLevel, setSkillLevel] = useState<number>(0);
   const [userPrices, setUserPrices] = useState<Record<string, number>>({});
   const [dbPrices, setDbPrices] = useState<Record<string, number>>({});
   const [profLevels, setProfLevels] = useState<Record<string, number>>({});
@@ -50,10 +48,8 @@ export default function EfficiencySimulatorPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const savedSkill = localStorage.getItem('alldding_skill');
       const savedPrices = localStorage.getItem('alldding_prices');
       const savedProf = localStorage.getItem('alldding_profession');
-      if (savedSkill) setSkillLevel(Number(savedSkill));
       if (savedPrices) setUserPrices(JSON.parse(savedPrices));
       if (savedProf) setProfLevels(JSON.parse(savedProf));
       const data = await getCachedPrices();
@@ -124,8 +120,8 @@ export default function EfficiencySimulatorPage() {
       
       const currentMarketPrice = dbPrices[recipe.name] || 0;
       
-      const singleSalePrice = Math.floor(currentMarketPrice * (1 + SKILL_BONUS[skillLevel] + f15Bonus));
-      const bonusSalePrice = Math.floor(currentMarketPrice * (1 + SKILL_BONUS[skillLevel] + f15Bonus + f5Bonus));
+      const singleSalePrice = Math.floor(currentMarketPrice * (1 + f15Bonus));
+      const bonusSalePrice = Math.floor(currentMarketPrice * (1 + f15Bonus + f5Bonus));
 
       const sets3 = Math.floor(safeTargetQty / 192);
       const itemsIn3Sets = sets3 * 192;
@@ -150,7 +146,7 @@ export default function EfficiencySimulatorPage() {
         percentToMax 
       };
     }).sort((a, b) => b.totalProfit - a.totalProfit); 
-  }, [userPrices, dbPrices, skillLevel, profLevels, isLoaded, safeTargetQty]);
+  }, [userPrices, dbPrices, profLevels, isLoaded, safeTargetQty]);
 
   if (!isLoaded) return <div className="min-h-screen bg-gray-50 dark:bg-[#050505] flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 font-bold transition-colors duration-300">분석 데이터 로딩 중...</div>;
 
@@ -203,7 +199,7 @@ export default function EfficiencySimulatorPage() {
             
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <button onClick={() => setIsCalcOpen(true)} className="flex-1 bg-indigo-100 dark:bg-indigo-600/20 hover:bg-indigo-200 dark:hover:bg-indigo-600/40 border border-indigo-200 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400 px-5 py-3 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all shadow-sm dark:shadow-lg whitespace-nowrap"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>대리 판매 계산기</button>
-              <div className="flex-1 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 px-6 py-3 rounded-2xl flex items-center justify-center gap-4 shadow-sm dark:shadow-lg transition-colors whitespace-nowrap"><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">요리 스킬</span><span className="text-xl font-black text-indigo-600 dark:text-indigo-400">Lv.{skillLevel}</span></div>
+              <div className="flex-1 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 px-6 py-3 rounded-2xl flex items-center justify-center gap-4 shadow-sm dark:shadow-lg transition-colors whitespace-nowrap"><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">돈 좀 벌어볼까</span><span className="text-xl font-black text-indigo-600 dark:text-indigo-400">Lv.{profLevels['f15'] || 0}</span></div>
             </div>
           </div>
         </div>
