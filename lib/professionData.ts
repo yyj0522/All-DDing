@@ -464,9 +464,9 @@ export const OCEAN_FIXED_PRICES = [
   { name: '해구의 파동 코어', base: 11131 },
   { name: '침묵의 심해 비약', base: 11242 },
   { name: '청해룡의 날개', base: 11399 },
-  { name: '아쿠아 펄스 파편', base: 18985 },
-  { name: '나우틸러스의 손', base: 19207 },
-  { name: '무저의 척추', base: 19328 }
+  { name: '아쿠아 펄스 파편', base: 21833 },
+  { name: '나우틸러스의 손', base: 22088 },
+  { name: '무저의 척추', base: 22227 }
 ];
 
 export const PICKAXE_BASE_DROPS = [2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 12];
