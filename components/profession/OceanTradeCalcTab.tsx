@@ -7,11 +7,15 @@ interface Props {
   userStats: any;
 }
 
-const TIER1 = ["굴(1성)", "소라(1성)", "미역(1성)", "성게(1성)", "문어(1성)"];
-const TIER2 = ["굴(2성)", "소라(2성)", "미역(2성)", "성게(2성)", "문어(2성)"];
-const TIER3 = ["굴(3성)", "소라(3성)", "미역(3성)", "성게(3성)", "문어(3성)"];
+const TIER1 = ["굴(1성)", "소라(1성)", "문어(1성)", "미역(1성)", "성게(1성)"];
+const TIER2 = ["굴(2성)", "소라(2성)", "문어(2성)", "미역(2성)", "성게(2성)"];
+const TIER3 = ["굴(3성)", "소라(3성)", "문어(3성)", "미역(3성)", "성게(3성)"];
 const FISH = ["새우", "도미", "청어", "금붕어", "농어"];
 const VANILLA = ["점토", "모래", "자갈", "화강암", "흙", "해초", "참나무잎", "가문비나무잎", "자작나무잎", "아카시아나무잎", "벚나무잎", "켈프", "청금석 블록", "레드스톤 블록", "철 주괴", "금 주괴", "다이아몬드", "불우렁쉥이", "유리병", "네더랙", "마그마블록", "영혼 흙", "진홍빛 자루", "뒤틀린 자루", "말린 켈프", "발광 열매", "죽은 관 산호 블록", "죽은 사방산호 블록", "죽은 거품 산호 블록", "죽은 불 산호 블록", "죽은 뇌 산호 블록"];
+
+const ALCHEMY_T1 = ["수호의 정수(1성)", "파동의 정수(1성)", "생명의 정수(1성)", "부식의 정수(1성)", "혼란의 정수(1성)", "수호 에센스", "파동 에센스", "생명 에센스", "부식 에센스", "혼란 에센스", "수호의 엘릭서", "파동의 엘릭서", "생명의 엘릭서", "부식의 엘릭서", "혼란의 엘릭서"];
+const ALCHEMY_T2 = ["물결 수호의 핵", "파동 오염의 핵", "질서 파괴의 핵", "활력 붕괴의 핵", "침식 방어의 핵", "활기 보존의 결정", "파도 침식의 결정", "격류 재생의 결정", "맹독 혼란의 결정", "방어 오염의 결정", "불멸 재생의 영약", "파동 장벽의 영약", "생명 광란의 영약", "맹독 파동의 영약", "타락 침식의 영약"];
+const ALCHEMY_T3 = ["영생의 아쿠티스", "크라켄의 광란체", "리바이던의 깃털", "해구의 파동 코어", "침묵의 심해 비약", "청해룡의 날개", "아쿠아 펄스 파편", "나우틸러스의 손", "무저의 척추", "추출된 희석액"];
 
 export default function OceanTradeCalcTab({ userStats }: Props) {
   const [activeSubTab, setActiveSubTab] = useState<'trade' | 'inventory' | 'recommend' | 'simulator'>('recommend');
@@ -20,10 +24,9 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   const [stock, setStock] = useState<Record<string, number>>({});
   const [blacklist, setBlacklist] = useState<string[]>([]);
   const [tradeQty, setTradeQty] = useState<Record<string, number>>({});
+  const [targets, setTargets] = useState<Record<string, string>>({});
   
   const [globalSetMode, setGlobalSetMode] = useState<boolean>(false);
-  const [targetItem, setTargetItem] = useState<string>(OCEAN_FIXED_PRICES[0].name);
-  const [targetQtyStr, setTargetQtyStr] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState(false);
   const [expandedRec, setExpandedRec] = useState<Record<string, boolean>>({});
 
@@ -64,6 +67,10 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     setStock(prev => ({ ...prev, [item]: isNaN(num) ? 0 : Math.round(num * (globalSetMode ? 64 : 1)) }));
   };
 
+  const handleTargetChange = (item: string, val: string) => {
+    setTargets(prev => ({ ...prev, [item]: val }));
+  };
+
   const toggleBlacklist = (item: string) => {
     setBlacklist(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
   };
@@ -100,75 +107,89 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     alert('창고에 합산 및 수량이 초기화되었습니다.');
   };
 
-  const resolveMaterials = (itemName: string, quantity: number): Record<string, number> => {
-    let searchName = itemName;
-    if (itemName === '깐 새우') searchName = '깐 새우(2개)';
-    if (itemName === '도미 회') searchName = '도미 회(2개)';
-    if (itemName === '청어 회') searchName = '청어 회(2개)';
-    if (itemName === '금붕어 회') searchName = '금붕어 회(2개)';
-    if (itemName === '농어 회') searchName = '농어 회(2개)';
+  const resolveMaterialsWithStock = (targetList: Record<string, number>, initialStock: Record<string, number>) => {
+    const tempStock = { ...initialStock };
+    const missing: Record<string, number> = {};
 
-    const recipe = OCEAN_RECIPES.find(r => r.name === searchName);
-    
-    if (!recipe) {
-      let rawName = itemName;
-      if (itemName === '익히지 않은 새우 1개' || itemName === '익히지 않은 새우') rawName = '새우';
-      if (itemName === '익히지 않은 도미 1개' || itemName === '익히지 않은 도미') rawName = '도미';
-      if (itemName === '익히지 않은 청어 1개' || itemName === '익히지 않은 청어') rawName = '청어';
-      return { [rawName]: quantity };
-    }
+    const getReq = (name: string, q: number) => {
+      if (q <= 0) return;
+      const use = Math.min(q, tempStock[name] || 0);
+      tempStock[name] -= use;
+      const rem = q - use;
+      if (rem <= 0) return;
 
-    let yieldAmount = 1;
-    if (recipe.note && recipe.note.includes('2개 제작')) yieldAmount = 2;
-    if (recipe.name.includes('(2개)')) yieldAmount = 2;
+      let searchName = name;
+      if (name === '깐 새우') searchName = '깐 새우(2개)';
+      if (name === '도미 회') searchName = '도미 회(2개)';
+      if (name === '청어 회') searchName = '청어 회(2개)';
+      if (name === '금붕어 회') searchName = '금붕어 회(2개)';
+      if (name === '농어 회') searchName = '농어 회(2개)';
 
-    const craftsNeeded = Math.ceil(quantity / yieldAmount);
-    const totals: Record<string, number> = {};
+      const recipe = OCEAN_RECIPES.find(r => r.name === searchName);
+      if (!recipe) {
+        missing[name] = (missing[name] || 0) + rem;
+        return;
+      }
 
-    recipe.ingredients.forEach(ing => {
-      const match = ing.match(/(.+?)(?:\s+(\d+)개)?$/);
-      if (match) {
-        const ingName = match[1].trim();
-        const ingQty = match[2] ? parseInt(match[2], 10) : 1;
-        const subMats = resolveMaterials(ingName, ingQty * craftsNeeded);
-        Object.entries(subMats).forEach(([k, v]) => {
-          totals[k] = (totals[k] || 0) + v;
+      let yieldAmount = 1;
+      if (recipe.note && recipe.note.includes('2개 제작')) yieldAmount = 2;
+      if (recipe.name.includes('(2개)')) yieldAmount = 2;
+
+      const craftsNeeded = Math.ceil(rem / yieldAmount);
+      recipe.ingredients.forEach(ing => {
+        const match = ing.match(/(.+?)(?:\s+(\d+)개)?$/);
+        if (match) {
+          getReq(match[1].trim(), (match[2] ? parseInt(match[2], 10) : 1) * craftsNeeded);
+        }
+      });
+    };
+
+    Object.entries(targetList).forEach(([tItem, tQty]) => {
+      getReq(tItem, tQty);
+    });
+
+    return missing;
+  };
+
+  const resolveBaseMaterials = (itemName: string, qty: number) => {
+    return resolveMaterialsWithStock({ [itemName]: qty }, {});
+  };
+
+  const getBaseEquivalents = (currentStock: Record<string, number>) => {
+    const eq: Record<string, number> = {};
+    Object.entries(currentStock).forEach(([name, qty]) => {
+      if (qty > 0) {
+        const bases = resolveBaseMaterials(name, qty);
+        Object.entries(bases).forEach(([bName, bQty]) => {
+          eq[bName] = (eq[bName] || 0) + bQty;
         });
       }
     });
-    return totals;
+    return eq;
   };
 
   const recommendations = useMemo(() => {
     const CORE_ITEMS = [...TIER1, ...TIER2, ...TIER3, ...FISH];
+    const baseEq = getBaseEquivalents(stock);
     
     return OCEAN_FIXED_PRICES.map(item => {
       const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
-      const materials = resolveMaterials(item.name, 1);
+      const baseMats = resolveBaseMaterials(item.name, 1);
       let totalCost = 0;
       let hasBlacklist = false;
       let maxCrafts = 0;
 
-      Object.entries(materials).forEach(([mat, qty]) => {
+      Object.entries(baseMats).forEach(([mat, qty]) => {
         if (blacklist.includes(mat)) hasBlacklist = true;
         totalCost += (cost[mat] || 0) * qty;
         
         if (CORE_ITEMS.includes(mat)) {
-          const possibleCrafts = Math.ceil((stock[mat] || 0) / qty);
+          const possibleCrafts = Math.ceil((baseEq[mat] || 0) / qty);
           if (possibleCrafts > maxCrafts) maxCrafts = possibleCrafts;
         }
       });
 
-      const missingForMax: Record<string, number> = {};
-      if (maxCrafts > 0) {
-        Object.entries(materials).forEach(([mat, qty]) => {
-          const req = qty * maxCrafts;
-          const cur = stock[mat] || 0;
-          if (cur < req) {
-            missingForMax[mat] = req - cur;
-          }
-        });
-      }
+      const missingForMax = resolveMaterialsWithStock({ [item.name]: maxCrafts }, stock);
 
       return { 
         name: item.name, 
@@ -176,7 +197,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         totalCost, 
         profit: sellPrice - totalCost, 
         hasBlacklist, 
-        materials,
+        materials: baseMats,
         maxCrafts,
         missingForMax
       };
@@ -184,26 +205,28 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   }, [cost, stock, blacklist, o16Bonus]);
 
   const simulatorResult = useMemo(() => {
-    const parsedTargetQty = Math.max(1, Math.round((parseFloat(targetQtyStr) || 0) * (globalSetMode ? 64 : 1)));
-    const actualTargetQty = parsedTargetQty === 0 ? 1 : parsedTargetQty;
-    const materials = resolveMaterials(targetItem, actualTargetQty);
     let totalCost = 0;
-    let expectedRevenue = Math.ceil((OCEAN_FIXED_PRICES.find(i => i.name === targetItem)?.base || 0) * (1 + o16Bonus)) * actualTargetQty;
-    const missing: Record<string, number> = {};
+    let expectedRevenue = 0;
     let hasBlacklist = false;
+    const actualTargets: Record<string, number> = {};
 
-    Object.entries(materials).forEach(([mat, reqQty]) => {
-      if (blacklist.includes(mat)) hasBlacklist = true;
-      const currentStock = stock[mat] || 0;
-      if (currentStock < reqQty) {
-        const missingQty = reqQty - currentStock;
-        missing[mat] = missingQty;
-        totalCost += missingQty * (cost[mat] || 0);
+    Object.entries(targets).forEach(([targetItem, qtyStr]) => {
+      const parsedTargetQty = Math.max(0, Math.round((parseFloat(qtyStr) || 0) * (globalSetMode ? 64 : 1)));
+      if (parsedTargetQty > 0) {
+        actualTargets[targetItem] = parsedTargetQty;
+        expectedRevenue += Math.ceil((OCEAN_FIXED_PRICES.find(i => i.name === targetItem)?.base || 0) * (1 + o16Bonus)) * parsedTargetQty;
       }
     });
 
-    return { materials, missing, totalCost, expectedRevenue, profit: expectedRevenue - totalCost, hasBlacklist };
-  }, [targetItem, targetQtyStr, stock, cost, blacklist, o16Bonus, globalSetMode]);
+    const missing = resolveMaterialsWithStock(actualTargets, stock);
+
+    Object.entries(missing).forEach(([mat, reqQty]) => {
+      if (blacklist.includes(mat)) hasBlacklist = true;
+      totalCost += reqQty * (cost[mat] || 0);
+    });
+
+    return { missing, totalCost, expectedRevenue, profit: expectedRevenue - totalCost, hasBlacklist, isActive: Object.keys(actualTargets).length > 0 };
+  }, [targets, stock, cost, blacklist, o16Bonus, globalSetMode]);
 
   const validRecommendations = recommendations.filter(r => !r.hasBlacklist);
 
@@ -351,7 +374,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                   수량 초기화
                 </button>
                 <button onClick={saveCostData} className="flex-[2] sm:flex-none bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/40 text-blue-600 dark:text-blue-300 text-xs font-bold px-5 py-3.5 rounded-xl border border-blue-200 dark:border-blue-500/30 transition-all active:scale-95 whitespace-nowrap shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.1)] flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8m-9 4h4" /></svg>
                   단가 저장
                 </button>
                 <button onClick={addTradeToStock} className="flex-[2] sm:flex-none bg-gradient-to-r from-emerald-400 to-emerald-500 dark:from-emerald-500 dark:to-emerald-600 hover:from-emerald-500 hover:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white dark:text-black text-xs font-black px-8 py-3.5 rounded-xl shadow-md dark:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all hover:-translate-y-0.5 active:scale-95 whitespace-nowrap flex items-center justify-center gap-2">
@@ -369,9 +392,9 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
           <div>
             <div className="mb-6">
               <h3 className="text-base font-black text-gray-900 dark:text-white mb-1.5 flex items-center gap-2 transition-colors">
-                <div className="w-1.5 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full transition-colors"></div>창고 재고 설정
+                <div className="w-1.5 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full transition-colors"></div>기본 재료 창고
               </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 ml-3.5 transition-colors">제작 시뮬레이터에서 사용할 현재 보유 재고량을 {globalSetMode ? '세트 단위로' : '개수 단위로'} 입력해 주세요.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 ml-3.5 transition-colors">제작 시뮬레이터에서 사용할 어패류/물고기 재고량을 {globalSetMode ? '세트 단위로' : '개수 단위로'} 입력해 주세요.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {[...TIER1, ...TIER2, ...TIER3, ...FISH].map(item => (
@@ -381,6 +404,64 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                     <span className="text-[11px] text-gray-700 dark:text-gray-200 font-bold truncate transition-colors">{item}</span>
                   </div>
                   <input type="number" step="any" value={stock[item] === 0 ? '' : (globalSetMode ? Number((stock[item] / 64).toFixed(4)) : stock[item]) || ''} onChange={(e) => handleStockChange(item, e.target.value)} placeholder={globalSetMode ? "0셋" : "0개"} className="w-16 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-medium text-right focus:outline-none focus:border-emerald-500 shrink-0 transition-colors placeholder:text-gray-400" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-gray-200 dark:border-white/5 transition-colors">
+            <div className="mb-6">
+              <h3 className="text-base font-black text-purple-600 dark:text-purple-400 mb-1.5 flex items-center gap-2 transition-colors">
+                <div className="w-1.5 h-4 bg-purple-500 dark:bg-purple-400 rounded-full transition-colors"></div>1단계 연금품 창고 (정수/에센스/엘릭서)
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 ml-3.5 transition-colors">보유 중인 1단계 연금품을 입력하면 시뮬레이션 및 추천 루트에서 자동으로 우선 계산됩니다.</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {ALCHEMY_T1.map(item => (
+                <div key={item} className="bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-xl p-2.5 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <img src={getImagePath(item)||''} alt="" className="w-5 h-5 object-contain shrink-0 drop-shadow-sm dark:drop-shadow-md group-hover:scale-110 transition-transform"/>
+                    <span className="text-[11px] text-gray-700 dark:text-gray-200 font-bold truncate transition-colors">{item}</span>
+                  </div>
+                  <input type="number" step="any" value={stock[item] === 0 ? '' : (globalSetMode ? Number((stock[item] / 64).toFixed(4)) : stock[item]) || ''} onChange={(e) => handleStockChange(item, e.target.value)} placeholder={globalSetMode ? "0셋" : "0개"} className="w-16 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-medium text-right focus:outline-none focus:border-purple-500 shrink-0 transition-colors placeholder:text-gray-400" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-gray-200 dark:border-white/5 transition-colors">
+            <div className="mb-6">
+              <h3 className="text-base font-black text-rose-600 dark:text-rose-400 mb-1.5 flex items-center gap-2 transition-colors">
+                <div className="w-1.5 h-4 bg-rose-500 dark:bg-rose-400 rounded-full transition-colors"></div>2단계 연금품 창고 (핵/결정/영약)
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {ALCHEMY_T2.map(item => (
+                <div key={item} className="bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-xl p-2.5 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <img src={getImagePath(item)||''} alt="" className="w-5 h-5 object-contain shrink-0 drop-shadow-sm dark:drop-shadow-md group-hover:scale-110 transition-transform"/>
+                    <span className="text-[11px] text-gray-700 dark:text-gray-200 font-bold truncate transition-colors">{item}</span>
+                  </div>
+                  <input type="number" step="any" value={stock[item] === 0 ? '' : (globalSetMode ? Number((stock[item] / 64).toFixed(4)) : stock[item]) || ''} onChange={(e) => handleStockChange(item, e.target.value)} placeholder={globalSetMode ? "0셋" : "0개"} className="w-16 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-medium text-right focus:outline-none focus:border-rose-500 shrink-0 transition-colors placeholder:text-gray-400" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-gray-200 dark:border-white/5 transition-colors">
+            <div className="mb-6">
+              <h3 className="text-base font-black text-indigo-600 dark:text-indigo-400 mb-1.5 flex items-center gap-2 transition-colors">
+                <div className="w-1.5 h-4 bg-indigo-500 dark:bg-indigo-400 rounded-full transition-colors"></div>3단계 연금품 창고 (최종 재료)
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {ALCHEMY_T3.map(item => (
+                <div key={item} className="bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-xl p-2.5 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <img src={getImagePath(item)||''} alt="" className="w-5 h-5 object-contain shrink-0 drop-shadow-sm dark:drop-shadow-md group-hover:scale-110 transition-transform"/>
+                    <span className="text-[11px] text-gray-700 dark:text-gray-200 font-bold truncate transition-colors">{item}</span>
+                  </div>
+                  <input type="number" step="any" value={stock[item] === 0 ? '' : (globalSetMode ? Number((stock[item] / 64).toFixed(4)) : stock[item]) || ''} onChange={(e) => handleStockChange(item, e.target.value)} placeholder={globalSetMode ? "0셋" : "0개"} className="w-16 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-medium text-right focus:outline-none focus:border-indigo-500 shrink-0 transition-colors placeholder:text-gray-400" />
                 </div>
               ))}
             </div>
@@ -525,30 +606,39 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         <div className="animate-fade-in bg-white dark:bg-gradient-to-b dark:from-[#111113] dark:to-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl p-5 md:p-8 flex flex-col lg:flex-row gap-8 lg:gap-10 shadow-sm dark:shadow-2xl transition-colors">
           <div className="flex-1 flex flex-col">
             <h3 className="text-base font-black text-gray-900 dark:text-white mb-5 flex items-center gap-2 transition-colors">
-              <div className="w-1.5 h-4 bg-cyan-500 dark:bg-cyan-400 rounded-full transition-colors"></div>시뮬레이션 목표 설정
+              <div className="w-1.5 h-4 bg-cyan-500 dark:bg-cyan-400 rounded-full transition-colors"></div>시뮬레이션 다중 목표 설정
             </h3>
-            <div className="flex gap-3 mb-8">
-              <select value={targetItem} onChange={(e) => setTargetItem(e.target.value)} className="flex-[2] bg-gray-50 dark:bg-[#1a1a1e] border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white text-sm font-bold focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 cursor-pointer transition-colors shadow-inner">
-                {OCEAN_FIXED_PRICES.map(item => <option key={item.name} value={item.name} className="bg-white dark:bg-[#0a0a0a]">{item.name}</option>)}
-              </select>
-              <div className="flex-1 relative">
-                <input type="number" step="any" value={targetQtyStr} onChange={(e) => setTargetQtyStr(e.target.value)} placeholder={globalSetMode ? "수량(셋)" : "수량(개)"} className="w-full h-full bg-gray-50 dark:bg-[#1a1a1e] border border-gray-200 dark:border-white/10 rounded-xl pl-4 pr-8 py-3.5 text-gray-900 dark:text-white text-sm font-black focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 transition-colors shadow-inner placeholder:text-gray-400 dark:placeholder:text-gray-600 placeholder:font-medium" />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 dark:text-gray-500 transition-colors">{globalSetMode ? "셋" : "개"}</span>
-              </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-8">
+              {OCEAN_FIXED_PRICES.map(item => (
+                <div key={item.name} className="bg-gray-50 dark:bg-[#1a1a1e] border border-gray-200 dark:border-white/10 rounded-xl p-2.5 flex flex-col gap-2 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <img src={getImagePath(item.name)||''} className="w-5 h-5 object-contain" />
+                    <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 truncate">{item.name}</span>
+                  </div>
+                  <div className="relative">
+                    <input type="number" step="any" value={targets[item.name] || ''} onChange={(e) => handleTargetChange(item.name, e.target.value)} placeholder={globalSetMode ? "0셋" : "0개"} className="w-full bg-white dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 transition-colors" />
+                  </div>
+                </div>
+              ))}
             </div>
 
             <h4 className="text-sm font-black text-gray-700 dark:text-gray-300 mb-4 flex items-center justify-between transition-colors">
-              부족한 재료 현황
-              <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-md transition-colors">내 창고 재고 대비</span>
+              최종 부족한 재료 현황
+              <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-md transition-colors">내 창고 재고 완벽 합산</span>
             </h4>
             
             <div className="flex-1 bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-2xl p-4 transition-colors">
-              {Object.entries(simulatorResult.missing).length === 0 ? (
+              {!simulatorResult.isActive ? (
+                <div className="flex flex-col items-center justify-center h-full py-10 opacity-70">
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 transition-colors">제작할 목표 수량을 입력해 주세요.</p>
+                </div>
+              ) : Object.entries(simulatorResult.missing).length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-10 opacity-70">
                   <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-500/10 rounded-full flex items-center justify-center mb-3 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 transition-colors">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   </div>
-                  <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 transition-colors">보유 중인 재고로 충분히 제작 가능합니다!</p>
+                  <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 transition-colors">보유 중인 재고로 충분히 모두 제작 가능합니다!</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -573,7 +663,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
 
           <div className="w-full lg:w-[350px] flex flex-col justify-center gap-4 shrink-0 mt-6 lg:mt-0 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-white/5 pt-8 lg:pt-0 lg:pl-8 transition-colors">
             <div className="bg-rose-50 dark:bg-rose-950/10 border border-rose-200 dark:border-rose-500/10 rounded-2xl p-5 hover:bg-rose-100 dark:hover:bg-rose-950/20 transition-colors">
-              <p className="text-[10px] text-rose-500 dark:text-rose-300/60 font-bold mb-1 tracking-wider transition-colors">부족분 매입 예상 비용</p>
+              <p className="text-[10px] text-rose-500 dark:text-rose-300/60 font-bold mb-1 tracking-wider transition-colors">부족분 매입 예상 총 비용</p>
               <p className="text-xl font-black text-rose-600 dark:text-rose-400 drop-shadow-sm transition-colors">- {simulatorResult.totalCost.toLocaleString()} G</p>
             </div>
             <div className="bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-500/10 rounded-2xl p-5 hover:bg-emerald-100 dark:hover:bg-emerald-950/20 transition-colors">
