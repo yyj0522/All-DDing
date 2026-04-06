@@ -59,7 +59,7 @@ export default function WelcomePopup() {
     <div className="fixed top-20 left-4 md:top-24 md:left-8 z-[999] pointer-events-none flex flex-col xl:flex-row gap-4 lg:gap-6 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-6rem)] overflow-y-auto xl:overflow-x-hidden custom-scrollbar">
       
       {isOpenMain ? (
-        <div className="pointer-events-auto animate-fade-in bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[760px] lg:w-[1150px] shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[calc(100vh-6rem)] overflow-hidden shrink-0 transition-colors">
+        <div className="pointer-events-auto animate-fade-in bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl w-full md:w-[760px] lg:w-[850px] shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[calc(100vh-6rem)] overflow-hidden shrink-0 transition-colors">
           <div className="bg-black border-b border-white/10 px-6 py-5 shrink-0 transition-colors">
             <h2 className="text-lg font-black text-white tracking-tight transition-colors">
               올띵(All-Dding)에 오신 것을 환영합니다!
@@ -110,7 +110,7 @@ export default function WelcomePopup() {
               </ul>
             </div>
 
-            <div className="flex-1 p-6 space-y-6 bg-gray-50 dark:bg-black/20 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/5 transition-colors">
+            <div className="flex-1 p-6 space-y-6 bg-gray-50 dark:bg-black/20 transition-colors">
               <div>
                 <h3 className="text-base font-black text-gray-900 dark:text-white mb-2 flex items-center gap-2 transition-colors">
                   업데이트 및 의견 제보 안내
@@ -121,11 +121,16 @@ export default function WelcomePopup() {
               </div>
 
               <div className="space-y-4">
-                <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/5 rounded-xl p-4 shadow-sm dark:shadow-none transition-colors">
-                  <h4 className="text-sm font-bold text-amber-600 dark:text-amber-500 mb-1 transition-colors">사냥꾼 관련 제보 요청</h4>
-                  <p className="text-[11px] text-gray-700 dark:text-gray-400 leading-relaxed break-keep transition-colors">
-                    전문가 페이지에 사냥꾼 전용 아이템 레시피가 추가되었습니다. 사냥꾼의 수익구조와 플레이 루틴등을 제보해주시면 큰 도움이 될 것 같습니다.
+                <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-5 shadow-sm dark:shadow-none transition-colors text-center">
+                  <h4 className="text-sm font-bold text-indigo-700 dark:text-indigo-300 mb-2 transition-colors">
+                    04-07 업데이트가 적용되었습니다! 자세한 내용은 패치노트에서 확인하세요
+                  </h4>
+                  <p className="text-[11px] text-gray-600 dark:text-gray-400 break-keep mb-4 transition-colors">
+                    상단 메뉴의 '패치노트' 게시판을 통해 이번 업데이트의 모든 상세 내역을 확인하실 수 있습니다.
                   </p>
+                  <a href="/note" className="inline-block bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-400 text-white dark:text-gray-900 text-xs font-bold px-6 py-2.5 rounded-lg transition-colors shadow-md dark:shadow-none">
+                    패치노트 바로가기
+                  </a>
                 </div>
 
                 <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/5 rounded-xl p-4 shadow-sm dark:shadow-none transition-colors">
@@ -146,36 +151,6 @@ export default function WelcomePopup() {
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="flex-1 p-6 space-y-6 bg-indigo-50/50 dark:bg-indigo-950/10 transition-colors">
-              <div>
-                <h3 className="text-base font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
-                  04/07 올띵 업데이트 안내
-                </h3>
-                <p className="text-[12px] text-gray-800 dark:text-gray-300 break-keep leading-relaxed transition-colors mb-3">
-                  새로운 기능과 변경사항이 포함된 <strong>03/27 올띵 업데이트</strong>가 적용되었습니다!
-                </p>
-
-                <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-3 transition-colors mb-4">
-                  <p className="text-[11px] text-amber-800 dark:text-amber-200 font-bold leading-relaxed break-keep transition-colors">
-                    ※ 개인 설정 데이터 보호용 클라우드 동기화(로그인) 기능이 추가되었습니다.
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-[#111] border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-5 shadow-sm transition-colors text-center">
-                <h4 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-2 transition-colors">
-                  자세한 내용은 패치노트에서 확인하세요
-                </h4>
-                <p className="text-[11px] text-gray-600 dark:text-gray-400 break-keep mb-4 transition-colors">
-                  상단 메뉴의 '패치노트' 게시판을 통해 이번 업데이트의 모든 상세 내역을 확인하실 수 있습니다.
-                </p>
-                <a href="/note" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg transition-colors">
-                  패치노트 바로가기
-                </a>
               </div>
             </div>
           </div>
@@ -207,8 +182,7 @@ export default function WelcomePopup() {
           </div>
         </div>
       ) : (
-        // xl 화면에서 메인 팝업이 닫혔을 때 공간 유지용 플레이스홀더
-        <div className="hidden xl:block w-[1150px] shrink-0 pointer-events-none" />
+        <div className="hidden xl:block w-full md:w-[760px] lg:w-[850px] shrink-0 pointer-events-none" />
       )}
 
       {isOpenRpg && (
