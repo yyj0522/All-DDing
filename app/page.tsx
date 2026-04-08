@@ -31,14 +31,14 @@ const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@ma
 
 const RECIPES = [
   { id: "c01", name: "토마토 스파게티", maxPrice: 864, isHard: false, ingredients: { "토마토 베이스": 1, "호박 묶음": 1 } },
-  { id: "c02", name: "어니언 링", maxPrice: 1296, isHard: false, ingredients: { "양파 베이스": 1, "감자 묶음": 1 } },
-  { id: "c03", name: "갈릭 케이크", maxPrice: 810, isHard: false, ingredients: { "마늘 베이스": 1, "당근 묶음": 1 } },
+  { id: "c02", name: "어니언 링", maxPrice: 1026, isHard: false, ingredients: { "양파 베이스": 1, "감자 묶음": 1 } },
+  { id: "c03", name: "갈릭 케이크", maxPrice: 756, isHard: false, ingredients: { "마늘 베이스": 1, "당근 묶음": 1 } },
   { id: "c04", name: "삼겹살 토마토 찌개", maxPrice: 2039, isHard: false, ingredients: { "토마토 베이스": 2, "비트 묶음": 1, "요리용 소금": 1, "익힌 돼지고기": 1, "익힌 돼지 삼겹살": 1 } },
   { id: "c05", name: "삼색 아이스크림", maxPrice: 3022, isHard: true, ingredients: { "양파 베이스": 2, "수박 묶음": 1, "코코넛": 1, "설탕 큐브": 1, "요리용 우유": 1 } },
-  { id: "c06", name: "마늘 양갈비 핫도그", maxPrice: 1832, isHard: false, ingredients: { "마늘 베이스": 2, "감자 묶음": 1, "오일": 1, "익힌 양고기": 1, "익힌 양 갈비살": 1 } },
+  { id: "c06", name: "마늘 양갈비 핫도그", maxPrice: 1713, isHard: false, ingredients: { "마늘 베이스": 2, "감자 묶음": 1, "오일": 1, "익힌 양고기": 1, "익힌 양 갈비살": 1 } },
   { id: "c07", name: "달콤 시리얼", maxPrice: 2578, isHard: true, ingredients: { "토마토 베이스": 2, "달콤한 열매 묶음": 1, "파인애플": 1, "밀가루 반죽": 1, "오일": 1 } },
-  { id: "c08", name: "로스트 치킨 파이", maxPrice: 2253, isHard: false, ingredients: { "마늘 베이스": 2, "당근 묶음": 1, "버터 조각": 1, "익힌 닭고기": 1, "익힌 닭 다리살": 1 } },
-  { id: "c09", name: "스윗 치킨 햄버거", maxPrice: 3612, isHard: false, ingredients: { "토마토 베이스": 1, "양파 베이스": 1, "비트 묶음": 1, "달콤한 열매 묶음": 1, "익힌 닭 가슴살": 1, "익힌 닭 다리살": 1 } },
+  { id: "c08", name: "로스트 치킨 파이", maxPrice: 2134, isHard: false, ingredients: { "마늘 베이스": 2, "당근 묶음": 1, "버터 조각": 1, "익힌 닭고기": 1, "익힌 닭 다리살": 1 } },
+  { id: "c09", name: "스윗 치킨 햄버거", maxPrice: 3234, isHard: false, ingredients: { "토마토 베이스": 1, "양파 베이스": 1, "비트 묶음": 1, "달콤한 열매 묶음": 1, "익힌 닭 가슴살": 1, "익힌 닭 다리살": 1 } },
   { id: "c10", name: "토마토 파인애플 피자", maxPrice: 3455, isHard: true, ingredients: { "토마토 베이스": 2, "마늘 베이스": 2, "파인애플": 1, "치즈 조각": 1, "스테이크": 1, "익힌 소 등심": 1 } },
   { id: "c11", name: "양파 수프", maxPrice: 3797, isHard: true, ingredients: { "양파 베이스": 2, "마늘 베이스": 1, "감자 묶음": 1, "코코넛": 1, "버터 조각": 1, "익힌 돼지 앞다리살": 1 } },
   { id: "c12", name: "허브 삼겹살 찜", maxPrice: 2982, isHard: false, ingredients: { "마늘 베이스": 2, "양파 베이스": 1, "호박 묶음": 1, "감자 묶음": 1, "익힌 돼지고기": 1, "익힌 돼지 삼겹살": 1 } },
@@ -736,7 +736,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
       <Footer />
     </div>
   );

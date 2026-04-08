@@ -11,17 +11,17 @@ export default function RpgPage() {
         
         <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl p-10 md:p-14 shadow-xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] max-w-2xl w-full">
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-6 tracking-tight">
-            RPG 관련 업데이트 예정
+            RPG 관련 업데이트 안내
           </h1>
           
           <div className="w-12 h-1 bg-indigo-500 mx-auto rounded-full mb-8"></div>
           
           <div className="space-y-5 text-sm md:text-base text-gray-600 dark:text-gray-400 leading-relaxed break-keep">
             <p>
-              현재 새롭게 업데이트된 RPG 콘텐츠의 세부 데이터를 파악하고 있습니다.
+              현재 새롭게 업데이트된 RPG 콘텐츠를 어느정도 진행해 4구역 메인퀘스트 후반부를 제외한 대부분의 데이터를 확보했습니다.
             </p>
             <p>
-              올띵은 1인 개발 및 운영으로, 유저 여러분의 제보가 사이트 업데이트와 개발 방향 설정에 아주 큰 도움이 됩니다.
+              3~4건정도의 기능 추가 건의를 받았는데 공략 게시판에 잘 정리해주신 분들이 많아 일단 기능 추가를 보류하고자 합니다.
             </p>
             <div className="bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl p-5 mt-6">
               <p className="font-bold text-gray-800 dark:text-gray-200">

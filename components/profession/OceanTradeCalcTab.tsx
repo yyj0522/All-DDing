@@ -17,8 +17,78 @@ const ALCHEMY_T1 = ["수호의 정수(1성)", "파동의 정수(1성)", "생명�
 const ALCHEMY_T2 = ["물결 수호의 핵", "파동 오염의 핵", "질서 파괴의 핵", "활력 붕괴의 핵", "침식 방어의 핵", "활기 보존의 결정", "파도 침식의 결정", "격류 재생의 결정", "맹독 혼란의 결정", "방어 오염의 결정", "불멸 재생의 영약", "파동 장벽의 영약", "생명 광란의 영약", "맹독 파동의 영약", "타락 침식의 영약"];
 const ALCHEMY_T3 = ["영생의 아쿠티스", "크라켄의 광란체", "리바이던의 깃털", "해구의 파동 코어", "침묵의 심해 비약", "청해룡의 날개", "아쿠아 펄스 파편", "나우틸러스의 손", "무저의 척추", "추출된 희석액"];
 
+const RECIPE_FIXES: Record<string, {ing: string, req: number, yield: number}> = {
+  '깐 새우': { ing: '새우', req: 1, yield: 2 },
+  '도미 회': { ing: '도미', req: 1, yield: 2 },
+  '청어 회': { ing: '청어', req: 1, yield: 2 },
+  '금붕어 회': { ing: '금붕어', req: 1, yield: 2 },
+  '농어 회': { ing: '농어', req: 1, yield: 2 },
+};
+
+const ROD_BASE_DROPS = [1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 10];
+const O11_BONUS = [0, 0.05, 0.07, 0.10, 0.15, 0.20];
+const O14_BONUS = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10];
+const O17_BONUS = [0, 0.01, 0.03, 0.05, 0.07, 0.10, 0.15];
+
+const simulateCraftPure = (targetList: Record<string, number>, initialStock: Record<string, number>) => {
+  const tempStock = { ...initialStock };
+  const missing: Record<string, number> = {};
+
+  const getReq = (name: string, q: number) => {
+    if (q <= 0) return;
+    const use = Math.min(q, tempStock[name] || 0);
+    tempStock[name] = (tempStock[name] || 0) - use;
+    const rem = q - use;
+    if (rem <= 0) return;
+
+    if (RECIPE_FIXES[name]) {
+      const fix = RECIPE_FIXES[name];
+      const craftsNeeded = Math.ceil(rem / fix.yield);
+      const leftover = (craftsNeeded * fix.yield) - rem;
+      if (leftover > 0) tempStock[name] = (tempStock[name] || 0) + leftover;
+      getReq(fix.ing, fix.req * craftsNeeded);
+      return;
+    }
+
+    const recipe = OCEAN_RECIPES.find(r => r.name === name);
+    if (!recipe) {
+      missing[name] = (missing[name] || 0) + rem;
+      return;
+    }
+
+    let yieldAmount = 1;
+    if (recipe.note && recipe.note.includes('2개 제작')) yieldAmount = 2;
+    if (recipe.name.includes('(2개)')) yieldAmount = 2;
+
+    const craftsNeeded = Math.ceil(rem / yieldAmount);
+    const leftover = (craftsNeeded * yieldAmount) - rem;
+    if (leftover > 0) tempStock[name] = (tempStock[name] || 0) + leftover;
+
+    recipe.ingredients.forEach((ing: string) => {
+      const match = ing.match(/(.+?)(?:\s+(\d+)개)?$/);
+      if (match) getReq(match[1].trim(), (match[2] ? parseInt(match[2], 10) : 1) * craftsNeeded);
+    });
+  };
+
+  Object.entries(targetList).forEach(([tItem, tQty]) => {
+    getReq(tItem, tQty);
+  });
+
+  return { missing, stock: tempStock };
+};
+
+const ITEM_BASE_REQS: Record<string, Record<string, number>> = {};
+const ALL_ITEMS = Array.from(new Set([...TIER1, ...TIER2, ...TIER3, ...FISH, ...ALCHEMY_T1, ...ALCHEMY_T2, ...ALCHEMY_T3, ...OCEAN_FIXED_PRICES.map(i=>i.name)]));
+ALL_ITEMS.forEach(name => {
+  ITEM_BASE_REQS[name] = simulateCraftPure({ [name]: 1 }, {}).missing;
+});
+
+type StaminaScenario = 
+  | { type: 'single'; target: string; profit: number; crafted: Record<string, number> }
+  | { type: 'split'; target1: string; stamina1: number; target2: string; stamina2: number; profit: number; crafted: Record<string, number> };
+
 export default function OceanTradeCalcTab({ userStats }: Props) {
-  const [activeSubTab, setActiveSubTab] = useState<'trade' | 'inventory' | 'recommend' | 'simulator'>('recommend');
+  const [activeSubTab, setActiveSubTab] = useState<'recommend' | 'simulator' | 'trade' | 'inventory'>('recommend');
   
   const [cost, setCost] = useState<Record<string, number>>({});
   const [stock, setStock] = useState<Record<string, number>>({});
@@ -87,109 +157,66 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   };
 
   const totalTradeAmount = useMemo(() => {
+    if (!isLoaded) return 0;
     let sum = 0;
     Object.entries(tradeQty).forEach(([item, qty]) => {
       if (qty > 0) sum += (cost[item] || 0) * qty;
     });
     return sum;
-  }, [tradeQty, cost]);
+  }, [tradeQty, cost, isLoaded]);
 
   const addTradeToStock = () => {
     if (!confirm('현재 거래 수량을 창고에 합산하고 수량을 초기화하시겠습니까?')) return;
     const newStock = { ...stock };
     Object.entries(tradeQty).forEach(([item, qty]) => {
-      if (qty > 0) {
-        newStock[item] = (newStock[item] || 0) + qty;
-      }
+      if (qty > 0) newStock[item] = (newStock[item] || 0) + qty;
     });
     setStock(newStock);
     clearTradeQty();
     alert('창고에 합산 및 수량이 초기화되었습니다.');
   };
 
-  const resolveMaterialsWithStock = (targetList: Record<string, number>, initialStock: Record<string, number>) => {
-    const tempStock = { ...initialStock };
-    const missing: Record<string, number> = {};
-
-    const getReq = (name: string, q: number) => {
-      if (q <= 0) return;
-      const use = Math.min(q, tempStock[name] || 0);
-      tempStock[name] -= use;
-      const rem = q - use;
-      if (rem <= 0) return;
-
-      let searchName = name;
-      if (name === '깐 새우') searchName = '깐 새우(2개)';
-      if (name === '도미 회') searchName = '도미 회(2개)';
-      if (name === '청어 회') searchName = '청어 회(2개)';
-      if (name === '금붕어 회') searchName = '금붕어 회(2개)';
-      if (name === '농어 회') searchName = '농어 회(2개)';
-
-      const recipe = OCEAN_RECIPES.find(r => r.name === searchName);
-      if (!recipe) {
-        missing[name] = (missing[name] || 0) + rem;
-        return;
-      }
-
-      let yieldAmount = 1;
-      if (recipe.note && recipe.note.includes('2개 제작')) yieldAmount = 2;
-      if (recipe.name.includes('(2개)')) yieldAmount = 2;
-
-      const craftsNeeded = Math.ceil(rem / yieldAmount);
-      recipe.ingredients.forEach(ing => {
-        const match = ing.match(/(.+?)(?:\s+(\d+)개)?$/);
-        if (match) {
-          getReq(match[1].trim(), (match[2] ? parseInt(match[2], 10) : 1) * craftsNeeded);
-        }
-      });
-    };
-
-    Object.entries(targetList).forEach(([tItem, tQty]) => {
-      getReq(tItem, tQty);
-    });
-
-    return missing;
-  };
-
-  const resolveBaseMaterials = (itemName: string, qty: number) => {
-    return resolveMaterialsWithStock({ [itemName]: qty }, {});
-  };
-
   const getBaseEquivalents = (currentStock: Record<string, number>) => {
     const eq: Record<string, number> = {};
     Object.entries(currentStock).forEach(([name, qty]) => {
       if (qty > 0) {
-        const bases = resolveBaseMaterials(name, qty);
-        Object.entries(bases).forEach(([bName, bQty]) => {
-          eq[bName] = (eq[bName] || 0) + bQty;
-        });
+        if (ITEM_BASE_REQS[name]) {
+          Object.entries(ITEM_BASE_REQS[name]).forEach(([bName, bQty]) => {
+            eq[bName] = (eq[bName] || 0) + (bQty * qty);
+          });
+        } else {
+          eq[name] = (eq[name] || 0) + qty;
+        }
       }
     });
     return eq;
   };
 
   const recommendations = useMemo(() => {
+    if (!isLoaded || activeSubTab === 'trade' || activeSubTab === 'inventory') return [];
+    
     const CORE_ITEMS = [...TIER1, ...TIER2, ...TIER3, ...FISH];
     const baseEq = getBaseEquivalents(stock);
     
     return OCEAN_FIXED_PRICES.map(item => {
       const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
-      const baseMats = resolveBaseMaterials(item.name, 1);
+      const baseMats = ITEM_BASE_REQS[item.name] || {};
       let totalCost = 0;
       let hasBlacklist = false;
-      let maxCrafts = 0;
+      let maxCrafts = Infinity;
 
       Object.entries(baseMats).forEach(([mat, qty]) => {
         if (blacklist.includes(mat)) hasBlacklist = true;
         totalCost += (cost[mat] || 0) * qty;
         
         if (CORE_ITEMS.includes(mat)) {
-          const possibleCrafts = Math.ceil((baseEq[mat] || 0) / qty);
-          if (possibleCrafts > maxCrafts) maxCrafts = possibleCrafts;
+          maxCrafts = Math.min(maxCrafts, Math.floor((baseEq[mat] || 0) / qty));
         }
       });
 
-      const missingForMax = resolveMaterialsWithStock({ [item.name]: maxCrafts }, stock);
+      if (maxCrafts === Infinity) maxCrafts = 0;
+
+      const missingForMax = simulateCraftPure({ [item.name]: maxCrafts }, stock).missing;
 
       return { 
         name: item.name, 
@@ -202,9 +229,205 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         missingForMax
       };
     }).sort((a, b) => b.profit - a.profit);
-  }, [cost, stock, blacklist, o16Bonus]);
+  }, [cost, stock, blacklist, o16Bonus, isLoaded, activeSubTab]);
+
+  const evalStockFast = (addedStock: Record<string, number>, sortedItems: any[]) => {
+    let tempStock = { ...stock };
+    for(const k in addedStock) tempStock[k] = (tempStock[k] || 0) + addedStock[k];
+    let totalP = 0;
+    const crafted: Record<string, number> = {};
+    const CORE_ITEMS = [...TIER1, ...TIER2, ...TIER3, ...FISH];
+    
+    for (const item of sortedItems) {
+       const stockEq = getBaseEquivalents(tempStock);
+       let high = 10000;
+       let limitFound = false;
+       for (const [mat, count] of Object.entries(ITEM_BASE_REQS[item.name] || {})) {
+           if (CORE_ITEMS.includes(mat)) {
+               high = Math.min(high, Math.floor((stockEq[mat] || 0) / count));
+               limitFound = true;
+           }
+       }
+       if (!limitFound) high = 10000;
+       if (high <= 0) continue;
+
+       let low = 0;
+       let bestQty = 0;
+       let resultingStock = tempStock;
+       
+       while(low <= high) {
+          let mid = Math.floor((low + high) / 2);
+          if (mid === 0) break;
+          const sim = simulateCraftPure({[item.name]: mid}, tempStock);
+          const missingKeys = Object.keys(sim.missing);
+          const canCraft = missingKeys.every(k => VANILLA.includes(k) && !blacklist.includes(k));
+
+          if (canCraft) {
+             bestQty = mid;
+             resultingStock = sim.stock;
+             low = mid + 1;
+          } else {
+             high = mid - 1;
+          }
+       }
+
+       if (bestQty > 0) {
+          const simMissing = simulateCraftPure({[item.name]: bestQty}, tempStock).missing;
+          let costForThis = 0;
+          Object.entries(simMissing).forEach(([m, q]) => { costForThis += q * (cost[m] || 0); });
+          const profit = (item.sellPrice * bestQty) - costForThis;
+          
+          totalP += profit;
+          crafted[item.name] = bestQty;
+          tempStock = resultingStock;
+       }
+    }
+    return { profit: totalP, crafted };
+  };
+
+  const staminaAnalysis = useMemo(() => {
+    if (!isLoaded || activeSubTab !== 'recommend') return null;
+    const sortedItems = [...recommendations].filter(r => !r.hasBlacklist && r.profit > 0);
+    if (sortedItems.length === 0 || userStats.stamina < 15) return null;
+
+    const o11Mult = 1 + (O11_BONUS[userStats.o11Lv] || 0);
+    const rodLevel = Math.min(15, Math.max(0, userStats.rodLv));
+    const rawDropCount = ROD_BASE_DROPS[rodLevel] || 1;
+    const avgDropsPerAction = rawDropCount * o11Mult;
+    
+    const o17Prob = O17_BONUS[userStats.o17Lv] || 0;
+    const p3 = 0.10 + o17Prob;
+    const p2 = 0.30;
+    const p1 = Math.max(0, 1.0 - p2 - p3);
+
+    const getYield = (stamina: number, category: string) => {
+        const actions = Math.floor(stamina / 15);
+        if (actions <= 0) return {};
+        const totalItems = actions * avgDropsPerAction;
+        
+        if (FISH.includes(category)) {
+            return { [category]: Math.round(totalItems) };
+        } else {
+            return {
+                [`${category}(1성)`]: Math.round(totalItems * p1),
+                [`${category}(2성)`]: Math.round(totalItems * p2),
+                [`${category}(3성)`]: Math.round(totalItems * p3),
+            };
+        }
+    };
+
+    const TARGET_CATEGORIES = ['굴', '소라', '문어', '미역', '성게', ...FISH];
+
+    let bestScenario: StaminaScenario | null = null;
+    let maxFoundProfit = -1;
+    const totalStamina = userStats.stamina;
+    const maxActions = Math.floor(totalStamina / 15);
+    
+    const singleResults = [];
+    for(const cat of TARGET_CATEGORIES) {
+        const yieldA = getYield(totalStamina, cat);
+        const res = evalStockFast(yieldA, sortedItems);
+        singleResults.push({ cat, profit: res.profit, crafted: res.crafted });
+        if (res.profit > maxFoundProfit) {
+            maxFoundProfit = res.profit;
+            bestScenario = { type: 'single', target: cat, profit: res.profit, crafted: res.crafted };
+        }
+    }
+
+    singleResults.sort((a, b) => b.profit - a.profit);
+    const topCandidates = singleResults.slice(0, 4).map(r => r.cat);
+
+    const ratios = [0.25, 0.5, 0.75];
+    for(let i=0; i<topCandidates.length; i++) {
+        for(let j=i+1; j<topCandidates.length; j++) {
+            const cat1 = topCandidates[i];
+            const cat2 = topCandidates[j];
+            
+            for(const r of ratios) {
+                const a1 = Math.floor(maxActions * r);
+                const a2 = maxActions - a1;
+                if (a1 <= 0 || a2 <= 0) continue;
+
+                const yield1 = getYield(a1 * 15, cat1);
+                const yield2 = getYield(a2 * 15, cat2);
+                const combined = { ...yield1 };
+                for(const k in yield2) combined[k] = (combined[k]||0) + yield2[k];
+
+                const res = evalStockFast(combined, sortedItems);
+                if (res.profit > maxFoundProfit) {
+                    maxFoundProfit = res.profit;
+                    bestScenario = { 
+                        type: 'split', 
+                        target1: cat1, stamina1: a1 * 15, 
+                        target2: cat2, stamina2: a2 * 15,
+                        profit: res.profit, crafted: res.crafted 
+                    };
+                }
+            }
+        }
+    }
+
+    return bestScenario;
+  }, [stock, recommendations, cost, blacklist, userStats, isLoaded, activeSubTab]);
+
+  const inventoryAnalysis = useMemo(() => {
+    if (!isLoaded || activeSubTab !== 'recommend') return { combo: [], totalComboProfit: 0 };
+    let currentStock = { ...stock };
+    const combo: {name: string, qty: number, profit: number, missingVanilla: Record<string, number>}[] = [];
+    let totalComboProfit = 0;
+    const CORE_ITEMS = [...TIER1, ...TIER2, ...TIER3, ...FISH];
+    const sortedItems = [...recommendations].filter(r => !r.hasBlacklist && r.profit > 0);
+    
+    for (const item of sortedItems) {
+       const stockEq = getBaseEquivalents(currentStock);
+       let high = 10000;
+       let limitFound = false;
+       for (const [mat, count] of Object.entries(ITEM_BASE_REQS[item.name] || {})) {
+           if (CORE_ITEMS.includes(mat)) {
+               high = Math.min(high, Math.floor((stockEq[mat] || 0) / count));
+               limitFound = true;
+           }
+       }
+       if (!limitFound) high = 10000;
+       if (high <= 0) continue;
+
+       let low = 0, bestQty = 0;
+       let resultingStock = currentStock;
+       let bestMissing: Record<string, number> = {};
+       
+       while(low <= high) {
+          let mid = Math.floor((low + high) / 2);
+          if (mid === 0) break;
+          const sim = simulateCraftPure({[item.name]: mid}, currentStock);
+          const missingKeys = Object.keys(sim.missing);
+          const canCraft = missingKeys.every(k => VANILLA.includes(k) && !blacklist.includes(k));
+
+          if (canCraft) {
+             bestQty = mid;
+             resultingStock = sim.stock;
+             bestMissing = sim.missing;
+             low = mid + 1;
+          } else {
+             high = mid - 1;
+          }
+       }
+
+       if (bestQty > 0) {
+          let costForThis = 0;
+          Object.entries(bestMissing).forEach(([m, q]) => { costForThis += q * (cost[m] || 0); });
+          const profit = (item.sellPrice * bestQty) - costForThis;
+          
+          combo.push({ name: item.name, qty: bestQty, profit: profit, missingVanilla: bestMissing });
+          totalComboProfit += profit;
+          currentStock = resultingStock;
+       }
+    }
+
+    return { combo, totalComboProfit };
+  }, [stock, recommendations, cost, blacklist, o16Bonus, isLoaded, activeSubTab]);
 
   const simulatorResult = useMemo(() => {
+    if (!isLoaded || activeSubTab !== 'simulator') return { missing: {}, totalCost: 0, expectedRevenue: 0, profit: 0, hasBlacklist: false, isActive: false };
     let totalCost = 0;
     let expectedRevenue = 0;
     let hasBlacklist = false;
@@ -218,7 +441,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
       }
     });
 
-    const missing = resolveMaterialsWithStock(actualTargets, stock);
+    const missing = simulateCraftPure(actualTargets, stock).missing;
 
     Object.entries(missing).forEach(([mat, reqQty]) => {
       if (blacklist.includes(mat)) hasBlacklist = true;
@@ -226,7 +449,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     });
 
     return { missing, totalCost, expectedRevenue, profit: expectedRevenue - totalCost, hasBlacklist, isActive: Object.keys(actualTargets).length > 0 };
-  }, [targets, stock, cost, blacklist, o16Bonus, globalSetMode]);
+  }, [targets, stock, cost, blacklist, o16Bonus, globalSetMode, isLoaded, activeSubTab]);
 
   const validRecommendations = recommendations.filter(r => !r.hasBlacklist);
 
@@ -240,7 +463,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     return `${sets.toLocaleString()}셋 ${rem}개`;
   };
 
-  if (!isLoaded) return <div className="bg-gray-100 dark:bg-white/5 h-64 rounded-3xl animate-pulse w-full"></div>;
+  if (!isLoaded) return <div className="bg-gray-100 dark:bg-[#0a0a0a] h-64 rounded-3xl animate-pulse w-full border border-gray-200 dark:border-white/10 transition-colors"></div>;
 
   const renderTradeItem = (item: string) => {
     const c = cost[item] || 0;
@@ -251,10 +474,10 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     const displayQty = q === 0 ? '' : (globalSetMode ? Number((q / 64).toFixed(4)) : Number(q.toFixed(4)));
     
     return (
-      <div key={item} className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-3 flex flex-col gap-2.5 hover:bg-gray-50 dark:hover:bg-[#16161a] hover:border-cyan-300 dark:hover:border-cyan-500/40 shadow-sm dark:shadow-none hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(34,211,238,0.1)] transition-all duration-300 group">
+      <div key={item} className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/5 rounded-2xl p-3 flex flex-col gap-2.5 hover:bg-gray-50 dark:hover:bg-white/5 shadow-sm dark:shadow-none hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(34,211,238,0.05)] transition-all duration-300 group">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-lg shrink-0 border border-gray-200 dark:border-white/5 group-hover:bg-gray-200 dark:group-hover:bg-white/10 transition-colors">
+            <div className="w-6 h-6 flex items-center justify-center bg-gray-100 dark:bg-black/50 rounded-lg shrink-0 border border-gray-200 dark:border-white/5 transition-colors">
               <img src={getImagePath(item)||''} alt="" className="w-4 h-4 object-contain drop-shadow-sm dark:drop-shadow-md"/>
             </div>
             <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate max-w-[60px] sm:max-w-[80px] tracking-tight transition-colors">{item}</span>
@@ -263,10 +486,10 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         </div>
         <div className="flex gap-2">
           <div className="flex-1 relative">
-            <input type="number" step="any" value={displayCost} onChange={(e) => handleCostChange(item, e.target.value)} placeholder={globalSetMode ? "단가(1셋)" : "단가(1개)"} className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium" />
+            <input type="number" step="any" value={displayCost} onChange={(e) => handleCostChange(item, e.target.value)} placeholder={globalSetMode ? "단가(1셋)" : "단가(1개)"} className="w-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] focus:outline-none focus:border-cyan-400 dark:focus:border-cyan-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium" />
           </div>
           <div className="flex-1 relative">
-            <input type="number" step="any" value={displayQty} onChange={(e) => handleTradeQtyChange(item, e.target.value)} placeholder={globalSetMode ? "수량(셋)" : "수량(개)"} className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium" />
+            <input type="number" step="any" value={displayQty} onChange={(e) => handleTradeQtyChange(item, e.target.value)} placeholder={globalSetMode ? "수량(셋)" : "수량(개)"} className="w-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium" />
           </div>
         </div>
       </div>
@@ -276,10 +499,10 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   const SubTabButton = ({ id, label }: { id: typeof activeSubTab, label: string }) => (
     <button 
       onClick={() => setActiveSubTab(id)} 
-      className={`relative px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap overflow-hidden ${
+      className={`relative px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap overflow-hidden border ${
         activeSubTab === id 
-        ? 'bg-cyan-500 text-white dark:text-black shadow-md dark:shadow-[0_0_20px_rgba(34,211,238,0.3)] scale-100' 
-        : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/5 scale-95'
+        ? 'bg-cyan-500 border-cyan-400 dark:border-cyan-600 text-white dark:text-black shadow-md dark:shadow-[0_0_20px_rgba(34,211,238,0.3)] scale-100' 
+        : 'bg-white dark:bg-black/40 border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm dark:shadow-none hover:bg-gray-50 dark:hover:bg-white/5 scale-95'
       }`}
     >
       <span className="relative z-10">{label}</span>
@@ -300,16 +523,16 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         }
       `}} />
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-1.5 bg-gray-100/80 dark:bg-black/40 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl w-full shadow-sm dark:shadow-lg transition-colors">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-1.5 w-full bg-gray-100/80 dark:bg-black/40 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-lg transition-colors">
         <div className="flex gap-1 overflow-x-auto custom-scrollbar w-full md:w-auto">
-          <SubTabButton id="trade" label="거래 계산기" />
-          <SubTabButton id="inventory" label="재고 & 바닐라 설정" />
           <SubTabButton id="recommend" label="최적 제작 추천" />
           <SubTabButton id="simulator" label="제작 시뮬레이터" />
+          <SubTabButton id="trade" label="거래 계산기" />
+          <SubTabButton id="inventory" label="재고 & 바닐라 설정" />
         </div>
         <label className="flex items-center justify-end gap-2 px-3 py-2 cursor-pointer shrink-0 w-full md:w-auto">
           <input type="checkbox" className="hidden" checked={globalSetMode} onChange={(e) => setGlobalSetMode(e.target.checked)} />
-          <span className="text-xs font-black text-gray-700 dark:text-gray-300 select-none">세트(64개) 단위 모드</span>
+          <span className="text-xs font-black text-gray-700 dark:text-gray-300 select-none transition-colors">세트(64개) 단위 모드</span>
           <div className={`relative w-10 h-5 rounded-full transition-colors ${globalSetMode ? 'bg-cyan-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
             <div className={`absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${globalSetMode ? 'translate-x-5' : 'translate-x-0'}`}></div>
           </div>
@@ -370,7 +593,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                 </p>
               </div>
               <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full lg:w-auto">
-                <button onClick={clearTradeQty} className="flex-1 sm:flex-none bg-gray-100 dark:bg-[#1a1a1e] hover:bg-gray-200 dark:hover:bg-[#25252a] text-gray-700 dark:text-white text-xs font-bold px-5 py-3.5 rounded-xl border border-gray-300 dark:border-white/10 transition-all active:scale-95 whitespace-nowrap">
+                <button onClick={clearTradeQty} className="flex-1 sm:flex-none bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-white text-xs font-bold px-5 py-3.5 rounded-xl border border-gray-300 dark:border-transparent transition-all active:scale-95 whitespace-nowrap">
                   수량 초기화
                 </button>
                 <button onClick={saveCostData} className="flex-[2] sm:flex-none bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/40 text-blue-600 dark:text-blue-300 text-xs font-bold px-5 py-3.5 rounded-xl border border-blue-200 dark:border-blue-500/30 transition-all active:scale-95 whitespace-nowrap shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.1)] flex items-center justify-center gap-2">
@@ -508,7 +731,71 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
           <div className="bg-white dark:bg-[#0f1115] border border-gray-200 dark:border-cyan-500/20 rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-sm dark:shadow-2xl transition-colors">
             <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-100 dark:bg-cyan-500/5 rounded-full blur-[80px] pointer-events-none transition-colors"></div>
             <div className="relative z-10">
-              <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight transition-colors">최적 제작 루트 추천</h3>
+              <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6 border-b border-gray-200 dark:border-white/10 pb-4 tracking-tight transition-colors">스태미나 효율 및 재고 소진 분석</h3>
+              
+              {staminaAnalysis ? (
+                <div className="space-y-6">
+                  {staminaAnalysis.type === 'single' ? (
+                    <div className="bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-2xl p-5 shadow-sm dark:shadow-none transition-colors">
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2 transition-colors">스태미나 올인 추천</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-4 leading-relaxed transition-colors">
+                        현재 보유하신 재고와 총 스태미나({userStats.stamina.toLocaleString()})를 고려할 때, <br className="hidden sm:block"/>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-black transition-colors">[{staminaAnalysis.target}]</span>만 집중적으로 채집하는 것이 가장 높은 수익을 기대할 수 있습니다.
+                      </p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {Object.entries(staminaAnalysis.crafted).map(([item, qty]) => (
+                          <span key={item} className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-lg text-xs font-black text-gray-900 dark:text-white shadow-sm dark:shadow-none transition-colors">
+                            {item} <span className="text-indigo-600 dark:text-indigo-400 ml-1 transition-colors">{formatQty(qty as number)}</span>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="border-t border-gray-200 dark:border-white/10 pt-3 transition-colors">
+                        <p className="text-[11px] font-bold text-gray-500 mb-1 transition-colors">총 예상 순수익</p>
+                        <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 transition-colors">{staminaAnalysis.profit.toLocaleString()} G</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-2xl p-5 shadow-sm dark:shadow-none transition-colors">
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2 transition-colors">재고 소진 및 마진 극대화 분배</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-4 leading-relaxed transition-colors">
+                        창고에 남은 악성 재고를 소진하면서 동시에 최고 마진을 내는 최적의 스태미나 분배 비율입니다.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-4 mb-5">
+                        <div className="flex-1 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-4 shadow-sm dark:shadow-none transition-colors">
+                          <p className="text-[10px] font-bold text-gray-500 mb-1 transition-colors">재고 소진용 타겟</p>
+                          <p className="text-sm font-black text-emerald-600 dark:text-emerald-400 transition-colors">[{staminaAnalysis.target1}] 채집</p>
+                          <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-1 transition-colors">스태미나 {staminaAnalysis.stamina1.toLocaleString()} 할당</p>
+                        </div>
+                        <div className="flex-1 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-4 shadow-sm dark:shadow-none transition-colors">
+                          <p className="text-[10px] font-bold text-gray-500 mb-1 transition-colors">수익 극대화 타겟</p>
+                          <p className="text-sm font-black text-indigo-600 dark:text-indigo-400 transition-colors">[{staminaAnalysis.target2}] 채집</p>
+                          <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mt-1 transition-colors">스태미나 {staminaAnalysis.stamina2.toLocaleString()} 할당</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {Object.entries(staminaAnalysis.crafted).map(([item, qty]) => (
+                          <span key={item} className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-lg text-xs font-black text-gray-900 dark:text-white shadow-sm dark:shadow-none transition-colors">
+                            {item} <span className="text-indigo-600 dark:text-indigo-400 ml-1 transition-colors">{formatQty(qty as number)}</span>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="border-t border-gray-200 dark:border-white/10 pt-3 transition-colors">
+                        <p className="text-[11px] font-bold text-gray-500 mb-1 transition-colors">총 예상 순수익</p>
+                        <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 transition-colors">{staminaAnalysis.profit.toLocaleString()} G</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm font-bold text-gray-500 text-center py-10 transition-colors">스태미나 정보를 불러오거나 분석할 수 없습니다.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-[#0f1115] border border-gray-200 dark:border-cyan-500/20 rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-sm dark:shadow-2xl transition-colors">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-100 dark:bg-cyan-500/5 rounded-full blur-[80px] pointer-events-none transition-colors"></div>
+            <div className="relative z-10">
+              <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2 tracking-tight transition-colors">단일 품목 최적 제작 루트</h3>
               <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl transition-colors">
                 입력하신 재료 매입가를 바탕으로 1개 제작 시 <strong className="text-cyan-600 dark:text-cyan-400 transition-colors">가장 마진이 많이 남는 순위</strong>입니다.<br className="hidden sm:block"/>
                 <span className="bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 px-1.5 py-0.5 rounded font-bold mt-1 inline-block border border-cyan-200 dark:border-cyan-500/20 transition-colors">[프리미엄 한정가] Lv.{userStats.o16Lv}</span> 효과가 적용된 판매가로 계산되었습니다.<br/>
@@ -587,7 +874,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                                   <img src={getImagePath(mat)||''} className="w-4 h-4 object-contain shrink-0" />
                                   <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 truncate max-w-[60px] sm:max-w-[80px] transition-colors">{mat}</span>
                                 </div>
-                                <span className="text-[10px] font-black text-rose-500 dark:text-rose-400 shrink-0 transition-colors">{formatQty(q)} 부족</span>
+                                <span className="text-[10px] font-black text-rose-500 dark:text-rose-400 shrink-0 transition-colors">{formatQty(q as number)} 부족</span>
                               </div>
                             ))}
                           </div>
@@ -652,7 +939,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                           </div>
                           <span className={`text-[11px] font-bold truncate transition-colors ${isBlack ? 'text-red-500 dark:text-red-400' : 'text-gray-700 dark:text-gray-200'}`}>{mat}</span>
                         </div>
-                        <span className={`text-[11px] font-black shrink-0 transition-colors ${isBlack ? 'text-red-400 dark:text-red-500/70' : 'text-rose-500 dark:text-rose-400'}`}>{formatQty(qty)} 부족</span>
+                        <span className={`text-[11px] font-black shrink-0 transition-colors ${isBlack ? 'text-red-400 dark:text-red-500/70' : 'text-rose-500 dark:text-rose-400'}`}>{formatQty(qty as number)} 부족</span>
                       </div>
                     )
                   })}
