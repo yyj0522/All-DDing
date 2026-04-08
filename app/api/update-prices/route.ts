@@ -17,14 +17,20 @@ export async function POST(request: Request) {
     const token = searchParams.get('token');
     
     if (token !== SECRET_TOKEN) {
-      return NextResponse.json({ error: 'Unauthorized: 잘못된 토큰입니다.' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return NextResponse.json({ error: 'Invalid JSON Syntax' }, { status: 400 });
+    }
+
     const { prices } = body; 
 
     if (!prices || typeof prices !== 'object') {
-      return NextResponse.json({ error: 'Invalid payload: 데이터 형식이 잘못되었습니다.' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
     const currentCooking = getCookingPeriod();
@@ -59,18 +65,22 @@ export async function POST(request: Request) {
     }
 
     if (updates.length === 0) {
-      return NextResponse.json({ error: '등록할 수 있는 요리 또는 공예품 데이터가 없습니다.' }, { status: 400 });
+      return NextResponse.json({ error: 'No valid items found' }, { status: 400 });
     }
 
     const { error } = await supabaseAdmin
       .from('item_prices')
       .upsert(updates, { onConflict: 'item_name, period' });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase Error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-    return NextResponse.json({ success: true, message: '스마트 시세 업데이트 완료!', updatedCount: updates.length });
+    return NextResponse.json({ success: true, updatedCount: updates.length });
 
   } catch (error: any) {
+    console.error('API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
