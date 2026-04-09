@@ -13,7 +13,6 @@ export default function PollWidget({ pollId }: PollWidgetProps) {
   const [isVoting, setIsVoting] = useState(false);
 
   useEffect(() => {
-    // 이미 이 브라우저에서 투표했는지 확인
     const voted = localStorage.getItem(`hasVoted_poll_${pollId}`);
     if (voted) setHasVoted(true);
 
@@ -27,7 +26,6 @@ export default function PollWidget({ pollId }: PollWidgetProps) {
   const handleVote = async (selectedOption: string) => {
     setIsVoting(true);
     try {
-      // 선택한 옵션을 vote_type에 그대로 저장해!
       await supabase.from('feature_votes').insert([{ poll_id: pollId, vote_type: selectedOption }]);
     } catch (error) {
       console.error('투표 저장 실패:', error);
@@ -38,7 +36,7 @@ export default function PollWidget({ pollId }: PollWidgetProps) {
     }
   };
 
-  if (!poll) return null; // 투표 데이터가 없으면 아예 안 보임
+  if (!poll) return null; 
 
   return (
     <div className="bg-white dark:bg-[#111] border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-5 shadow-sm transition-colors">

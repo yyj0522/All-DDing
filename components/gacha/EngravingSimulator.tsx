@@ -58,9 +58,9 @@ const SpriteEffect = ({ type, onComplete }: { type: 'hitting' | 'success' | 'fai
 };
 
 const STONE_GRADES: { id: GradeId; gradeName: string; prob: number; coin: number; ruby: number }[] = [
-  { id: 'rough', gradeName: '투박한', prob: 5, coin: 200000, ruby: 10 },
-  { id: 'neat', gradeName: '단정한', prob: 10, coin: 400000, ruby: 20 },
-  { id: 'exquisite', gradeName: '정교한', prob: 15, coin: 600000, ruby: 30 },
+  { id: 'rough', gradeName: '투박한', prob: 10, coin: 100000, ruby: 3 },
+  { id: 'neat', gradeName: '단정한', prob: 20, coin: 200000, ruby: 5 },
+  { id: 'exquisite', gradeName: '정교한', prob: 30, coin: 300000, ruby: 7 },
 ];
 
 const TOOL_TYPES = [

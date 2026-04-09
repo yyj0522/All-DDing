@@ -160,8 +160,8 @@ export default function SettingsPage() {
   if (!isLoaded) return <div className="min-h-screen bg-gray-50 dark:bg-[#050505] transition-colors duration-300"></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-200 dark:selection:bg-indigo-500/30 flex flex-col relative overflow-x-hidden transition-colors duration-300">
-      <div className="absolute top-[-10%] left-[-5%] w-full h-[40%] bg-indigo-100 dark:bg-white/5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300"></div>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-200 dark:selection:bg-indigo-500/30 relative flex flex-col overflow-x-hidden transition-colors duration-300">
+      <div className="absolute top-[-20%] left-[-10%] w-full h-[50%] bg-indigo-300/20 dark:bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300"></div>
       <Header />
       <style dangerouslySetInnerHTML={{__html: `
         .skill-tree { display: flex; justify-content: center; width: 100%; padding-bottom: 2rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -186,20 +186,38 @@ export default function SettingsPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
         html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
       `}} />
-      <main className="relative z-10 flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-40 pb-20">
-        <div className="mb-8 md:mb-12 text-center md:text-left max-w-7xl mx-auto px-2 transition-colors">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-3 transition-colors">개인 설정 <span className="text-indigo-600 dark:text-indigo-500 transition-colors">보드</span></h1>
-          <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm md:text-base tracking-wide max-w-2xl break-keep transition-colors">전문가 스킬 트리, 세이지 도구 강화 현황 및 재료 단가를 통합 관리합니다.</p>
+      <main className="relative z-10 flex-1 max-w-[1500px] w-full mx-auto px-4 pt-28 md:pt-40 pb-20 flex flex-col items-center">
+        <div className="mb-8 text-center w-full px-2">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-3 transition-colors">
+            개인 설정 <span className="text-indigo-600 dark:text-indigo-500 transition-colors">보드</span>
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 text-xs md:text-base tracking-wide max-w-xl mx-auto break-keep opacity-80 transition-colors">
+            전문가 스킬 트리, 세이지 도구 강화 현황 및 재료 단가를 통합 관리합니다.
+          </p>
         </div>
-        <div className="w-full max-w-7xl mx-auto mb-8 md:mb-12 px-2 transition-colors">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white dark:bg-white/5 p-1.5 rounded-2xl md:rounded-full border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-2xl transition-colors">
-            <button onClick={() => setActiveTab('트리')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '트리' ? 'bg-amber-600 text-white shadow-md dark:shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'}`}>스킬 트리</button>
-            <button onClick={() => setActiveTab('도구')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '도구' ? 'bg-rose-600 text-white shadow-md dark:shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'}`}>도구 강화</button>
-            <button onClick={() => setActiveTab('단가')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '단가' ? 'bg-indigo-600 text-white shadow-md dark:shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'}`}>단가 관리</button>
-            <button onClick={() => setActiveTab('기타')} className={`py-3 md:py-4 rounded-xl md:rounded-full font-bold transition-all text-xs sm:text-sm ${activeTab === '기타' ? 'bg-emerald-600 text-white shadow-md dark:shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'}`}>기타 설정</button>
+
+        <div className="w-full max-w-2xl mb-8 px-2">
+          <div className="grid grid-cols-4 gap-1.5 md:gap-4 bg-white dark:bg-white/5 p-1.5 rounded-[20px] md:rounded-[24px] border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-2xl transition-colors">
+            {['트리', '도구', '단가', '기타'].map((tab) => {
+              const label = tab === '트리' ? '스킬 트리' : tab === '도구' ? '도구 강화' : tab === '단가' ? '단가 관리' : '기타 설정';
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab as '트리'|'도구'|'단가'|'기타')}
+                  className={`flex items-center justify-center py-3 md:py-4 rounded-[14px] md:rounded-[18px] font-bold transition-all text-[11px] sm:text-sm md:text-base shadow-sm ${
+                    activeTab === tab
+                    ? 'bg-gray-900 text-white dark:bg-white dark:text-black scale-100 shadow-gray-300 dark:shadow-white/10'
+                    : 'text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
-        <div className="w-full animate-fade-in px-1 sm:px-0">
+
+        <div className="w-full animate-fade-in px-1 md:px-0 flex flex-col items-center">
           {activeTab === '트리' && <SkillTreeTab profTab={profTab} setProfTab={setProfTab} levels={levels} handleLevelChange={handleLevelChange} resetTree={resetTree} saveAll={saveAll} diffCost={diffCost} activeEffects={activeEffects} />}
           {activeTab === '도구' && <SageToolsTab activeToolId={activeToolId} setActiveToolId={setActiveToolId} toolLevels={toolLevels} handleToolLevelChange={handleToolLevelChange} resetTools={resetTools} saveAll={saveAll} diffToolCost={diffToolCost} getToolImageName={getToolImageName} />}
           {activeTab === '단가' && <PriceSheetTab prices={prices} handlePriceChange={handlePriceChange} saveAll={saveAll} />}

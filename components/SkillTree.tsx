@@ -37,10 +37,29 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
     if (id === 'h15') imageId = 'h14';
     if (id === 'h16') imageId = 'h15';
     if (id === 'f22') imageId = 'f15';
+    if (id === 'f23') imageId = 'f4'; // 식은 커피 먹기지 -> 불 더 올려! 아이콘 공유
+    if (id === 'm16') imageId = 'm5'; // 귀하신 몸값 -> 주괴 좀 사주괴 아이콘 공유
+    if (id === 'o19') imageId = 'o18'; // 연금은 계속된다 -> 바다처럼 넓은 아이콘 공유
 
     return (
-      <div className={`inline-block w-40 md:w-44 bg-white dark:bg-[#0a0a0a] border-2 rounded-2xl p-3 flex flex-col items-center gap-2 shadow-sm dark:shadow-lg transition-all z-10 ${isUnlocked ? (lv > 0 ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-500/5' : 'border-gray-300 dark:border-gray-600') : 'border-gray-200 dark:border-gray-800 opacity-60 dark:opacity-40'}`}>
-        <div className={`relative mx-auto w-10 h-10 rounded-lg border flex items-center justify-center overflow-hidden ${isUnlocked ? 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/20' : 'bg-gray-100 dark:bg-black border-gray-300 dark:border-gray-700'}`}>
+      <div className={`relative inline-flex flex-col items-center w-[100px] sm:w-[145px] border-2 rounded-[1.25rem] p-2 sm:p-2.5 gap-1.5 shadow-sm hover:shadow-md transition-all z-10 ${
+        isUnlocked 
+        ? (lv > 0 
+            ? 'border-amber-400 dark:border-amber-500/50 bg-amber-50 dark:bg-[#1a140a] shadow-md' 
+            : 'border-gray-300 dark:border-transparent bg-white dark:bg-[#111113]') 
+        : 'border-gray-200 dark:border-transparent bg-gray-50 dark:bg-[#0a0a0a] opacity-70'
+      }`}>
+        <div className={`absolute -top-3 px-2.5 py-0.5 rounded-lg text-[9px] sm:text-[10px] font-black z-20 shadow-sm transition-colors ${
+          lv > 0 
+          ? 'bg-amber-500 text-white dark:bg-amber-500 dark:text-white' 
+          : (isUnlocked ? 'bg-gray-700 text-white dark:bg-gray-600' : 'bg-gray-300 text-gray-500 dark:bg-gray-800 dark:text-gray-600')
+        }`}>
+          {lv} / {skill.max}
+        </div>
+        
+        <div className={`relative w-9 h-9 sm:w-11 sm:h-11 mt-1 rounded-xl border flex items-center justify-center overflow-hidden transition-colors shadow-inner ${
+          isUnlocked ? 'bg-gray-100 dark:bg-black/50 border-transparent' : 'bg-gray-200 dark:bg-black/80 border-transparent'
+        }`}>
           <Image 
             src={`${STORAGE_BASE_URL}/${folderName}/${imageId}_on.png`} 
             alt={skill.name}
@@ -48,18 +67,29 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
             unoptimized={true}
             loading="eager"
             priority={true}
-            className={`object-contain p-1 transition-all duration-300 ${lv > 0 ? 'grayscale-0 opacity-100' : 'grayscale opacity-50 dark:opacity-40 blur-[0.3px]'}`}
+            className={`object-contain p-1.5 transition-all duration-300 ${lv > 0 ? 'grayscale-0 opacity-100 drop-shadow-sm' : 'grayscale opacity-60 dark:opacity-40 blur-[0.3px]'}`}
             style={{ imageRendering: 'pixelated' }}
           />
         </div>
-        <div className="text-[11px] md:text-xs font-bold text-gray-900 dark:text-white text-center leading-tight h-8 flex items-center justify-center break-keep w-full px-1 transition-colors">{skill.name}</div>
-        <div className="flex items-center gap-2 bg-gray-50 dark:bg-black rounded-xl p-1.5 w-full justify-between border border-gray-200 dark:border-white/5 mt-1 transition-colors">
-          <button onClick={() => onLevelChange(id, -1)} disabled={lv === 0} className="relative w-5 h-5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 bg-white dark:bg-white/5 border border-gray-200 dark:border-transparent rounded-lg cursor-pointer disabled:cursor-default before:absolute before:-inset-2 before:content-[''] transition-colors">
-            <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
+        
+        <div className={`text-[9px] sm:text-[11px] font-black text-center leading-tight h-6 flex items-center justify-center break-keep w-full tracking-tight ${isUnlocked ? 'text-gray-900 dark:text-gray-200' : 'text-gray-400 dark:text-gray-600'}`}>
+          {skill.name}
+        </div>
+        
+        <div className="flex w-full gap-1.5 mt-0.5">
+          <button 
+            onClick={() => onLevelChange(id, -1)} 
+            disabled={lv === 0} 
+            className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-gray-100 disabled:dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 rounded-lg py-1 transition-all active:scale-95 shadow-sm disabled:shadow-none"
+          >
+            <span className="text-xs sm:text-sm font-black leading-none mb-[1px]">-</span>
           </button>
-          <span className={`text-[10px] md:text-xs font-black tracking-widest transition-colors ${lv > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'} pointer-events-none`}>{lv}/{skill.max}</span>
-          <button onClick={() => onLevelChange(id, 1)} disabled={!isUnlocked || lv === skill.max} className="relative w-5 h-5 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 bg-white dark:bg-white/5 border border-gray-200 dark:border-transparent rounded-lg cursor-pointer disabled:cursor-default before:absolute before:-inset-2 before:content-[''] transition-colors">
-            <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+          <button 
+            onClick={() => onLevelChange(id, 1)} 
+            disabled={!isUnlocked || lv === skill.max} 
+            className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-gray-100 disabled:dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 rounded-lg py-1 transition-all active:scale-95 shadow-sm disabled:shadow-none"
+          >
+            <span className="text-xs sm:text-sm font-black leading-none mb-[1px]">+</span>
           </button>
         </div>
       </div>
@@ -68,7 +98,7 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
 
   if (profTab === '재배') {
     return (
-      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top [&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
+      <div className="skill-tree flex justify-center min-w-max mx-auto transform scale-[0.85] md:scale-100 origin-top [&_li]:!px-[1px] sm:[&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
         <ul>
           <li><SkillBox id="f1" />
             <ul>
@@ -94,7 +124,11 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
                                 <ul>
                                   <li><SkillBox id="f20" />
                                     <ul>
-                                      <li><SkillBox id="f19" /></li>
+                                      <li><SkillBox id="f19" />
+                                        <ul>
+                                          <li><SkillBox id="f23" /></li>
+                                        </ul>
+                                      </li>
                                       <li><SkillBox id="f21" /></li>
                                     </ul>
                                   </li>
@@ -121,12 +155,22 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
 
   if (profTab === '채광') {
     return (
-      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top [&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
+      <div className="skill-tree flex justify-center min-w-max mx-auto transform scale-[0.85] md:scale-100 origin-top [&_li]:!px-[1px] sm:[&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
         <ul>
           <li><SkillBox id="m1" />
             <ul>
               <li><SkillBox id="m2" />
-                <ul><li><SkillBox id="m3" /><ul><li><SkillBox id="m4" /></li></ul></li></ul>
+                <ul>
+                  <li><SkillBox id="m3" />
+                    <ul>
+                      <li><SkillBox id="m4" />
+                        <ul>
+                          <li><SkillBox id="m16" /></li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
               </li>
               <li><SkillBox id="m5" />
                 <ul>
@@ -165,7 +209,7 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
 
   if (profTab === '해양') {
     return (
-      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top [&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
+      <div className="skill-tree flex justify-center min-w-max mx-auto transform scale-[0.85] md:scale-100 origin-top [&_li]:!px-[1px] sm:[&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
         <ul>
           <li><SkillBox id="o1" />
             <ul>
@@ -185,7 +229,17 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
                     <ul><li><SkillBox id="o13" /><ul><li><SkillBox id="o14" /><ul><li><SkillBox id="o15" /></li></ul></li></ul></li></ul>
                   </li>
                   <li><SkillBox id="o16" />
-                    <ul><li><SkillBox id="o17" /><ul><li><SkillBox id="o18" /></li></ul></li></ul>
+                    <ul>
+                      <li><SkillBox id="o17" />
+                        <ul>
+                          <li><SkillBox id="o18" />
+                            <ul>
+                              <li><SkillBox id="o19" /></li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
                   </li>
                 </ul>
               </li>
@@ -198,7 +252,7 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
 
   if (profTab === '사냥') {
     return (
-      <div className="skill-tree min-w-max mx-auto transform scale-[0.8] md:scale-95 origin-top [&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
+      <div className="skill-tree flex justify-center min-w-max mx-auto transform scale-[0.85] md:scale-100 origin-top [&_li]:!px-[1px] sm:[&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
         <ul>
           <li><SkillBox id="h1" />
             <ul>

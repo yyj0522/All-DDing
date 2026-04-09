@@ -146,19 +146,21 @@ export default function ProfessionPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-gray-100 font-sans selection:bg-amber-200 dark:selection:bg-amber-500/30 relative flex flex-col overflow-x-hidden transition-colors duration-300">
-      <div className="absolute top-[-20%] left-[-10%] w-full h-[50%] bg-stone-300/30 dark:bg-stone-600/5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300"></div>
+      <div className="absolute top-[-20%] left-[-10%] w-full h-[50%] bg-stone-400/20 dark:bg-stone-600/10 rounded-full blur-[150px] pointer-events-none transition-colors duration-300"></div>
       <Header />
 
-      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 pt-28 md:pt-40 pb-20 flex flex-col items-center">
-        <div className="mb-8 text-center w-full px-2">
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-3">전문가 기능</h1>
-          <p className="text-gray-600 dark:text-gray-400 text-xs md:text-base tracking-wide max-w-xl mx-auto break-keep opacity-80">
-            내 능력치 기반 수익률 계산 및 전용 조합법 확인
+      <main className="relative z-10 flex-1 max-w-[1400px] w-full mx-auto px-4 pt-28 md:pt-40 pb-24 md:pb-20 flex flex-col items-center">
+        <div className="mb-8 text-center w-full px-2 transition-colors">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-3 transition-colors">
+            전문가 <span className="text-stone-600 dark:text-stone-500 transition-colors">기능</span>
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 text-xs md:text-base tracking-wide max-w-xl mx-auto break-keep opacity-80 transition-colors">
+            내 능력치 기반 수익률 계산 및 전용 조합법을 확인하세요.
           </p>
         </div>
 
-        <div className="w-full max-w-2xl mb-8 px-2">
-          <div className="grid grid-cols-4 gap-1.5 md:gap-4 bg-white dark:bg-white/5 p-1.5 rounded-[20px] md:rounded-[24px] border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-2xl transition-colors">
+        <div className="w-full max-w-2xl mb-8 px-2 transition-colors">
+          <div className="grid grid-cols-4 gap-1.5 md:gap-4 bg-white dark:bg-white/5 p-1.5 rounded-[20px] md:rounded-[24px] border border-gray-300 dark:border-transparent shadow-md dark:shadow-2xl transition-colors">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -168,8 +170,8 @@ export default function ProfessionPage() {
                 }}
                 className={`flex items-center justify-center py-3 md:py-4 rounded-[14px] md:rounded-[18px] font-bold transition-all text-[11px] sm:text-sm md:text-base shadow-sm ${
                   activeTab === tab.id 
-                  ? `bg-gray-900 text-white dark:bg-white dark:text-black scale-100 shadow-gray-300 dark:shadow-white/10` 
-                  : 'text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'
+                  ? `bg-gray-900 text-white dark:bg-white dark:text-black scale-100 shadow-gray-400 dark:shadow-white/10` 
+                  : 'text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 bg-transparent'
                 }`}
               >
                 {tab.id}
@@ -178,11 +180,13 @@ export default function ProfessionPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-4 sm:gap-8 w-full mb-10 border-b border-gray-200 dark:border-white/10 px-2 transition-colors">
+        <div className="flex overflow-x-auto custom-scrollbar snap-x justify-start md:justify-center gap-2 sm:gap-3 w-full max-w-4xl mb-10 px-2 pb-2 transition-colors">
           <button 
             onClick={() => setSubTab('조합법')} 
-            className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-              subTab === '조합법' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+            className={`px-4 md:px-6 py-2.5 rounded-full font-bold text-[11px] sm:text-xs md:text-sm transition-all border whitespace-nowrap snap-start shadow-sm ${
+              subTab === '조합법' 
+              ? 'bg-gray-900 text-white border-transparent dark:bg-white dark:text-black' 
+              : 'bg-white dark:bg-[#111113] border-gray-300 dark:border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
             }`}
           >
             제작 & 조합법
@@ -191,8 +195,10 @@ export default function ProfessionPage() {
           {(activeTab === '채광' || activeTab === '사냥' || activeTab === '해양') && (
             <button 
               onClick={() => setSubTab('시세수익')} 
-              className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                subTab === '시세수익' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+              className={`px-4 md:px-6 py-2.5 rounded-full font-bold text-[11px] sm:text-xs md:text-sm transition-all border whitespace-nowrap snap-start shadow-sm ${
+                subTab === '시세수익' 
+                ? 'bg-gray-900 text-white border-transparent dark:bg-white dark:text-black' 
+                : 'bg-white dark:bg-[#111113] border-gray-300 dark:border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
               }`}
             >
               예상 일일 수익
@@ -203,16 +209,20 @@ export default function ProfessionPage() {
             <>
               <button 
                 onClick={() => setSubTab('변동시세')} 
-                className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                  subTab === '변동시세' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+                className={`px-4 md:px-6 py-2.5 rounded-full font-bold text-[11px] sm:text-xs md:text-sm transition-all border whitespace-nowrap snap-start shadow-sm ${
+                  subTab === '변동시세' 
+                  ? 'bg-gray-900 text-white border-transparent dark:bg-white dark:text-black' 
+                  : 'bg-white dark:bg-[#111113] border-gray-300 dark:border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                 }`}
               >
                 3일 주기 시세
               </button>
               <button 
                 onClick={() => setSubTab('바리스타')} 
-                className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                  subTab === '바리스타' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+                className={`px-4 md:px-6 py-2.5 rounded-full font-bold text-[11px] sm:text-xs md:text-sm transition-all border whitespace-nowrap snap-start shadow-sm ${
+                  subTab === '바리스타' 
+                  ? 'bg-gray-900 text-white border-transparent dark:bg-white dark:text-black' 
+                  : 'bg-white dark:bg-[#111113] border-gray-300 dark:border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                 }`}
               >
                 바리스타
@@ -224,16 +234,20 @@ export default function ProfessionPage() {
             <>
               <button 
                 onClick={() => setSubTab('변동시세')} 
-                className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                  subTab === '변동시세' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+                className={`px-4 md:px-6 py-2.5 rounded-full font-bold text-[11px] sm:text-xs md:text-sm transition-all border whitespace-nowrap snap-start shadow-sm ${
+                  subTab === '변동시세' 
+                  ? 'bg-gray-900 text-white border-transparent dark:bg-white dark:text-black' 
+                  : 'bg-white dark:bg-[#111113] border-gray-300 dark:border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                 }`}
               >
                 공예품 시세
               </button>
               <button 
                 onClick={() => setSubTab('거래계산기')} 
-                className={`pb-3.5 font-bold text-[11px] sm:text-xs md:text-sm transition-all border-b-2 px-1 ${
-                  subTab === '거래계산기' ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+                className={`px-4 md:px-6 py-2.5 rounded-full font-bold text-[11px] sm:text-xs md:text-sm transition-all border whitespace-nowrap snap-start shadow-sm ${
+                  subTab === '거래계산기' 
+                  ? 'bg-gray-900 text-white border-transparent dark:bg-white dark:text-black' 
+                  : 'bg-white dark:bg-[#111113] border-gray-300 dark:border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                 }`}
               >
                 거래 계산기

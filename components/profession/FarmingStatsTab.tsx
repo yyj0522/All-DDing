@@ -125,64 +125,85 @@ export default function FarmingStatsTab() {
   };
 
   return (
-    <div className="flex flex-col gap-8 w-full relative transition-colors duration-300">
-      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-sm dark:shadow-2xl flex flex-col min-h-[400px] transition-colors">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10 border-b border-gray-200 dark:border-white/5 pb-6 transition-colors">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">요리 변동 시세 트렌드</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors">최근 5주기 동안의 가격 변동폭입니다.</p>
+    <div className="flex flex-col gap-6 md:gap-8 w-full relative animate-fade-in-up transition-colors duration-300">
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-8 shadow-md dark:shadow-2xl flex flex-col min-h-[400px] transition-colors">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-gray-200 dark:border-white/5 pb-5 transition-colors">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white tracking-tight transition-colors">요리 시세 변동 그래프</h3>
           </div>
-          <div className="flex items-center gap-3 bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 px-4 py-2.5 rounded-xl transition-colors">
-            <span className="text-xs font-bold text-gray-600 dark:text-gray-500">품목 선택</span>
-            <select value={selectedFood} onChange={(e) => setSelectedFood(e.target.value)} className="bg-transparent text-green-600 dark:text-green-400 text-sm font-bold focus:outline-none transition-colors">
-              {FOOD_NAMES.map(name => <option key={name} value={name} className="bg-white dark:bg-[#0a0a0a]">{name}</option>)}
+          <div className="relative w-full sm:w-auto flex items-center bg-gray-50 dark:bg-[#111113] border border-gray-300 dark:border-transparent rounded-xl overflow-hidden shadow-sm transition-colors group">
+            <div className="bg-gray-100 dark:bg-white/5 px-3 py-2.5 border-r border-gray-300 dark:border-transparent pointer-events-none transition-colors">
+              <span className="text-[11px] font-black text-gray-500 dark:text-gray-400 whitespace-nowrap">품목 검색</span>
+            </div>
+            <select 
+              value={selectedFood} 
+              onChange={(e) => setSelectedFood(e.target.value)} 
+              className="w-full bg-transparent text-emerald-700 dark:text-emerald-400 text-xs md:text-sm font-black px-8 py-2.5 focus:outline-none appearance-none cursor-pointer transition-colors"
+            >
+              {FOOD_NAMES.map(name => <option key={name} value={name} className="bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white">{name}</option>)}
             </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-600 dark:text-emerald-400 transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+            </div>
           </div>
         </div>
-        <div className="flex-1 w-full relative pt-4">
+        <div className="flex-1 w-full relative pt-2">
           {renderLineChart()}
         </div>
       </div>
       
-      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl p-6 md:p-10 shadow-sm dark:shadow-2xl transition-colors">
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-200 dark:border-white/5 pb-4 transition-colors">
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-8 shadow-md dark:shadow-2xl transition-colors">
+        <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-200 dark:border-white/5 pb-5 transition-colors">
           <div>
-            <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-400 dark:to-emerald-600 mb-1">ALL-DDING 요리 시세 전광판</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-500">현재 주기 기준, 직전 주기 대비 등락폭을 최고가 도달율 순으로 표시합니다.</p>
+            <h3 className="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500 dark:from-green-400 dark:to-emerald-600 mb-1.5 tracking-tighter">ALL-DDING 요리 시세표</h3>
+            <p className="text-[11px] md:text-xs font-bold text-gray-500 dark:text-gray-400 transition-colors">현재 주기 기준, 직전 주기 대비 등락폭을 최고가 도달율 순으로 표시합니다.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20 px-3 py-1 rounded-lg text-xs font-bold transition-colors">{latestPeriod} 기준</span>
-            <button onClick={handleDownloadImage} className="flex items-center gap-2 bg-gray-100 dark:bg-white/5 hover:bg-green-500 dark:hover:bg-green-600 text-gray-700 dark:text-white hover:text-white border border-gray-200 dark:border-white/10 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          <div className="flex items-center gap-2.5 w-full md:w-auto">
+            <span className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-transparent px-3 py-1.5 rounded-lg text-[10px] md:text-[11px] font-black whitespace-nowrap shadow-sm dark:shadow-none transition-colors flex-1 md:flex-none text-center">{latestPeriod} 기준</span>
+            <button onClick={handleDownloadImage} className="flex-1 md:flex-none flex items-center justify-center gap-1.5 bg-gray-100 dark:bg-[#111113] hover:bg-emerald-600 dark:hover:bg-emerald-600 text-gray-700 dark:text-gray-300 hover:text-white border border-gray-300 dark:border-transparent px-4 py-1.5 rounded-lg text-[11px] md:text-xs font-black transition-all duration-300 shadow-sm active:scale-95 group whitespace-nowrap">
+              <svg className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               이미지로 저장
             </button>
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-3">
           {processedData.map((food, idx) => {
             const isUp = food.diff > 0;
             const imgPath = getImagePath(food.name);
             return (
-              <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-xl p-3 md:p-4 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => setSelectedFood(food.name)}>
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-10 h-10 bg-white dark:bg-white/5 rounded border border-gray-200 dark:border-white/10 flex items-center justify-center overflow-hidden p-1 transition-colors">
-                    {imgPath ? <img src={imgPath} alt={food.name} className="w-full h-full object-contain" style={{imageRendering: 'pixelated'}} onError={(e) => e.currentTarget.style.display='none'} /> : <span className="text-[8px] text-gray-400 dark:text-gray-500">IMG</span>}
+              <div 
+                key={idx} 
+                className="flex items-center justify-between bg-white dark:bg-[#111113] border border-gray-300 dark:border-transparent rounded-[1.25rem] p-3 md:p-4 hover:border-emerald-400 dark:hover:bg-[#151518] transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer group" 
+                onClick={() => setSelectedFood(food.name)}
+              >
+                <div className="flex items-center gap-3 md:gap-4 flex-1">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-50 dark:bg-black/50 rounded-xl border border-gray-200 dark:border-transparent flex items-center justify-center overflow-hidden p-1.5 transition-colors shadow-inner group-hover:scale-105 duration-300">
+                    {imgPath ? <img src={imgPath} alt={food.name} className="w-full h-full object-contain drop-shadow-sm" style={{imageRendering: 'pixelated'}} onError={(e) => e.currentTarget.style.display='none'} /> : <span className="text-[8px] text-gray-400 dark:text-gray-500 font-bold">IMG</span>}
                   </div>
-                  <span className="text-sm md:text-base font-bold text-gray-900 dark:text-white transition-colors">{food.name}</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs md:text-sm font-black text-gray-900 dark:text-white transition-colors tracking-tight">{food.name}</span>
+                    <span className="text-[9px] md:text-[10px] font-bold text-gray-500 dark:text-gray-500 transition-colors hidden sm:block">최고가의 <span className="text-gray-700 dark:text-gray-300">{food.percent}%</span> 도달</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4 md:gap-8 flex-1 justify-end">
-                  <div className="text-right min-w-[80px]">
-                    <span className="text-amber-600 dark:text-amber-400 font-black text-base md:text-lg transition-colors">{food.current.toLocaleString()}</span>
-                    <span className="text-amber-700 dark:text-amber-600 font-bold text-xs ml-1 transition-colors">Gold</span>
+                <div className="flex items-center gap-3 md:gap-6 flex-1 justify-end">
+                  <div className="text-right flex flex-col items-end">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-amber-600 dark:text-amber-500 font-black text-sm md:text-lg tracking-tight transition-colors">{food.current.toLocaleString()}</span>
+                      <span className="text-amber-700 dark:text-amber-600 font-bold text-[10px] md:text-xs transition-colors">G</span>
+                    </div>
                   </div>
-                  <div className={`flex items-center gap-1 min-w-[70px] justify-end font-bold text-sm ${isUp ? 'text-red-500' : food.diff < 0 ? 'text-blue-500' : 'text-gray-500'}`}>
-                    <span>{Math.abs(food.diff).toLocaleString()}</span>
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      {isUp ? <path d="M12 4l8 8h-6v8h-4v-8H4l8-8z"/> : food.diff < 0 ? <path d="M12 20l-8-8h6V4h4v8h6l-8 8z"/> : <path d="M5 11h14v2H5z"/>}
-                    </svg>
+                  <div className={`flex flex-col items-end justify-center min-w-[50px] md:min-w-[60px] font-black ${isUp ? 'text-red-500' : food.diff < 0 ? 'text-blue-600 dark:text-blue-500' : 'text-gray-400 dark:text-gray-500'}`}>
+                    <div className="flex items-center gap-0.5 text-xs md:text-sm tracking-tighter">
+                      <span>{Math.abs(food.diff).toLocaleString()}</span>
+                      <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 24 24">
+                        {isUp ? <path d="M12 4l8 8h-6v8h-4v-8H4l8-8z"/> : food.diff < 0 ? <path d="M12 20l-8-8h6V4h4v8h6l-8 8z"/> : <path d="M5 11h14v2H5z"/>}
+                      </svg>
+                    </div>
                   </div>
-                  <div className="hidden md:block min-w-[120px] text-right">
-                    <span className="text-gray-500 dark:text-gray-500 text-xs font-bold transition-colors">( 최고가의 <span className="text-gray-900 dark:text-white transition-colors">{food.percent}%</span> )</span>
+                  <div className="hidden lg:block min-w-[80px]">
+                    <div className="w-full h-1.5 bg-gray-200 dark:bg-black/50 rounded-full overflow-hidden shadow-inner">
+                      <div className={`h-full rounded-full transition-all duration-1000 ${food.percent >= 80 ? 'bg-emerald-500' : 'bg-gray-400 dark:bg-gray-600'}`} style={{ width: `${Math.min(food.percent, 100)}%` }}></div>
+                    </div>
                   </div>
                 </div>
               </div>

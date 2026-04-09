@@ -24,6 +24,10 @@ const ITEM_IMAGES: Record<string, string> = {
   '아르데온의 반지': `${STORAGE_BASE_URL}/islandbox/treaure_relic5.png`,
   '상급 미끼 인챈트북': `${STORAGE_BASE_URL}/islandbox/common_general_enchant_book.png`,
   '겉날개': `${STORAGE_BASE_URL}/sailing/ItemSprite_elytra.png`,
+  '좀비 인챈트북 (10%)': `${STORAGE_BASE_URL}/islandbox/normal_special_enchant_book.png`,
+  '스켈레톤 인챈트북 (10%)': `${STORAGE_BASE_URL}/islandbox/normal_special_enchant_book.png`,
+  '거미 인챈트북 (10%)': `${STORAGE_BASE_URL}/islandbox/normal_special_enchant_book.png`,
+  '크리퍼 인챈트북 (10%)': `${STORAGE_BASE_URL}/islandbox/normal_special_enchant_book.png`,
 };
 
 const BOX_DATA = {
@@ -54,6 +58,10 @@ const BOX_DATA = {
       { name: '스킬 프리즘', min: 1, max: 1, chance: 5 },
       { name: '스킬 프리즘', min: 2, max: 2, chance: 3 },
       { name: '스킬 프리즘', min: 3, max: 3, chance: 1 },
+      //{ name: '좀비 인챈트북 (10%)', min: 1, max: 1, chance: 1 },
+      //{ name: '스켈레톤 인챈트북 (10%)', min: 1, max: 1, chance: 1 },
+      //{ name: '거미 인챈트북 (10%)', min: 1, max: 1, chance: 1 },
+      //{ name: '크리퍼 인챈트북 (10%)', min: 1, max: 1, chance: 1 },
     ]
   },
   legend: {

@@ -28,7 +28,7 @@ const RECIPES = [
   { id: "c07", name: "달콤 시리얼", maxPrice: 2578, isHard: true, craftTime: 30, ingredients: { "토마토 베이스": 2, "달콤한 열매 묶음": 1, "파인애플": 1, "밀가루 반죽": 1, "오일": 1 } },
   { id: "c08", name: "로스트 치킨 파이", maxPrice: 2253, isHard: false, craftTime: 30, ingredients: { "마늘 베이스": 2, "당근 묶음": 1, "버터 조각": 1, "익힌 닭고기": 1, "익힌 닭 다리살": 1 } },
   { id: "c09", name: "스윗 치킨 햄버거", maxPrice: 3612, isHard: false, craftTime: 40, ingredients: { "토마토 베이스": 1, "양파 베이스": 1, "비트 묶음": 1, "달콤한 열매 묶음": 1, "익힌 닭 가슴살": 1, "익힌 닭 다리살": 1 } },
-  { id: "c10", name: "토마토 파인애플 피자", maxPrice: 3455, isHard: true, craftTime: 40, ingredients: { "토마토 베이스": 2, "마늘 베이스": 2, "파인애플": 1, "치즈 조각": 1, "스테이크": 1, "익힌 소 등심": 1 } },
+  { id: "c10", name: "토마토 파인애플 피자", maxPrice: 3077, isHard: true, craftTime: 40, ingredients: { "토마토 베이스": 2, "마늘 베이스": 1, "파인애플": 1, "치즈 조각": 1, "스테이크": 1, "익힌 소 등심": 1 } },
   { id: "c11", name: "양파 수프", maxPrice: 3797, isHard: true, craftTime: 40, ingredients: { "양파 베이스": 2, "마늘 베이스": 1, "감자 묶음": 1, "코코넛": 1, "버터 조각": 1, "익힌 돼지 앞다리살": 1 } },
   { id: "c12", name: "허브 삼겹살 찜", maxPrice: 2982, isHard: false, craftTime: 40, ingredients: { "마늘 베이스": 2, "양파 베이스": 1, "호박 묶음": 1, "감자 묶음": 1, "익힌 돼지고기": 1, "익힌 돼지 삼겹살": 1 } },
   { id: "c13", name: "토마토 라자냐", maxPrice: 4181, isHard: false, craftTime: 50, ingredients: { "토마토 베이스": 1, "양파 베이스": 1, "마늘 베이스": 1, "당근 묶음": 1, "호박 묶음": 1, "밀가루 반죽": 1, "익힌 양 다리살": 1 } },
@@ -43,6 +43,7 @@ export default function EfficiencySimulatorPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [targetQty, setTargetQty] = useState<number | string>(1);
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
 
   const safeTargetQty = typeof targetQty === 'number' && targetQty > 0 ? targetQty : 1;
 
@@ -63,7 +64,7 @@ export default function EfficiencySimulatorPage() {
     fetchData();
   }, []);
 
-  const calculateIngredientCost = (ingName: string, count: number) => {
+  const calculateIngredientCost = (ingName: string) => {
     const activePrice = userPrices[ingName] !== undefined ? userPrices[ingName] : (dbPrices[ingName] || 0);
     const getBaseExpectedCost = (seedName: string, baseYield: number) => {
       const seedPrice = userPrices[seedName] !== undefined ? userPrices[seedName] : (dbPrices[seedName] || 0);
@@ -76,12 +77,12 @@ export default function EfficiencySimulatorPage() {
       const seedReturn = F12_SEED_RETURN[f12Lv] || 0;
       const netSeedCost = unitSeedCost * (1 - seedReturn);
       const expectedYield = (baseYield * (1 + 6 * giantChance)) + extraCrop;
-      return (netSeedCost / expectedYield) * 8 * count;
+      return (netSeedCost / expectedYield) * 8; 
     };
     if (ingName === "토마토 베이스") return getBaseExpectedCost("토마토 씨앗", 2.0);
     if (ingName === "양파 베이스") return getBaseExpectedCost("양파 씨앗", 1.5);
     if (ingName === "마늘 베이스") return getBaseExpectedCost("마늘 씨앗", 2.5);
-    return (activePrice / 64) * count; 
+    return activePrice / 64; 
   };
 
   const formatTime = (totalSeconds: number) => {
@@ -94,6 +95,10 @@ export default function EfficiencySimulatorPage() {
     if (m > 0) parts.push(`${m}분`);
     if (s > 0 || parts.length === 0) parts.push(`${s}초`);
     return parts.join(' ');
+  };
+
+  const toggleCard = (id: string) => {
+    setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const analyzedData = useMemo(() => {
@@ -109,12 +114,13 @@ export default function EfficiencySimulatorPage() {
 
     return RECIPES.map(recipe => {
       let singleCost = 0;
-      const parsedCosts: Record<string, number> = {};
+      const parsedCosts: Record<string, { unitCost: number, totalCostForThisIng: number }> = {};
       
       Object.entries(recipe.ingredients).forEach(([ing, count]) => {
-        const cost = calculateIngredientCost(ing, count);
-        parsedCosts[ing] = cost;
-        singleCost += cost;
+        const unitCost = calculateIngredientCost(ing);
+        const totalCostForThisIng = unitCost * count;
+        parsedCosts[ing] = { unitCost, totalCostForThisIng };
+        singleCost += totalCostForThisIng;
       });
       singleCost = Math.round(singleCost);
       
@@ -159,115 +165,155 @@ export default function EfficiencySimulatorPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsCalcOpen(false)}></div>
           <div className="relative z-10 animate-fade-in-up">
-            <button onClick={() => setIsCalcOpen(false)} className="absolute -top-10 right-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-bold text-sm bg-white dark:bg-black/50 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 transition-colors"
+            <button onClick={() => setIsCalcOpen(false)} className="absolute -top-10 right-0 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-bold text-sm bg-white dark:bg-black/50 px-4 py-2 rounded-xl border border-gray-300 dark:border-transparent transition-colors shadow-sm"
             >닫기 ✕</button>
             <TradeCalculator />
           </div>
         </div>
       )}
 
-      <main className="relative z-10 flex-1 max-w-[1400px] w-full mx-auto px-4 pt-32 md:pt-40 pb-20">
-        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-gray-200 dark:border-white/5 pb-8 transition-colors">
-          <div className="flex-1">
-            <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">요리 효율 분석</h1>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mt-3 leading-relaxed break-keep">
-              재배 전문가 스킬(돈 좀 벌어볼까, 한 솥 가득, 불 더 올려)과 최신 시세가 모두 반영된 실시간 수익 분석입니다.
-            </p>
-          </div>
-          
-          <div className="flex flex-col gap-3 w-full md:w-auto">
-            <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 px-5 py-4 rounded-2xl flex items-center gap-4 shadow-sm dark:shadow-lg transition-colors">
-              <span className="text-sm font-bold text-gray-700 dark:text-gray-300 tracking-tight shrink-0">목표 제작 수량</span>
-              <div className="relative flex-1">
-                <input 
-                  type="number" 
-                  min="1"
-                  value={targetQty} 
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '') setTargetQty('');
-                    else setTargetQty(parseInt(val, 10));
-                  }}
-                  onBlur={() => {
-                    if (targetQty === '' || Number(targetQty) <= 0) setTargetQty(1);
-                  }}
-                  className="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-gray-900 dark:text-white text-base font-black focus:outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors shadow-inner"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">개</span>
+      <main className="relative z-10 flex-1 max-w-[1400px] w-full mx-auto px-4 pt-28 md:pt-40 pb-24 md:pb-20">
+        <div className="mb-8 text-center w-full px-2 transition-colors">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-3 transition-colors">
+            요리 효율 <span className="text-indigo-600 dark:text-indigo-500 transition-colors">분석</span>
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 text-xs md:text-base tracking-wide max-w-xl mx-auto break-keep opacity-80 transition-colors">
+            재배 전문가 스킬과 최신 시세가 모두 반영된 실시간 수익 분석입니다.
+          </p>
+        </div>
+
+        <div className="w-full max-w-3xl mx-auto mb-8 md:mb-12 sticky top-[80px] md:top-[100px] z-40 transition-colors">
+          <div className="bg-white/85 dark:bg-[#0a0a0a]/85 backdrop-blur-xl border border-gray-300 dark:border-transparent rounded-[2rem] p-4 md:p-6 shadow-md dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] flex flex-col md:flex-row items-stretch md:items-center gap-4 transition-colors">
+            <div className="flex-1 flex items-center bg-gray-100 dark:bg-[#111113] rounded-[1.25rem] p-2 pr-4 border border-gray-300 dark:border-transparent transition-colors">
+              <div className="bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-[10px] md:text-xs px-3 py-2 rounded-xl whitespace-nowrap mr-3 transition-colors">
+                목표 수량
               </div>
+              <input 
+                type="number" 
+                min="1"
+                value={targetQty} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') setTargetQty('');
+                  else setTargetQty(parseInt(val, 10));
+                }}
+                onBlur={() => {
+                  if (targetQty === '' || Number(targetQty) <= 0) setTargetQty(1);
+                }}
+                className="w-full bg-transparent text-gray-900 dark:text-white text-lg md:text-xl font-black focus:outline-none placeholder-gray-400 dark:placeholder-gray-700"
+                placeholder="1"
+              />
+              <span className="text-gray-500 dark:text-gray-500 font-bold ml-2">개</span>
             </div>
-            
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <button onClick={() => setIsCalcOpen(true)} className="flex-1 bg-indigo-100 dark:bg-indigo-600/20 hover:bg-indigo-200 dark:hover:bg-indigo-600/40 border border-indigo-200 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400 px-5 py-3 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all shadow-sm dark:shadow-lg whitespace-nowrap"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>대리 판매 계산기</button>
-              <div className="flex-1 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 px-6 py-3 rounded-2xl flex items-center justify-center gap-4 shadow-sm dark:shadow-lg transition-colors whitespace-nowrap"><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">돈 좀 벌어볼까</span><span className="text-xl font-black text-indigo-600 dark:text-indigo-400">Lv.{profLevels['f15'] || 0}</span></div>
+
+            <div className="flex gap-3">
+              <div className="flex flex-col justify-center items-center bg-gray-100 dark:bg-[#111113] px-4 rounded-[1.25rem] border border-gray-300 dark:border-transparent transition-colors min-w-[100px]">
+                <span className="text-[9px] font-bold text-gray-500 mb-0.5">돈 좀 벌어볼까</span>
+                <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">Lv.{profLevels['f15'] || 0}</span>
+              </div>
+              <button onClick={() => setIsCalcOpen(true)} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-[1.25rem] flex items-center justify-center gap-2 font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 whitespace-nowrap">
+                <span className="hidden sm:inline">대리 판매</span> 계산기
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {/* 👇 해결의 핵심인 items-start 속성 추가 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 items-start">
           {analyzedData.map((item, idx) => (
-            <div key={item.id} className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/5 hover:border-indigo-400 dark:hover:border-indigo-500/30 rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 shadow-sm hover:shadow-md dark:shadow-2xl">
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-14 h-14 bg-gray-50 dark:bg-[#111] rounded-xl border border-gray-200 dark:border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden relative transition-colors">
-                    <Image 
-                      src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[item.name]}.png`} 
-                      alt={item.name}
-                      width={44}
-                      height={44}
-                      unoptimized={true}
-                      priority={idx < 6}
-                      className="object-contain" 
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate">{item.name}</h3>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] text-gray-500 dark:text-gray-400 font-bold whitespace-nowrap">1개 원가 {item.singleCost.toLocaleString()}G</span>
-                      {item.isHard && <span className="text-[10px] text-amber-600 dark:text-amber-500 font-bold bg-amber-100 dark:bg-amber-500/10 px-1.5 py-0.5 rounded whitespace-nowrap">수급주의</span>}
+            <div key={item.id} className="bg-white dark:bg-gradient-to-b dark:from-[#111113] dark:to-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] overflow-hidden flex flex-col transition-all duration-300 shadow-md hover:shadow-lg dark:shadow-2xl group">
+              <div className="p-5 md:p-6 pb-4">
+                <div className="flex items-start justify-between gap-4 mb-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-gray-100 dark:bg-black/50 rounded-2xl border border-gray-300 dark:border-transparent flex items-center justify-center flex-shrink-0 shadow-inner transition-colors group-hover:scale-105 duration-300">
+                      <Image 
+                        src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[item.name]}.png`} 
+                        alt={item.name}
+                        width={48}
+                        height={48}
+                        unoptimized={true}
+                        priority={idx < 6}
+                        className="object-contain drop-shadow-md" 
+                        style={{ imageRendering: 'pixelated' }}
+                      />
                     </div>
-                  </div>
-                </div>
-                <div className="text-right flex flex-col items-end shrink-0 pl-2">
-                  <div className={`text-xl font-black ${item.totalProfit > 0 ? 'text-indigo-600 dark:text-indigo-400 drop-shadow-sm dark:drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {item.totalProfit > 0 ? '+' : ''}{(item.totalProfit).toLocaleString()}G
-                  </div>
-                  <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1 whitespace-nowrap">
-                    최고가 대비 <span className={item.percentToMax >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}>{item.percentToMax.toFixed(1)}%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-5 bg-gray-50 dark:bg-black/30 p-4 rounded-xl border border-gray-200 dark:border-white/5 transition-colors">
-                {Object.entries(item.ingredients).map(([ing, count], i) => {
-                  const cost = Math.round(item.parsedCosts[ing]);
-                  const imgName = ITEM_IMAGES[ing] || ITEM_IMAGES[ing.replace(' 베이스', ' 씨앗')];
-                  return (
-                    <div key={i} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border transition-colors ${cost === 0 ? 'bg-emerald-100 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300'}`}>
-                      <div className="relative w-4 h-4 flex-shrink-0">
-                        <Image src={`${STORAGE_BASE_URL}/ingredients/${imgName}.png`} alt={ing} fill unoptimized={true} className="object-contain" style={{ imageRendering: 'pixelated' }} />
+                    <div className="flex flex-col">
+                      <h3 className="text-base md:text-lg font-black text-gray-900 dark:text-white tracking-tight mb-1">{item.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] md:text-[11px] text-gray-600 dark:text-gray-400 font-bold">1개 원가 {item.singleCost.toLocaleString()}G</span>
+                        {item.isHard && <span className="text-[9px] text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/20 px-1.5 py-0.5 rounded-md font-black border border-amber-200 dark:border-transparent">수급주의</span>}
                       </div>
-                      <span>{ing} x{count * safeTargetQty}</span>
-                      {cost > 0 && <span className="text-gray-400 dark:text-gray-500 opacity-80">({(cost * safeTargetQty).toLocaleString()}G)</span>}
                     </div>
-                  );
-                })}
+                  </div>
+                </div>
+
+                <div className="bg-gray-100 dark:bg-black/30 rounded-2xl p-4 mb-3 border border-gray-300 dark:border-transparent transition-colors shadow-inner dark:shadow-none">
+                  <div className="flex items-end justify-between mb-2">
+                    <span className="text-[10px] font-bold text-gray-600 dark:text-gray-500 uppercase tracking-widest">총 예상 순수익</span>
+                    <div className={`text-2xl md:text-3xl font-black tracking-tighter ${item.totalProfit > 0 ? 'text-indigo-600 dark:text-indigo-400 drop-shadow-sm' : 'text-rose-600 dark:text-rose-400'}`}>
+                      {item.totalProfit > 0 ? '+' : ''}{(item.totalProfit).toLocaleString()}<span className="text-lg md:text-xl ml-1">G</span>
+                    </div>
+                  </div>
+                  
+                  <div className="w-full mt-3">
+                    <div className="flex justify-between text-[10px] font-bold mb-1.5">
+                      <span className="text-gray-600 dark:text-gray-500">최고가 도달율</span>
+                      <span className={item.percentToMax >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-400'}>{item.percentToMax.toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-300 dark:bg-gray-800 rounded-full overflow-hidden shadow-inner">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-1000 ${item.percentToMax >= 80 ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-indigo-500 dark:bg-indigo-500/60'}`}
+                        style={{ width: `${item.percentToMax}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-white/5 pt-3 mt-1">
+                  <button 
+                    onClick={() => toggleCard(item.id)}
+                    className="w-full flex items-center justify-between py-1 text-[11px] font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <span>필요 재료 (총 {safeTargetQty}개 기준)</span>
+                    <span className="text-[10px] bg-gray-100 dark:bg-white/10 px-2 py-1 rounded-md border border-gray-200 dark:border-transparent transition-colors">{expandedCards[item.id] ? '접기 ▲' : '펼치기 ▼'}</span>
+                  </button>
+
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedCards[item.id] ? 'max-h-[500px] mt-3 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="grid grid-cols-3 gap-2 pb-2">
+                      {Object.entries(item.ingredients).map(([ing, count], i) => {
+                        const { totalCostForThisIng } = item.parsedCosts[ing];
+                        const finalIngCost = Math.round(totalCostForThisIng * safeTargetQty);
+                        const imgName = ITEM_IMAGES[ing] || ITEM_IMAGES[ing.replace(' 베이스', ' 씨앗')];
+                        return (
+                          <div key={i} className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-colors ${finalIngCost === 0 ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-transparent' : 'bg-gray-100 dark:bg-white/5 border-gray-300 dark:border-transparent'}`}>
+                            <div className="relative w-6 h-6 mb-1">
+                              <Image src={`${STORAGE_BASE_URL}/ingredients/${imgName}.png`} alt={ing} fill unoptimized={true} className="object-contain" style={{ imageRendering: 'pixelated' }} />
+                            </div>
+                            <span className={`text-[10px] font-bold truncate w-full text-center ${finalIngCost === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-800 dark:text-gray-300'}`}>{ing}</span>
+                            <div className="flex flex-col items-center gap-0.5 mt-0.5">
+                              <span className={`text-[9px] font-black ${finalIngCost === 0 ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-900 dark:text-white'}`}>x{count * safeTargetQty}</span>
+                              {finalIngCost > 0 && <span className="text-[9px] font-bold text-gray-500">({finalIngCost.toLocaleString()}G)</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 border-t border-gray-200 dark:border-white/5 pt-5 transition-colors">
-                <div className="flex flex-col p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20">
-                  <span className="text-[10px] text-amber-600 dark:text-amber-500/80 font-bold mb-1 tracking-wider uppercase flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    예상 제작 시간
+              <div className="grid grid-cols-2 mt-auto border-t border-gray-300 dark:border-white/5">
+                <div className="flex flex-col p-4 bg-amber-50 dark:bg-amber-950/20 border-r border-gray-300 dark:border-white/5 transition-colors">
+                  <span className="text-[9px] text-amber-700 dark:text-amber-500/80 font-bold mb-1 tracking-widest">
+                    제작 소요 시간
                   </span>
                   <span className="text-sm font-black text-amber-700 dark:text-amber-400">{formatTime(item.totalTimeSec)}</span>
                 </div>
-                <div className="flex flex-col p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 items-end text-right">
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-500/80 font-bold mb-1 tracking-wider uppercase">
-                    적용된 총 판매가
+                <div className="flex flex-col p-4 bg-indigo-50 dark:bg-indigo-950/20 transition-colors">
+                  <span className="text-[9px] text-indigo-700 dark:text-indigo-400/80 font-bold mb-1 tracking-widest">
+                    적용 판매가
                   </span>
-                  <span className="text-sm font-black text-emerald-700 dark:text-emerald-400">{item.totalRevenue.toLocaleString()} G</span>
+                  <span className="text-sm font-black text-indigo-700 dark:text-indigo-400">{item.totalRevenue.toLocaleString()} G</span>
                 </div>
               </div>
             </div>
