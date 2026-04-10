@@ -421,7 +421,7 @@ export const OCEAN_RECIPES = [
   { name: '수호 에센스', facility: '연금 제작 시설', time: '5초', ingredients: ['굴(2성) 2개', '해초 6개', '참나무잎 6개'], note: '1회 2개 제작', type: '제작' },
   { name: '파동 에센스', facility: '연금 제작 시설', time: '5초', ingredients: ['소라(2성) 2개', '해초 6개', '가문비나무잎 6개'], note: '1회 2개 제작', type: '제작' },
   { name: '혼란 에센스', facility: '연금 제작 시설', time: '5초', ingredients: ['문어(2성) 2개', '해초 6개', '자작나무잎 6개'], note: '1회 2개 제작', type: '제작' },
-  { name: '생명 에센스', facility: '연금 제작 시설', time: '5초', ingredients: ['미역(2성) 2개', '해초 6개', '정글나무잎 6개'], note: '1회 2개 제작', type: '제작' },
+  { name: '생명 에센스', facility: '연금 제작 시설', time: '5초', ingredients: ['미역(2성) 2개', '해초 6개', '벚나무잎 6개'], note: '1회 2개 제작', type: '제작' },
   { name: '부식 에센스', facility: '연금 제작 시설', time: '5초', ingredients: ['성게(2성) 2개', '해초 6개', '짙은 참나무 잎 6개'], note: '1회 2개 제작', type: '제작' },
   { name: '활기 보존의 결정', facility: '연금 제작 시설', time: '10초', ingredients: ['수호 에센스', '생명 에센스', '켈프 8개', '청금석 블록'], type: '제작' },
   { name: '파도 침식의 결정', facility: '연금 제작 시설', time: '10초', ingredients: ['파동 에센스', '부식 에센스', '켈프 8개', '레드스톤 블록'], type: '제작' },

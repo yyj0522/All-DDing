@@ -21,14 +21,14 @@ const APPRAISAL_BASE_EXPECTATION = {
 };
 
 export default function MiningStatsTab({ userStats, targetZone, setTargetZone, results }: Props) {
-  const { expectedIngots, expectedGems, expectedRelics, expectedRelicPoints, gemRevenue } = results;
+  const { expectedIngots, expectedGems, expectedRelics, expectedRelicPoints, ingotRevenue, gemRevenue, totalRevenue } = results;
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
   const [marketPrices, setMarketPrices] = useState({
     abilityStone: 0, lifestone1: 0, lifestone2: 0, lifestone3: 0,
-    corumIngot: 0, leaftoneIngot: 0, serentIngot: 0,
     topazBlock: 0, sapphireBlock: 0, platinumBlock: 0,
+    corumIngot: 0, leaftoneIngot: 0, serentIngot: 0,
     cobbleBundle: 0, deepslateBundle: 0,
     copperBlock: 0, redstoneBlock: 0, lapisBlock: 0,
     ironBlock: 0, diamondBlock: 0, amethystBlock: 0, goldBlock: 0
@@ -71,7 +71,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
     const ingotBuff = PRICE_BUFF_EFFECTS[userStats.ingotBuffLv || 0] || 0;
 
     const baseIngotPrice = MINE_FIXED_PRICES.ingots.find(i => i.zone === targetZone)?.base || 0;
-    const npcProfit = Math.floor(baseIngotPrice * (1 + ingotBuff));
+    const npcProfit = Math.round(baseIngotPrice * (1 + ingotBuff));
     const npcVal = npcProfit || 0;
 
     let stoneProfit = 0;
@@ -87,18 +87,20 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
       stoneProfit = (marketPrices.abilityStone || 0);
       stoneReq = 3;
     }
-    const stoneVal = Math.floor(stoneProfit / stoneReq) || 0;
+    const stoneVal = Math.round(stoneProfit / stoneReq) || 0;
 
-    const expectedAppraisalRev = Math.floor(APPRAISAL_BASE_EXPECTATION[targetZone] * (1 + m16Buff));
+    const expectedAppraisalRev = Math.round(APPRAISAL_BASE_EXPECTATION[targetZone] * (1 + m16Buff));
+    
+    // 블록 단위를 1개로 변경했으므로 64로 나누지 않고 바로 * 3 연산 적용
     let blockCost = 0;
-    if (targetZone === '코룸') blockCost = ((marketPrices.topazBlock || 0) / 64) * 3;
-    if (targetZone === '리프톤') blockCost = ((marketPrices.sapphireBlock || 0) / 64) * 3;
-    if (targetZone === '세렌트') blockCost = ((marketPrices.platinumBlock || 0) / 64) * 3;
+    if (targetZone === '코룸') blockCost = (marketPrices.topazBlock || 0) * 3;
+    if (targetZone === '리프톤') blockCost = (marketPrices.sapphireBlock || 0) * 3;
+    if (targetZone === '세렌트') blockCost = (marketPrices.platinumBlock || 0) * 3;
 
     const ROYAL_TOKEN_COST = 10000;
     const totalAppraisalCost = blockCost + ROYAL_TOKEN_COST;
     const appraisalProfitPerCraft = expectedAppraisalRev - totalAppraisalCost;
-    const appraisalVal = Math.floor(appraisalProfitPerCraft / 32) || 0;
+    const appraisalVal = Math.round(appraisalProfitPerCraft / 32) || 0;
 
     let lifeProfit = 0;
     let lifeReq = 1;
@@ -119,7 +121,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
       lifeProfit = (marketPrices.lifestone3 || 0) - cost;
       lifeReq = 3;
     }
-    const lifeVal = Math.floor(lifeProfit / lifeReq) || 0;
+    const lifeVal = Math.round(lifeProfit / lifeReq) || 0;
 
     const options = [
       { type: 'appraisal', name: '귀중품 세공 (감정)', val: appraisalVal, profit: appraisalProfitPerCraft, req: 32, limit: 5, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/20' },
@@ -203,7 +205,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-transparent rounded-2xl p-6 text-center shadow-sm transition-colors">
                 <h4 className="text-sm font-black text-amber-900 dark:text-amber-100 mb-2 tracking-tight transition-colors">최적 분배 기준 총 수익</h4>
                 <p className="text-[10px] text-amber-600 dark:text-amber-500/80 font-bold mb-2 transition-colors">최적 루트 수익 + 보석 판매수익 합산</p>
-                <span className="text-3xl font-black text-amber-600 dark:text-amber-400 drop-shadow-sm transition-colors">{strategyAnalysis?.recommendedTotalRev.toLocaleString()} G</span>
+                <span className="text-3xl font-black text-amber-600 dark:text-amber-400 drop-shadow-sm transition-colors">약 {Math.round(strategyAnalysis?.recommendedTotalRev || 0).toLocaleString()} G</span>
               </div>
             </div>
           </div>
@@ -225,14 +227,17 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
         <div className="space-y-6">
           <div>
             <p className="text-[11px] font-black text-gray-400 mb-2 px-1 tracking-widest uppercase flex items-center gap-2">
-              스톤류 결과물 시세 (1개 단위 입력)
+              결과물 및 광물 블록 시세 (1개 단위 입력)
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
               {[
                 { id: 'abilityStone', label: '어빌리티 스톤 (1개)', ph: '1개 단가', img: '어빌리티 스톤' },
                 { id: 'lifestone1', label: '하급 라이프스톤 (1개)', ph: '1개 단가', img: '하급 라이프스톤' },
                 { id: 'lifestone2', label: '중급 라이프스톤 (1개)', ph: '1개 단가', img: '중급 라이프스톤' },
-                { id: 'lifestone3', label: '상급 라이프스톤 (1개)', ph: '1개 단가', img: '상급 라이프스톤' }
+                { id: 'lifestone3', label: '상급 라이프스톤 (1개)', ph: '1개 단가', img: '상급 라이프스톤' },
+                { id: 'topazBlock', label: '토파즈 블록 (1개)', ph: '1개 단가', img: '토파즈 블록' },
+                { id: 'sapphireBlock', label: '사파이어 블록 (1개)', ph: '1개 단가', img: '사파이어 블록' },
+                { id: 'platinumBlock', label: '플래티넘 블록 (1개)', ph: '1개 단가', img: '플래티넘 블록' }
               ].map(item => (
                 <div key={item.id} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-xl p-3 flex flex-col gap-2.5 shadow-sm transition-colors">
                   <div className="flex items-center gap-2 min-w-0"><img src={getImagePath(item.img)||''} className="w-4 h-4 object-contain drop-shadow-sm" alt=""/><span className="text-[11px] font-black text-gray-800 dark:text-gray-200 truncate">{item.label}</span></div>
@@ -244,16 +249,13 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
           
           <div>
             <p className="text-[11px] font-black text-gray-400 mb-2 px-1 tracking-widest uppercase flex items-center gap-2">
-              주괴 및 광물 블록 시세 (1세트 단위 입력)
+              주괴 시세 (1세트 단위 입력)
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {[
                 { id: 'corumIngot', label: '코룸 주괴 (1셋)', ph: '1셋(64개) 단가', img: '코룸 주괴' },
                 { id: 'leaftoneIngot', label: '리프톤 주괴 (1셋)', ph: '1셋(64개) 단가', img: '리프톤 주괴' },
-                { id: 'serentIngot', label: '세렌트 주괴 (1셋)', ph: '1셋(64개) 단가', img: '세렌트 주괴' },
-                { id: 'topazBlock', label: '토파즈 블록 (1셋)', ph: '1셋(64개) 단가', img: '토파즈 블록' },
-                { id: 'sapphireBlock', label: '사파이어 블록 (1셋)', ph: '1셋(64개) 단가', img: '사파이어 블록' },
-                { id: 'platinumBlock', label: '플래티넘 블록 (1셋)', ph: '1셋(64개) 단가', img: '플래티넘 블록' },
+                { id: 'serentIngot', label: '세렌트 주괴 (1셋)', ph: '1셋(64개) 단가', img: '세렌트 주괴' }
               ].map(item => (
                 <div key={item.id} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-xl p-3 flex flex-col gap-2.5 shadow-sm transition-colors">
                   <div className="flex items-center gap-2 min-w-0"><img src={getImagePath(item.img)||''} className="w-4 h-4 object-contain drop-shadow-sm" alt=""/><span className="text-[11px] font-black text-gray-800 dark:text-gray-200 truncate">{item.label}</span></div>
@@ -360,7 +362,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
                 </div>
                 <p className="text-[10px] font-black text-gray-500 mt-1 mb-2 text-center tracking-tight truncate px-1">{strat.name}</p>
                 <p className={`text-lg md:text-xl font-black text-center tracking-tighter ${strat.color}`}>
-                  {strat.val.toLocaleString()} <span className="text-xs font-bold">G/개</span>
+                  {Math.round(strat.val).toLocaleString()} <span className="text-xs font-bold">G/개</span>
                 </p>
               </div>
             ))}
@@ -384,10 +386,10 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
             </div>
             <div className="bg-white dark:bg-black border border-indigo-200 dark:border-transparent p-5 rounded-3xl shadow-xl flex flex-col items-center justify-center min-w-[200px]">
               <p className="text-[11px] font-black text-gray-500 mb-1.5">시나리오 합산 수익</p>
-              <p className="text-2xl font-black text-indigo-600 tracking-tighter">{strategyAnalysis?.options.reduce((sum, o) => {
+              <p className="text-2xl font-black text-indigo-600 tracking-tighter">약 {Math.round(strategyAnalysis?.options.reduce((sum, o) => {
                 const planItem = strategyAnalysis.plan.find(p => p.type === o.type);
                 return sum + (planItem ? planItem.crafts * o.profit : 0);
-              }, 0).toLocaleString()} G</p>
+              }, 0) || 0).toLocaleString()} G</p>
             </div>
           </div>
 
@@ -396,11 +398,11 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
               <p className="text-sm md:text-base font-black text-gray-900 dark:text-white mb-1 tracking-tight transition-colors">추천 경로: 일일 예상 총수익</p>
               <p className="text-[10px] md:text-[11px] font-bold text-gray-500 break-keep">
                 ※ 보석 매각액을 포함하며, 입력된 부자재 비용이 자동 차감된 순수익입니다.<br/>
-                <span className="text-emerald-600 dark:text-emerald-400">단순 매각 대비 <strong>+{strategyAnalysis?.extraProfit.toLocaleString()} G</strong> 추가 이득</span>
+                <span className="text-emerald-600 dark:text-emerald-400">단순 매각 대비 <strong>+ {Math.round(strategyAnalysis?.extraProfit || 0).toLocaleString()} G</strong> 추가 이득</span>
               </p>
             </div>
             <span className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-rose-500 dark:from-amber-400 dark:to-rose-400 drop-shadow-sm tracking-tighter whitespace-nowrap">
-              {strategyAnalysis?.recommendedTotalRev.toLocaleString()} <span className="text-2xl text-rose-500 font-black">G</span>
+              약 {Math.round(strategyAnalysis?.recommendedTotalRev || 0).toLocaleString()} <span className="text-2xl text-rose-500 font-black">G</span>
             </span>
           </div>
         </div>
@@ -417,7 +419,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
           </div>
           <div className="grid grid-cols-1 gap-3 md:gap-4 flex-1">
             {MINE_FIXED_PRICES.ingots.map((item, idx) => {
-              const buffedPrice = Math.floor(item.base * (1 + (PRICE_BUFF_EFFECTS[userStats.ingotBuffLv] || 0)));
+              const buffedPrice = Math.round(item.base * (1 + (PRICE_BUFF_EFFECTS[userStats.ingotBuffLv] || 0)));
               const imgPath = getImagePath(item.name);
               return (
                 <div key={idx} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-2xl p-4 md:p-5 flex items-center justify-between shadow-sm transition-colors">
@@ -449,7 +451,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
           </div>
           <div className="grid grid-cols-1 gap-3 md:gap-4 flex-1">
             {MINE_FIXED_PRICES.gems.map((item, idx) => {
-              const buffedPrice = Math.floor(item.base * (1 + (PRICE_BUFF_EFFECTS[userStats.gemBuffLv] || 0)));
+              const buffedPrice = Math.round(item.base * (1 + (PRICE_BUFF_EFFECTS[userStats.gemBuffLv] || 0)));
               const imgPath = getImagePath(item.name);
               return (
                 <div key={idx} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-2xl p-4 md:p-5 flex items-center justify-between shadow-sm transition-colors">
