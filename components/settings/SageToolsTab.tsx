@@ -123,14 +123,14 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
               <span className="text-xs font-bold text-gray-500 dark:text-gray-500 transition-colors">중급 라이프스톤</span>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-gray-700 dark:text-gray-300 text-sm transition-colors">{diffToolCost.stone2.toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
-                <img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} alt="중급" className="w-4 h-4 object-contain drop-shadow-sm dark:drop-shadow-none" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
+                <img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} alt="중급" className="w-4 h-4 object-contain drop-shadow-sm dark:drop-shadow-none" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
               </div>
             </div>
             <div className="flex justify-between items-center transition-colors">
               <span className="text-xs font-bold text-gray-500 dark:text-gray-500 transition-colors">상급 라이프스톤</span>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-gray-700 dark:text-gray-300 text-sm transition-colors">{diffToolCost.stone3.toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
-                <img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} alt="상급" className="w-4 h-4 object-contain drop-shadow-sm dark:drop-shadow-none" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
+                <img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} alt="상급" className="w-4 h-4 object-contain drop-shadow-sm dark:drop-shadow-none" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
               </div>
             </div>
           </div>
