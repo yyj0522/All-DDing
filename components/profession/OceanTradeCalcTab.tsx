@@ -233,6 +233,12 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     alert('창고에 합산 및 수량이 초기화되었습니다.');
   };
 
+  const clearInventory = () => {
+    if (!confirm('전체 재고 수량을 0으로 초기화하시겠습니까?')) return;
+    setStock({});
+    alert('모든 재고가 초기화되었습니다.');
+  };
+
   const getBaseEquivalents = (currentStock: Record<string, number>) => {
     const eq: Record<string, number> = {};
     Object.entries(currentStock).forEach(([name, qty]) => {
@@ -686,11 +692,24 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
 
       {(activeSubTab === 'alchemy_optimal' || activeSubTab === 'stamina_recommend') && (
         <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[1.5rem] p-5 md:p-6 shadow-sm transition-colors">
-          <div className="flex items-center justify-between cursor-pointer" onClick={() => setIsInventoryVisible(!isInventoryVisible)}>
-             <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2.5">
-               <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>간편 재고 관리 (어패류 및 연금품)
-             </h3>
-             <span className="text-xs text-indigo-500 font-bold bg-indigo-50 dark:bg-indigo-950/30 px-3 py-1.5 rounded-lg transition-colors">{isInventoryVisible ? '접기' : '펼치기'}</span>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2.5 cursor-pointer" onClick={() => setIsInventoryVisible(!isInventoryVisible)}>
+              <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>간편 재고 관리 (어패류 및 연금품)
+            </h3>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={(e) => { e.stopPropagation(); clearInventory(); }}
+                className="text-xs text-rose-500 font-bold bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                전체 초기화
+              </button>
+              <button 
+                onClick={() => setIsInventoryVisible(!isInventoryVisible)}
+                className="text-xs text-indigo-500 font-bold bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                {isInventoryVisible ? '접기' : '펼치기'}
+              </button>
+            </div>
           </div>
           
           <div className="transition-all duration-500 ease-in-out" style={{ display: 'grid', gridTemplateRows: isInventoryVisible ? '1fr' : '0fr' }}>
@@ -787,7 +806,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                       <div className={`overflow-hidden transition-all duration-300 ${expandedRec[rec.name] ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
                          <div className="bg-white dark:bg-[#16161a] rounded-2xl p-4 md:p-5 mb-4 border border-gray-100 dark:border-white/5 shadow-inner">
                              <h5 className="text-xs md:text-sm font-black text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                                단계별 연금 체크리스트 <span className="text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md text-[10px] ml-1">({isCustomQty ? `${targetQty}개 기준` : '최대 수량 기준'})</span>
+                               단계별 연금 체크리스트 <span className="text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md text-[10px] ml-1">({isCustomQty ? `${targetQty}개 기준` : '최대 수량 기준'})</span>
                              </h5>
                              <div className="relative pl-5 border-l-2 border-indigo-100 dark:border-indigo-500/30 space-y-5">
                                 
