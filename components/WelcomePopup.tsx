@@ -63,7 +63,7 @@ export default function WelcomePopup() {
           
           <div className="bg-gray-100 dark:bg-black px-6 pt-6 pb-5 md:px-8 md:pt-8 md:pb-6 shrink-0 transition-colors border-b-2 border-gray-300 dark:border-transparent">
             <h2 className="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-fuchsia-600 dark:from-indigo-400 dark:to-fuchsia-400 tracking-tighter transition-colors">
-              올띵(All-Dding)에 오신 것을 환영합니다!
+              올띵에 오신 것을 환영합니다!
             </h2>
           </div>
           
@@ -185,60 +185,6 @@ export default function WelcomePopup() {
       ) : (
         <div className="hidden xl:block w-full md:w-[760px] lg:w-[850px] shrink-0 pointer-events-none" />
       )}
-
-      {isOpenRpg && (
-        <div className="pointer-events-auto animate-fade-in bg-white dark:bg-[#111113] border-2 border-gray-300 dark:border-transparent rounded-[2rem] w-full md:w-[400px] h-fit shadow-2xl dark:shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden shrink-0 transition-colors relative">
-          
-          <div className="bg-gray-100 dark:bg-black border-b-2 border-gray-300 dark:border-transparent px-6 pt-6 pb-5 md:px-8 md:pt-8 md:pb-6 shrink-0 transition-colors">
-            <h2 className="text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-rose-500 dark:from-amber-400 dark:to-rose-400 tracking-tighter transition-colors">
-              RPG 업데이트 제보 안내
-            </h2>
-          </div>
-          
-          <div className="flex-1 px-8 py-10 flex flex-col justify-center text-center space-y-8 bg-white dark:bg-transparent">
-            <div className="space-y-5">
-              <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight break-keep">
-                필요한 툴 및 기능 제보 요청
-              </h3>
-              <div className="w-10 h-1.5 bg-gray-300 dark:bg-gray-800 mx-auto rounded-full" />
-              <p className="text-xs md:text-[13px] font-bold text-gray-600 dark:text-gray-400 leading-relaxed break-keep">
-                RPG 콘텐츠 출시에 따라 올띵에 추가되었으면 하는 툴이나 기능을 제보해 주시기 바랍니다.
-              </p>
-            </div>
-            
-            <div className="bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-2xl p-5 shadow-sm transition-colors">
-              <p className="text-xs font-bold text-gray-700 dark:text-gray-300 break-keep leading-relaxed">
-                화면 우측 하단의 <span className="inline-block font-black text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded-md mx-0.5 border border-indigo-200 dark:border-transparent transition-colors">[의견 남기기]</span> 버튼을 통해 제보하실 수 있습니다.
-              </p>
-            </div>
-          </div>
-          
-          <div className="bg-gray-200 dark:bg-[#050505] border-t-2 border-gray-300 dark:border-transparent px-6 md:px-8 py-5 flex items-center justify-between shrink-0 transition-colors">
-            <label className="flex items-center gap-2.5 cursor-pointer group">
-              <div className="relative flex items-center justify-center w-5 h-5">
-                <input 
-                  type="checkbox" 
-                  className="peer appearance-none w-full h-full border-2 border-gray-400 dark:border-transparent rounded bg-white dark:bg-white/10 checked:bg-indigo-500 dark:checked:bg-indigo-600 checked:border-transparent transition-all cursor-pointer shadow-inner"
-                  checked={dontShowTodayRpg}
-                  onChange={(e) => setDontShowTodayRpg(e.target.checked)}
-                />
-                <span className="absolute text-white text-[12px] font-black opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity pb-[1px]">✓</span>
-              </div>
-              <span className="text-sm font-black text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors select-none tracking-tight">
-                오늘 하루 보지 않기
-              </span>
-            </label>
-            
-            <button 
-              onClick={handleCloseRpg}
-              className="bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 text-sm font-black px-8 py-3 rounded-xl transition-all shadow-md active:scale-95 border border-gray-900 dark:border-transparent"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
