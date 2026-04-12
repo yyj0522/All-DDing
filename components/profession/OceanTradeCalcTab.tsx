@@ -727,8 +727,8 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                 <p className="text-[11px] text-gray-500 mt-1.5">우측 모드에 따라 현재 보유한 재고를 효율적으로 소진할 수 있는 추천 목록을 제공합니다.</p>
               </div>
               <div className="flex bg-gray-100 dark:bg-[#16161a] rounded-lg p-1 w-max border border-gray-200 dark:border-white/10 shrink-0">
-                  <button onClick={() => setRecommendMode('balance')} className={`px-4 py-2 text-[11px] font-bold rounded-md transition-all ${recommendMode === 'balance' ? 'bg-white dark:bg-[#202024] shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>균등 소진 (재고 올인)</button>
-                  <button onClick={() => setRecommendMode('efficiency')} className={`px-4 py-2 text-[11px] font-bold rounded-md transition-all ${recommendMode === 'efficiency' ? 'bg-white dark:bg-[#202024] shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>수익 극대화 (최대 마진)</button>
+                  <button onClick={() => setRecommendMode('balance')} className={`px-4 py-2 text-[11px] font-bold rounded-md transition-all ${recommendMode === 'balance' ? 'bg-white dark:bg-[#202024] shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>재고 최대한 소진</button>
+                  <button onClick={() => setRecommendMode('efficiency')} className={`px-4 py-2 text-[11px] font-bold rounded-md transition-all ${recommendMode === 'efficiency' ? 'bg-white dark:bg-[#202024] shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>수익 효율 최우선</button>
               </div>
             </div>
             
