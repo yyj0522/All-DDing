@@ -4,6 +4,7 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 import WelcomePopup from "@/components/WelcomePopup"; 
 import { ThemeProvider } from "@/components/ThemeProvider";
 import AutoCloudSync from "@/components/AutoCloudSync";
+import ChannelTalk from "@/components/ChannelTalk";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -55,6 +56,7 @@ export default function RootLayout({
           <WelcomePopup />
           {children}
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
+          <ChannelTalk />
         </ThemeProvider>
       </body>
     </html>

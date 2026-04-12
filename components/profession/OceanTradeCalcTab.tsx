@@ -793,7 +793,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                                 
                                 <div className="relative">
                                    <div className="absolute -left-[25px] top-1.5 w-3 h-3 rounded-full bg-amber-400 border-[3px] border-white dark:border-[#16161a] shadow-sm"></div>
-                                   <p className="text-[11px] md:text-xs font-black text-amber-600 dark:text-amber-400 mb-2">STEP 1. 부족한 기초 재료 파악</p>
+                                   <p className="text-[11px] md:text-xs font-black text-amber-600 dark:text-amber-400 mb-2">STEP 1. 부족한 바닐라 재료 파악</p>
                                    {Object.keys(dynamicSim.missing).length === 0 ? (
                                       <span className="text-[11px] text-gray-500 font-bold">창고에 모든 기초 재료가 충분합니다.</span>
                                    ) : (
