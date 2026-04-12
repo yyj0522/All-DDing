@@ -32,7 +32,8 @@ const SKILL_IDS = {
   gemDrop: 'm3',      
   flamingPick: 'm7',  
   ingotBuff: 'm5',    
-  gemBuff: 'm4'        
+  gemBuff: 'm4',
+  m16: 'm16'
 };
 
 export default function ProfessionPage() {
@@ -42,7 +43,7 @@ export default function ProfessionPage() {
 
   const [userStats, setUserStats] = useState({
     stamina: 3000, pickaxeLv: 0, rodLv: 0, swordLv: 0, 
-    luckyHitLv: 0, gemDropLv: 0, flamingPickLv: 0, ingotBuffLv: 0, gemBuffLv: 0,
+    luckyHitLv: 0, gemDropLv: 0, flamingPickLv: 0, ingotBuffLv: 0, gemBuffLv: 0, m16Lv: 0,
     o11Lv: 0, o12Lv: 0, o14Lv: 0, o16Lv: 0, o17Lv: 0,
     h2Lv: 0, h5Lv: 0, h6Lv: 0, h12Lv: 0, h13Lv: 0, h14Lv: 0, h15Lv: 0
   });
@@ -56,7 +57,7 @@ export default function ProfessionPage() {
     
     let parsedStamina = 3000;
     let parsedPickaxe = 0, parsedRod = 0, parsedSword = 0;
-    let parsedLuckyHit = 0, parsedGemDrop = 0, parsedFlaming = 0, parsedIngotBuff = 0, parsedGemBuff = 0;
+    let parsedLuckyHit = 0, parsedGemDrop = 0, parsedFlaming = 0, parsedIngotBuff = 0, parsedGemBuff = 0, parsedM16 = 0;
     let parsedO11 = 0, parsedO12 = 0, parsedO14 = 0, parsedO16 = 0, parsedO17 = 0;
     let parsedH2 = 0, parsedH5 = 0, parsedH6 = 0, parsedH12 = 0, parsedH13 = 0, parsedH14 = 0, parsedH15 = 0;
 
@@ -67,6 +68,7 @@ export default function ProfessionPage() {
       parsedFlaming = p[SKILL_IDS.flamingPick] || 0; 
       parsedIngotBuff = p[SKILL_IDS.ingotBuff] || 0; 
       parsedGemBuff = p[SKILL_IDS.gemBuff] || 0; 
+      parsedM16 = p[SKILL_IDS.m16] || 0;
 
       parsedO11 = p['o11'] || 0;
       parsedO12 = p['o12'] || 0;
@@ -102,7 +104,7 @@ export default function ProfessionPage() {
     
     setUserStats({
       stamina: parsedStamina, pickaxeLv: parsedPickaxe, rodLv: parsedRod, swordLv: parsedSword,
-      luckyHitLv: parsedLuckyHit, gemDropLv: parsedGemDrop, flamingPickLv: parsedFlaming, ingotBuffLv: parsedIngotBuff, gemBuffLv: parsedGemBuff,
+      luckyHitLv: parsedLuckyHit, gemDropLv: parsedGemDrop, flamingPickLv: parsedFlaming, ingotBuffLv: parsedIngotBuff, gemBuffLv: parsedGemBuff, m16Lv: parsedM16,
       o11Lv: parsedO11, o12Lv: parsedO12, o14Lv: parsedO14, o16Lv: parsedO16, o17Lv: parsedO17,
       h2Lv: parsedH2, h5Lv: parsedH5, h6Lv: parsedH6, h12Lv: parsedH12, h13Lv: parsedH13, h14Lv: parsedH14, h15Lv: parsedH15
     });

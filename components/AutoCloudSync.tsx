@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 
 const SYNC_KEYS = [
+  'ocean_trade_v3',
   'ocean_trade_v2', 
   'alldding_profession', 
   'alldding_sage_tools', 
