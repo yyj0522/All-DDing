@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import confetti from 'canvas-confetti';
 import { useTheme } from 'next-themes';
 
@@ -99,9 +100,43 @@ export default function RandomBadgeSimulator() {
   const [budgetResult, setBudgetResult] = useState<{ pulls: number, results: [Reward, number][] } | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const confettiCanvasRef = useRef<HTMLCanvasElement>(null);
   const [testResults, setTestResults] = useState<Record<string, number>>({});
   const [testCount, setTestCount] = useState(0);
   const { theme } = useTheme();
+
+  const [mounted, setMounted] = useState(false);
+  const [panelRect, setPanelRect] = useState({ top: 0, left: 0, height: 0 });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!rootRef.current) return;
+    const parent = rootRef.current.closest('.max-w-5xl') as HTMLElement;
+    if (!parent) return;
+
+    const updatePosition = () => {
+      const bounds = parent.getBoundingClientRect();
+      setPanelRect({
+        top: bounds.top + window.scrollY,
+        left: bounds.right + 5,
+        height: bounds.height
+      });
+    };
+
+    updatePosition();
+    const ro = new ResizeObserver(updatePosition);
+    ro.observe(parent);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, []);
 
   useEffect(() => {
     const initial: Reward[] = [];
@@ -126,25 +161,11 @@ export default function RandomBadgeSimulator() {
   }, []);
 
   const triggerFancyConfetti = () => {
-    let originX = 0.5;
-    let originY = 0.5;
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      originX = (rect.left + rect.width / 2) / window.innerWidth;
-      originY = (rect.top + rect.height / 2) / window.innerHeight;
-    }
-    const count = 250; 
-    const defaults = {
-      origin: { x: originX, y: originY },
-      colors: ['#ffffff', '#f8fafc', '#e0f2fe', '#7dd3fc', '#3b82f6', '#1e3a8a'], 
-      ticks: 200, 
-      zIndex: 200
-    };
-    function fire(particleRatio: number, opts: any) {
-      confetti(Object.assign({}, defaults, opts, {
-        particleCount: Math.floor(count * particleRatio)
-      }));
-    }
+    if (!confettiCanvasRef.current) return;
+    const myConfetti = confetti.create(confettiCanvasRef.current, { resize: true, useWorker: true });
+    const count = 200;
+    const defaults = { origin: { x: 0.5, y: 0.5 }, colors: ['#ffffff', '#f8fafc', '#e0f2fe', '#7dd3fc', '#3b82f6', '#1e3a8a'], ticks: 200, zIndex: 200 };
+    const fire = (ratio: number, opts: any) => myConfetti(Object.assign({}, defaults, opts, { particleCount: Math.floor(count * ratio) }));
     fire(0.25, { spread: 26, startVelocity: 55 });
     fire(0.2, { spread: 60 });
     fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
@@ -284,7 +305,7 @@ export default function RandomBadgeSimulator() {
   };
 
   return (
-    <div className="w-full space-y-6 relative transition-colors duration-300">
+    <div ref={rootRef} className="w-full space-y-6 relative transition-colors duration-300">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-lg gap-4 transition-colors">
         <div className="flex items-center gap-4">
           <img src={`${STORAGE_BASE_URL}/sailing/diamond_chest.png`} alt="랜덤 뱃지 보급품" className="w-16 h-16 object-contain drop-shadow-md dark:drop-shadow-lg" />
@@ -324,8 +345,8 @@ export default function RandomBadgeSimulator() {
           <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-sm font-bold border border-blue-200 dark:border-blue-500/30 rounded-lg transition-colors">
             효과별 뱃지
           </button>
-          <button onClick={() => setShowProbModal(true)} className="px-4 py-2 bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/40 text-sm font-bold border border-fuchsia-200 dark:border-fuchsia-500/30 rounded-lg transition-colors">
-            확률표 보기
+          <button onClick={() => setShowProbModal(!showProbModal)} className={`px-4 py-2 text-sm font-bold border rounded-lg transition-all ${showProbModal ? 'bg-fuchsia-600 text-white border-fuchsia-600 dark:bg-fuchsia-500 dark:border-fuchsia-500 shadow-md' : 'bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 border-fuchsia-200 dark:border-fuchsia-500/30 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/40'}`}>
+            {showProbModal ? '확률표 접기' : '확률표 보기'}
           </button>
         </div>
       </div>
@@ -333,6 +354,8 @@ export default function RandomBadgeSimulator() {
       {mode === 'normal' && (
         <div className="w-full space-y-8 animate-fade-in">
           <div ref={containerRef} className="bg-gray-100 dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl p-6 relative overflow-hidden h-72 flex flex-col justify-center shadow-inner w-full transition-colors">
+            <canvas ref={confettiCanvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-40" />
+            
             <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex gap-[20px] z-0">
               {Array.from({ length: 21 }).map((_, i) => (
                 <div key={i} className={`w-[100px] h-[92px] rounded-xl flex-shrink-0 border transition-colors ${i === 10 ? 'bg-fuchsia-100 dark:bg-fuchsia-900/20 border-fuchsia-300 dark:border-fuchsia-500/50 shadow-[inset_0_0_10px_rgba(217,70,239,0.1)] dark:shadow-[inset_0_0_20px_rgba(217,70,239,0.3)]' : 'bg-white/50 dark:bg-gray-900/60 border-gray-200 dark:border-white/5'}`}></div>
@@ -340,12 +363,17 @@ export default function RandomBadgeSimulator() {
             </div>
             <div ref={trackRef} className="absolute top-1/2 flex gap-[20px] z-10" style={{ left: '50%', transform: `translate(${offset}px, -50%)`, transition: 'none' }}>
               {strip.map((item, i) => (
-                <div key={i} className="w-[100px] h-[92px] flex-shrink-0 flex flex-col items-center justify-center">
+                <div key={i} className="group relative hover:z-50 w-[100px] h-[92px] flex-shrink-0 flex flex-col items-center justify-center cursor-default">
                   <div className="relative">
                     <img src={item.image} alt={item.name} className="w-12 h-12 object-contain drop-shadow-md relative z-10" />
                     {item.grade === 'mythic' && <div className="absolute inset-0 bg-yellow-400/30 dark:bg-yellow-500/40 blur-lg rounded-full z-0 transition-colors"></div>}
                   </div>
                   <span className="text-[10px] mt-2 text-center text-gray-700 dark:text-gray-300 font-bold line-clamp-1 px-1 transition-colors">{item.name}</span>
+                  
+                  <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
+                    {item.name} ({item.effect})
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -376,7 +404,7 @@ export default function RandomBadgeSimulator() {
             <button onClick={handleMassTest} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl shadow-sm dark:shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all">즉시 1만번 실행</button>
           </div>
           {testCount > 0 && (
-            <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl overflow-x-auto shadow-sm dark:shadow-none transition-colors">
+            <div className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl overflow-x-auto shadow-sm dark:shadow-none transition-colors pb-6">
               <table className="w-full text-xs md:text-sm text-left whitespace-nowrap">
                 <thead className="text-gray-500 dark:text-gray-500 bg-gray-50 dark:bg-white/5 uppercase transition-colors"><tr><th className="px-4 py-3">보상</th><th className="px-4 py-3">공식</th><th className="px-4 py-3">실제</th><th className="px-4 py-3">횟수</th></tr></thead>
                 <tbody>
@@ -387,9 +415,15 @@ export default function RandomBadgeSimulator() {
                     const isAccurate = diff < 1.0; 
                     return (
                       <tr key={reward.id} className="border-b border-gray-200 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                        <td className="px-4 py-4 font-bold text-gray-900 dark:text-white flex items-center gap-3 transition-colors">
-                          <img src={reward.image} className="w-6 h-6 object-contain" />
-                          {reward.name}
+                        <td className="px-4 py-4 font-bold text-gray-900 dark:text-white transition-colors">
+                          <div className="group relative hover:z-50 inline-flex items-center gap-3 cursor-default">
+                            <img src={reward.image} className="w-6 h-6 object-contain" />
+                            <span className="truncate max-w-[120px]">{reward.name}</span>
+                            <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
+                              {reward.name} ({reward.effect})
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-4 py-4 text-gray-500 dark:text-gray-400 transition-colors">{reward.prob.toFixed(4)}%</td>
                         <td className={`px-4 py-4 font-black transition-colors ${isAccurate ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>{actualProb.toFixed(4)}%</td>
@@ -414,15 +448,19 @@ export default function RandomBadgeSimulator() {
                 <span className="text-sm font-bold text-gray-700 dark:text-gray-300 transition-colors">목표 뱃지 선택 (다중 선택 가능)</span>
                 <span className="text-xs text-rose-600 dark:text-rose-400 font-bold transition-colors">{snipeTargetIds.length}개 선택됨</span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar p-1 pb-6">
                 {BADGE_REWARDS.map(r => {
                   const isSelected = snipeTargetIds.includes(r.id);
                   return (
-                    <div key={r.id} onClick={() => toggleSnipeTarget(r.id)} className={`cursor-pointer flex items-center gap-2 p-2 rounded-lg border transition-all select-none ${isSelected ? 'bg-rose-50 dark:bg-rose-500/20 border-rose-400 dark:border-rose-500 shadow-sm dark:shadow-[inset_0_0_10px_rgba(225,29,72,0.3)]' : 'bg-gray-50 dark:bg-black/50 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                    <div key={r.id} onClick={() => toggleSnipeTarget(r.id)} className={`group relative hover:z-50 cursor-pointer flex items-center gap-2 p-2 rounded-lg border transition-all select-none ${isSelected ? 'bg-rose-50 dark:bg-rose-500/20 border-rose-400 dark:border-rose-500 shadow-sm dark:shadow-[inset_0_0_10px_rgba(225,29,72,0.3)]' : 'bg-gray-50 dark:bg-black/50 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5'}`}>
                       <img src={r.image} className="w-8 h-8 object-contain" />
                       <div className="flex flex-col overflow-hidden">
                         <span className={`text-[11px] font-bold truncate transition-colors ${r.grade === 'mythic' ? (isSelected ? 'text-yellow-600 dark:text-yellow-400' : 'text-yellow-600 dark:text-yellow-400') : (isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200')}`}>{r.name}</span>
                         <span className="text-[9px] text-gray-500 dark:text-gray-400 truncate transition-colors">{r.effect}</span>
+                      </div>
+                      <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
+                        {r.name} ({r.effect})
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
                       </div>
                     </div>
                   );
@@ -473,12 +511,17 @@ export default function RandomBadgeSimulator() {
                 <div className="flex justify-between items-center mb-6">
                   <h4 className="text-lg font-black text-gray-900 dark:text-white transition-colors">결과 리포트 <span className="text-sm text-gray-500 dark:text-gray-400 font-medium ml-2 transition-colors">({budgetResult.pulls.toLocaleString()}회 개봉)</span></h4>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 pb-6">
                   {budgetResult.results.map(([reward, count]) => (
-                    <div key={reward.id} className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-colors ${reward.grade === 'mythic' ? 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-300 dark:border-yellow-500/50' : 'bg-gray-50 dark:bg-black/50 border-gray-200 dark:border-white/10'}`}>
+                    <div key={reward.id} className={`group relative hover:z-50 flex flex-col items-center justify-center p-4 rounded-xl border transition-colors cursor-default ${reward.grade === 'mythic' ? 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-300 dark:border-yellow-500/50' : 'bg-gray-50 dark:bg-black/50 border-gray-200 dark:border-white/10'}`}>
                       <img src={reward.image} className="w-10 h-10 object-contain drop-shadow-md mb-2" />
                       <span className={`text-[11px] font-bold text-center mb-1 line-clamp-1 transition-colors ${reward.grade === 'mythic' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-700 dark:text-gray-300'}`}>{reward.name}</span>
                       <span className="bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white text-[10px] font-black px-2 py-0.5 rounded-full transition-colors">{count.toLocaleString()}개</span>
+                      
+                      <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
+                        {reward.name} ({reward.effect})
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -489,7 +532,7 @@ export default function RandomBadgeSimulator() {
       )}
 
       {showCategoryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowCategoryModal(false)}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowCategoryModal(false)}>
           <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-6 max-w-4xl w-full shadow-2xl flex flex-col max-h-[80vh] transition-colors" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-black text-blue-600 dark:text-blue-400 transition-colors">스탯(효과)별 뱃지 목록</h3>
@@ -497,17 +540,21 @@ export default function RandomBadgeSimulator() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto custom-scrollbar pr-2 flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto custom-scrollbar pr-2 pb-6 flex-1">
               {categorizedBadges.map(([effect, items]) => (
                 <div key={effect} className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-4 flex flex-col gap-3 transition-colors">
                   <h4 className="text-sm font-black text-yellow-600 dark:text-yellow-400 border-b border-gray-200 dark:border-white/10 pb-2 transition-colors">{effect}</h4>
                   <div className="flex flex-col gap-2">
                     {items.map(item => (
-                      <div key={item.id} className="flex items-center gap-3 bg-white dark:bg-black/40 p-2 rounded-lg border border-gray-200 dark:border-transparent transition-colors">
+                      <div key={item.id} className="group relative hover:z-50 flex items-center gap-3 bg-white dark:bg-black/40 p-2 rounded-lg border border-gray-200 dark:border-transparent transition-colors cursor-default">
                         <img src={item.image} className="w-8 h-8 object-contain" />
-                        <div className="flex flex-col">
-                          <span className={`text-xs font-bold transition-colors ${item.grade === 'mythic' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-900 dark:text-gray-200'}`}>{item.name}</span>
+                        <div className="flex flex-col min-w-0">
+                          <span className={`text-xs font-bold truncate transition-colors ${item.grade === 'mythic' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-900 dark:text-gray-200'}`}>{item.name}</span>
                           <span className="text-[10px] text-gray-500 dark:text-gray-500 transition-colors">{item.prob}%</span>
+                        </div>
+                        <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
+                          {item.name} ({item.effect})
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
                         </div>
                       </div>
                     ))}
@@ -520,28 +567,72 @@ export default function RandomBadgeSimulator() {
       )}
 
       {showProbModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setShowProbModal(false)}>
-          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-6 max-w-3xl w-full shadow-2xl transition-colors" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">랜덤 뱃지 보급품 확률표</h3>
-              <button onClick={() => setShowProbModal(false)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+        <div className="xl:hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setShowProbModal(false)}>
+          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-5 max-w-md w-full shadow-2xl transition-colors" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">랜덤 뱃지 보급품 확률표</h3>
+              <button onClick={() => setShowProbModal(false)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">✕</button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+            <div className="grid grid-cols-2 gap-1.5 max-h-[65vh] overflow-y-auto custom-scrollbar pr-1.5 pb-6 content-start">
               {BADGE_REWARDS.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-2 rounded-lg text-sm transition-colors">
-                  <img src={item.image} className="w-8 h-8 object-contain" />
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-gray-800 dark:text-gray-200 font-medium truncate transition-colors">{item.name}</span>
-                    <span className="text-[10px] text-yellow-600 dark:text-yellow-500 font-bold transition-colors">{item.effect}</span>
+                <div key={idx} className="group relative hover:z-50 flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-default">
+                  <div className="relative w-5 h-5 shrink-0">
+                    <img src={item.image} alt="I" className="w-full h-full object-contain drop-shadow-sm dark:drop-shadow-none" />
                   </div>
-                  <span className="text-white font-bold bg-fuchsia-400 dark:bg-fuchsia-500/20 dark:text-fuchsia-300 px-2 py-1 rounded whitespace-nowrap transition-colors">{item.prob.toFixed(4)}%</span>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-gray-700 dark:text-gray-200 font-bold text-[10px] truncate transition-colors">{item.name}</span>
+                    <span className="text-[8px] text-yellow-600 dark:text-yellow-500 font-bold truncate">{item.effect}</span>
+                  </div>
+                  <span className="text-white font-black bg-fuchsia-100 dark:bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-300 px-1 py-0.5 rounded text-[9px] transition-colors">{item.prob.toFixed(4)}%</span>
+                  
+                  <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
+                    {item.name} ({item.effect})
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
+      )}
+
+      {mounted && document.body && createPortal(
+        <div 
+          className={`hidden xl:block absolute z-40 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${showProbModal ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          style={{
+            top: panelRect.top,
+            left: panelRect.left,
+            height: panelRect.height,
+            width: showProbModal ? '400px' : '0px'
+          }}
+        >
+          <div style={{ width: '400px', height: '100%' }} className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-4 md:p-5 flex flex-col transition-colors">
+            <div className="flex justify-between items-center mb-5 shrink-0">
+              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">랜덤 뱃지 보급품 확률표</h3>
+              <button onClick={() => setShowProbModal(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors text-lg">✕</button>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 overflow-y-auto custom-scrollbar flex-1 pr-1.5 pb-6 content-start">
+              {BADGE_REWARDS.map((item, idx) => (
+                <div key={idx} className="group relative hover:z-50 flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-default">
+                  <div className="relative w-5 h-5 shrink-0">
+                    <img src={item.image} alt="I" className="w-full h-full object-contain drop-shadow-sm dark:drop-shadow-none" />
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-gray-700 dark:text-gray-200 font-bold text-[10px] truncate transition-colors">{item.name}</span>
+                    <span className="text-[8px] text-yellow-600 dark:text-yellow-500 font-bold truncate">{item.effect}</span>
+                  </div>
+                  <span className="text-white font-black bg-fuchsia-100 dark:bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-300 px-1 py-0.5 rounded text-[9px] transition-colors">{item.prob.toFixed(4)}%</span>
+                  
+                  <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
+                    {item.name} ({item.effect})
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

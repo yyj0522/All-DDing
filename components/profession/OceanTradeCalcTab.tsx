@@ -85,6 +85,12 @@ const simulateCraftPure = (targetList: Record<string, number>, initialStock: Rec
 
     if (RECIPE_FIXES[name]) {
       const fix = RECIPE_FIXES[name];
+      
+      if (!allowTierUpgrade && TIER2.includes(name) && TIER1.includes(fix.ing)) {
+        missing[name] = (missing[name] || 0) + rem;
+        return;
+      }
+
       const craftsNeeded = Math.ceil(rem / fix.yield);
       const leftover = (craftsNeeded * fix.yield) - rem;
       if (leftover > 0) tempStock[name] = (tempStock[name] || 0) + leftover;
@@ -99,11 +105,6 @@ const simulateCraftPure = (targetList: Record<string, number>, initialStock: Rec
     if (!recipe) {
       missing[name] = (missing[name] || 0) + rem;
       return;
-    }
-
-    if (!allowTierUpgrade && TIER2.includes(name) && recipe.ingredients.some(ing => TIER1.includes(ing.name))) {
-       missing[name] = (missing[name] || 0) + rem;
-       return;
     }
 
     const yieldAmount = recipe.yieldAmount;
@@ -255,7 +256,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     return eq;
   };
 
-  // 대규모 연산 속도 최적화 (Dynamic Batching 적용)
   const optimalCalculations = useMemo(() => {
     if (!isLoaded || activeSubTab === 'trade' || activeSubTab === 'settings') return { recommendations: [], totalExpectedProfit: 0, overallMissingVanilla: {} };
     
@@ -302,7 +302,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         }
         if (!possible) continue;
 
-        // Dynamic Batching: 연산량을 획기적으로 줄이기 위해 제작 가능량의 10%를 한 번에 묶어서 계산
         const batchSize = Math.max(1, Math.floor(maxPossible / 10));
 
         const sim = simulateCraftPure({ [item.name]: batchSize }, tempStock, allowTierUpgrade);
@@ -457,7 +456,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         }
         if (!possible) continue;
 
-        // Dynamic Batching을 통해 연산량 최소화
         const batchSize = Math.max(1, Math.floor(maxPossible / 5));
 
         const sim = simulateCraftPure({ [item.name]: batchSize }, tempStock, allowTierUpgrade);
@@ -576,7 +574,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     singleResults.sort((a, b) => b.stockConsumed !== a.stockConsumed ? b.stockConsumed - a.stockConsumed : b.profit - a.profit);
     const topCandidates = singleResults.slice(0, 4).map(r => r.cat);
 
-    // 탐색 구간 최적화 (불필요한 세부 스텝 생략하여 로딩 단축)
     const step = Math.max(1, Math.floor(maxActions / 6)); 
     
     for(let i=0; i<topCandidates.length; i++) {

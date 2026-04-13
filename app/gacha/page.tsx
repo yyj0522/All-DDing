@@ -44,7 +44,7 @@ export default function GachaPage() {
           </p>
         </div>
 
-        <div className="w-full max-w-4xl mx-auto flex items-center justify-center mb-8 z-20">
+        <div className="w-full max-w-4xl mx-auto flex items-center justify-center mb-8 relative">
           <div className="w-full flex flex-wrap justify-center gap-2 md:gap-2.5 px-1">
             {GACHA_CATEGORIES.map((cat) => (
               <button

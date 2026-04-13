@@ -184,7 +184,7 @@ export default function SageSimulator() {
         <div className="bg-white/80 dark:bg-[#0f0f13]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-xl transition-colors">
           <div className="flex gap-2 p-1 bg-gray-100 dark:bg-black/40 rounded-xl mb-5 transition-colors">
             {SAGE_TOOLS.map(tool => (
-              <button key={tool.id} onClick={() => { if(!isEnhancing) { setSelectedTool(tool.id); handleReset(); } }} className={`flex-1 py-2.5 text-[11px] font-black rounded-lg transition-all ${selectedTool === tool.id ? 'bg-indigo-100 text-indigo-600 dark:bg-gradient-to-t dark:from-indigo-600/40 dark:to-indigo-500/10 dark:text-indigo-300 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-white dark:hover:bg-white/5'}`}>{tool.name}</button>
+              <button key={tool.id} onClick={() => { if(!isEnhancing) { setSelectedTool(tool.id); handleReset(); } }} className={`flex-1 py-2.5 text-[11px] font-black rounded-lg transition-all ${selectedTool === tool.id ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-200 shadow-sm dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-white/5'}`}>{tool.name}</button>
             ))}
           </div>
           <div className="flex items-center justify-between">
@@ -276,8 +276,8 @@ export default function SageSimulator() {
 
         <div className="flex-1 bg-white/80 dark:bg-[#0f0f13]/80 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-xl flex flex-col transition-colors">
           <div className="flex border-b border-gray-200 dark:border-white/5 transition-colors">
-            <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-sm font-black transition-colors relative ${activeTab === 'history' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>실제 강화 기록{activeTab === 'history' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500"></div>}</button>
-            <button onClick={() => setActiveTab('expected')} className={`flex-1 py-3 text-sm font-black transition-colors relative ${activeTab === 'expected' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>구간별 기댓값 표{activeTab === 'expected' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500"></div>}</button>
+            <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-sm font-black transition-colors relative ${activeTab === 'history' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>실제 강화 기록{activeTab === 'history' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500"></div>}</button>
+            <button onClick={() => setActiveTab('expected')} className={`flex-1 py-3 text-sm font-black transition-colors relative ${activeTab === 'expected' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>구간별 기댓값 표{activeTab === 'expected' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500"></div>}</button>
           </div>
           <div className="p-4 flex-1 overflow-y-auto custom-scrollbar h-[400px]">
             {activeTab === 'history' && (
@@ -293,7 +293,7 @@ export default function SageSimulator() {
             )}
             {activeTab === 'history' ? (
               <div className="flex flex-col gap-2">
-                {history.length === 0 ? (<div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-600 transition-colors"><span className="text-sm font-bold">아직 돌파 기록이 없습니다.</span></div>) : 
+                {history.length === 0 ? (<div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500 transition-colors"><span className="text-sm font-bold">아직 돌파 기록이 없습니다.</span></div>) : 
                 history.map((h, i) => (
                   <div key={i} className="flex flex-row items-center justify-between bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-black/60 transition-colors">
                     <div className="flex items-center gap-3 shrink-0"><div className="flex items-center justify-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-3 py-1.5 rounded-lg min-w-[80px] transition-colors"><span className="text-indigo-600 dark:text-indigo-300 font-black text-xs transition-colors">{h.from} ➔ {h.to}</span></div><span className="text-gray-500 dark:text-gray-400 text-[11px] font-black transition-colors">{h.tries}번 시도</span></div>
