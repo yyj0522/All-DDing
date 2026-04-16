@@ -29,7 +29,7 @@ const H13_SPAWN_RATE = [0, 0.03, 0.07, 0.10];
 const H14_CARNI_PRICE = [0, 0.05, 0.07, 0.10, 0.20, 0.30, 0.50]; 
 const H15_CATCH_RATE = [0, 0.12, 0.15, 0.17, 0.20, 0.25, 0.30]; 
 
-const CARNIVORE_BASE_AVG_VALUE = (31500 * 0.6) + (63000 * 0.3) + (135000 * 0.1); 
+const CARNIVORE_BASE_AVG_VALUE = (26775 * 0.6) + (53550 * 0.3) + (114750 * 0.1); 
 
 export default function HuntRevenueTab({ userStats }: HuntRevenueTabProps) {
   const [weakenBonus, setWeakenBonus] = useState<number>(40); 
@@ -44,7 +44,7 @@ export default function HuntRevenueTab({ userStats }: HuntRevenueTabProps) {
     const totalTrophyMultiplier = 1 + comboDropBonus + h5Bonus;
     const expectedTrophies = Math.floor(totalKills * baseTrophy * totalTrophyMultiplier);
     
-    const craftableSouls = Math.floor(expectedTrophies / 10);
+    const craftableSouls = Math.floor(expectedTrophies / 15);
     const expectedContracts = Math.floor(craftableSouls / 2);
     const requiredMonsterHearts = craftableSouls * 8;
 
@@ -208,9 +208,9 @@ export default function HuntRevenueTab({ userStats }: HuntRevenueTabProps) {
         <ul className="space-y-3 pl-2">
           {[
             { t: '초식동물', d: '총 스태미나를 10 단위로 나눈 값을 기준으로 기본 처치 수를 산출합니다. (스태미나 20 소모 개체는 2마리 분량으로 취급)' },
-            { t: '전리품 및 계약서', d: '대검 고유 드랍 수 × (1 + [끝까지 간다!] 보너스 + [남들과는 다르게] 보너스) 배율을 적용합니다. 전리품 10개당 1개의 영혼, 영혼 2개당 1장의 계약서를 산출합니다. 계약서 1장(영혼 2개)당 총 16개의 몬스터 심장이 요구됩니다.' },
+            { t: '전리품 및 계약서', d: '대검 고유 드랍 수 × (1 + [끝까지 간다!] 보너스 + [남들과는 다르게] 보너스) 배율을 적용합니다. 전리품 15개당 1개의 영혼, 영혼 2개당 1장의 계약서를 산출합니다. 계약서 1장(영혼 2개)당 총 16개의 몬스터 심장이 요구됩니다.' },
             { t: '각인석', d: '대검 고유 확률에 [검증된 방식] 스킬 배율을 적용하여 획득한 각인석 조각 5개를 완제품 1개로 환산합니다.' },
-            { t: '육식동물 판매', d: '초식동물 처치 수 × [피 냄새가 나] 스킬 확률로 조우 기댓값을 산출합니다. 상태 비율 평균 가치(51,300G)에 [상태 좋네!] 버프 및 흥정 기댓값을 곱하여 산출합니다.' }
+            { t: '육식동물 판매', d: '초식동물 처치 수 × [피 냄새가 나] 스킬 확률로 조우 기댓값을 산출합니다. 상태 비율 평균 가치(43,605G)에 [상태 좋네!] 버프 및 흥정 기댓값을 곱하여 산출합니다.' }
           ].map((item, i) => (
             <li key={i} className="flex gap-3 items-start text-xs sm:text-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 mt-1.5 flex-shrink-0 transition-colors"></span>
