@@ -17,11 +17,12 @@ interface Reward {
 
 const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
 
-const NICKNAME_REWARDS: Reward[] = [
-  { id: 'nick_ticket', name: '한글 닉네임 변경권', prob: 3, image: `${STORAGE_BASE_URL}/capsule2/nickname_change_scroll.png`, amount: 1, grade: 'mythic' },
+const BIGHEAD_REWARDS: Reward[] = [
+  { id: 'big_head_ticket', name: '대두 치장 획득권', prob: 1, image: `${STORAGE_BASE_URL}/capsule2/feather_pen.png`, amount: 1, grade: 'mythic' },
+  { id: 'mid_head_ticket', name: '중두 치장 획득권', prob: 1, image: `${STORAGE_BASE_URL}/capsule2/feather_pen.png`, amount: 1, grade: 'mythic' },
   { id: 'coin_5', name: '코스메틱 코인', prob: 17, image: `${STORAGE_BASE_URL}/capsule2/cosmetic_coin.png`, amount: 5, grade: 'rare' },
   { id: 'coin_3', name: '코스메틱 코인', prob: 30, image: `${STORAGE_BASE_URL}/capsule2/cosmetic_coin.png`, amount: 3, grade: 'uncommon' },
-  { id: 'coin_1', name: '코스메틱 코인', prob: 50, image: `${STORAGE_BASE_URL}/capsule2/cosmetic_coin.png`, amount: 1, grade: 'common' },
+  { id: 'coin_1', name: '코스메틱 코인', prob: 51, image: `${STORAGE_BASE_URL}/capsule2/cosmetic_coin.png`, amount: 1, grade: 'common' },
 ];
 
 const drawReward = (rewards: Reward[]): Reward => {
@@ -38,7 +39,7 @@ const drawVisualReward = (rewards: Reward[]): Reward => {
   return rewards[Math.floor(Math.random() * rewards.length)];
 };
 
-export default function NicknameCapsuleSimulator() {
+export default function BigHeadCapsuleSimulator() {
   const [showAnimation, setShowAnimation] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [mode, setMode] = useState<'normal' | 'test' | 'snipe'>('normal');
@@ -98,7 +99,7 @@ export default function NicknameCapsuleSimulator() {
   useEffect(() => {
     const initial: Reward[] = [];
     for (let i = 0; i < 30; i++) {
-      initial.push(drawVisualReward(NICKNAME_REWARDS));
+      initial.push(drawVisualReward(BIGHEAD_REWARDS));
     }
     setStrip(initial);
     setOffset(-(10 * 120) - 50);
@@ -123,7 +124,7 @@ export default function NicknameCapsuleSimulator() {
   const handleOpen = () => {
     if (isSpinning) return;
 
-    const winner = drawReward(NICKNAME_REWARDS);
+    const winner = drawReward(BIGHEAD_REWARDS);
     setTotalPulls(prev => prev + 1);
     setTotalCost(prev => prev + 2500);
 
@@ -137,7 +138,7 @@ export default function NicknameCapsuleSimulator() {
 
     const newStrip: Reward[] = [];
     for (let i = 0; i < 100; i++) {
-      newStrip.push(drawVisualReward(NICKNAME_REWARDS));
+      newStrip.push(drawVisualReward(BIGHEAD_REWARDS));
     }
     const targetIndex = 85;
     newStrip[targetIndex] = winner;
@@ -183,10 +184,10 @@ export default function NicknameCapsuleSimulator() {
 
   const handleMassTest = () => {
     const results: Record<string, number> = {};
-    NICKNAME_REWARDS.forEach(r => results[r.id] = 0);
+    BIGHEAD_REWARDS.forEach(r => results[r.id] = 0);
 
     for (let i = 0; i < 10000; i++) {
-      const reward = drawReward(NICKNAME_REWARDS);
+      const reward = drawReward(BIGHEAD_REWARDS);
       results[reward.id]++;
     }
 
@@ -211,7 +212,7 @@ export default function NicknameCapsuleSimulator() {
       
       do {
         attempts++;
-        pulled = drawReward(NICKNAME_REWARDS);
+        pulled = drawReward(BIGHEAD_REWARDS);
         if (attempts > 50000) break;
       } while (pulled.id !== snipeTargetId);
 
@@ -236,9 +237,9 @@ export default function NicknameCapsuleSimulator() {
     <div ref={rootRef} className="w-full space-y-6 relative transition-colors duration-300">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-lg gap-4 transition-colors">
         <div className="flex items-center gap-4">
-          <img src={`${STORAGE_BASE_URL}/f1/mythic_special_box.png`} alt="한글 닉네임 캡슐" className="w-16 h-16 object-contain drop-shadow-md dark:drop-shadow-lg" />
+          <img src={`${STORAGE_BASE_URL}/f1/mythic_special_box.png`} alt="대두 치장 캡슐" className="w-16 h-16 object-contain drop-shadow-md dark:drop-shadow-lg" />
           <div>
-            <h2 className="text-xl font-black text-gray-900 dark:text-white transition-colors">한글 닉네임 변경 캡슐</h2>
+            <h2 className="text-xl font-black text-gray-900 dark:text-white transition-colors">대두 치장 캡슐</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors">1회 개봉 비용: <span className="text-blue-600 dark:text-blue-400 font-bold">2,500</span> 크리스탈</p>
           </div>
         </div>
@@ -363,7 +364,7 @@ export default function NicknameCapsuleSimulator() {
                   </tr>
                 </thead>
                 <tbody>
-                  {NICKNAME_REWARDS.map(reward => {
+                  {BIGHEAD_REWARDS.map(reward => {
                     const count = testResults[reward.id] || 0;
                     const actualProb = (count / 10000) * 100;
                     const diff = Math.abs(reward.prob - actualProb);
@@ -409,7 +410,7 @@ export default function NicknameCapsuleSimulator() {
                 className="flex-1 bg-gray-50 dark:bg-black border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-xs md:text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-rose-400 dark:focus:border-rose-500 cursor-pointer transition-colors"
               >
                 <option value="">저격할 목표 아이템을 선택하세요</option>
-                {NICKNAME_REWARDS.map(r => (
+                {BIGHEAD_REWARDS.map(r => (
                   <option key={r.id} value={r.id}>{r.name} {r.amount > 1 ? `(x${r.amount})` : ''} - 확률 {r.prob}%</option>
                 ))}
               </select>
@@ -455,12 +456,12 @@ export default function NicknameCapsuleSimulator() {
         <div className="xl:hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setShowProbModal(false)}>
           <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-5 max-w-md w-full shadow-2xl transition-colors" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">한글 닉네임 변경 캡슐 확률표</h3>
+              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">대두 치장 캡슐 확률표</h3>
               <button onClick={() => setShowProbModal(false)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">✕</button>
             </div>
             
             <div className="flex flex-col gap-1.5 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1.5 pb-6">
-              {NICKNAME_REWARDS.map((item, idx) => (
+              {BIGHEAD_REWARDS.map((item, idx) => (
                 <div key={idx} className="group relative hover:z-50 flex items-center gap-2 bg-gray-50 dark:bg-white/5 p-2 rounded-lg text-[11px] md:text-xs transition-colors cursor-default">
                   <div className="relative w-6 h-6 shrink-0"><Image src={item.image} alt="I" fill unoptimized className="drop-shadow-sm dark:drop-shadow-none" /></div>
                   <span className="text-gray-700 dark:text-gray-200 flex-1 font-medium truncate transition-colors">{item.name} {item.amount > 1 ? `x${item.amount}` : ''}</span>
@@ -491,11 +492,11 @@ export default function NicknameCapsuleSimulator() {
         >
           <div style={{ width: '400px', height: '100%' }} className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-4 md:p-5 flex flex-col transition-colors">
             <div className="flex justify-between items-center mb-5 shrink-0">
-              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">한글 닉네임 변경 캡슐 확률표</h3>
+              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">대두 치장 캡슐 확률표</h3>
               <button onClick={() => setShowProbModal(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors text-lg">✕</button>
             </div>
             <div className="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar flex-1 pr-1.5 pb-6">
-              {NICKNAME_REWARDS.map((item, idx) => (
+              {BIGHEAD_REWARDS.map((item, idx) => (
                 <div key={idx} className="group relative hover:z-50 flex items-center gap-2 bg-gray-50 dark:bg-white/5 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-default">
                   <div className="relative w-6 h-6 shrink-0"><Image src={item.image} alt="I" fill unoptimized className="drop-shadow-sm dark:drop-shadow-none" /></div>
                   <span className="text-gray-700 dark:text-gray-200 flex-1 font-bold text-[11px] truncate transition-colors">{item.name} {item.amount > 1 ? `x${item.amount}` : ''}</span>
