@@ -18,7 +18,7 @@ export default function PrivacyPage() {
               <li>서비스 제공: 기기 간 접속 환경 연동(클라우드 동기화), 개인화된 설정 데이터 저장 및 불러오기</li>
               <li>회원 관리: 본인 확인(마스터 복구 키 대조), 불량 회원의 부정 이용 방지 및 비인가 사용 방지</li>
               <li>서비스 이용 기록 분석: 유저의 방문 경로 및 서비스 이용 행태 분석을 통한 품질 개선</li>
-              <li>사용자 의견 수렴: 오류 제보 및 건의사항에 대한 답변 제공(사용자 선택 시)</li>
+              <li>고객 상담 및 응대: 채널톡을 통한 서비스 이용 문의 답변, 오류 제보 확인 및 처리 결과 회신</li>
             </ul>
           </section>
 
@@ -27,8 +27,8 @@ export default function PrivacyPage() {
             <p>올띵은 서비스 제공 및 이용 과정에서 다음과 같은 정보들을 수집합니다.</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li>클라우드 동기화(회원가입) 시: 로그인용 아이디(사용자 지정), 비밀번호, 마스터 복구 키, 서비스 이용 기록(게임 설정값)</li>
-              <li>자동 수집 항목: 접속 로그, 쿠키(Cookie), 접속 IP 정보, 브라우저 정보, 기기 정보</li>
-              <li>피드백 전송 시(선택): 이메일 주소 (답변 제공 목적)</li>
+              <li>고객 문의 시 (채널톡): (선택) 이메일 주소, 문의 내용에 포함된 개인정보</li>
+              <li>자동 수집 항목: 접속 로그, 접속 IP 정보, 쿠키(Cookie), 브라우저 정보, 기기 정보, 불량 이용 기록</li>
             </ul>
             <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg p-4 mt-3 transition-colors">
               <p className="text-[11px] text-red-600 dark:text-red-400 font-bold leading-relaxed break-keep transition-colors">
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 transition-colors">3. 개인정보 처리 업무의 위탁</h2>
             <p>올띵은 원활한 서비스 제공을 위하여 다음과 같이 개인정보 처리 업무를 외부 전문업체에 위탁하여 운영하고 있습니다.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
               <div className="bg-white dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none transition-colors">
                 <p className="font-bold text-gray-900 dark:text-white mb-2 transition-colors">Google, Inc. (수탁자)</p>
                 <ul className="space-y-1 text-xs">
@@ -52,9 +52,17 @@ export default function PrivacyPage() {
               <div className="bg-white dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none transition-colors">
                 <p className="font-bold text-gray-900 dark:text-white mb-2 transition-colors">Supabase, Inc. (수탁자)</p>
                 <ul className="space-y-1 text-xs">
-                  <li>위탁 업무: 클라우드 동기화 계정 데이터 및 피드백 시스템 보관</li>
-                  <li>항목: 아이디, 암호화된 비밀번호, 게임 설정값, 의견 내용, 이메일 주소(선택)</li>
-                  <li>보유 기간: 목적 달성 시 혹은 서비스 종료 시까지 (계정 삭제 요청 시 지체 없이 파기)</li>
+                  <li>위탁 업무: 클라우드 동기화 계정 데이터 보관</li>
+                  <li>수집 항목: 아이디, 암호화된 비밀번호, 게임 설정값</li>
+                  <li>보유 기간: 회원 탈퇴 또는 위탁 계약 종료 시까지</li>
+                </ul>
+              </div>
+              <div className="bg-white dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none transition-colors">
+                <p className="font-bold text-gray-900 dark:text-white mb-2 transition-colors">(주)채널코퍼레이션 (수탁자)</p>
+                <ul className="space-y-1 text-xs">
+                  <li>위탁 업무: 채널톡(Channel.io) 솔루션을 이용한 고객 문의 접수 및 상담 응대, 이메일 알림 발송</li>
+                  <li>수집 항목: (선택) 이메일 주소, 접속 기록, 쿠키</li>
+                  <li>보유 기간: 3년 (전자상거래 등에서의 소비자보호에 관한 법률)</li>
                 </ul>
               </div>
             </div>
@@ -77,7 +85,7 @@ export default function PrivacyPage() {
               <ul className="space-y-1">
                 <li>이름: Lucas (올띵 관리자)</li>
                 <li>연락처: <span className="text-fuchsia-600 dark:text-fuchsia-400 font-bold transition-colors">projectc029@gmail.com</span></li>
-                <li>문의 방법: 사이트 내 '의견 남기기' 기능 또는 이메일</li>
+                <li>문의 방법: 사이트 우측 하단의 채널톡 채팅 버튼 또는 이메일</li>
               </ul>
             </div>
           </section>
