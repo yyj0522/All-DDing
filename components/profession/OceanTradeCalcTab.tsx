@@ -185,16 +185,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     setCost(prev => ({ ...prev, [item]: isNaN(num) ? 0 : (globalSetMode ? num / 64 : num) }));
   };
 
-  const handleTradeQtyChange = (item: string, val: string) => {
-    const num = parseFloat(val);
-    setTradeQty(prev => ({ ...prev, [item]: isNaN(num) ? 0 : (globalSetMode ? num * 64 : num) }));
-  };
-
-  const handleStockChange = (item: string, val: string) => {
-    const num = parseFloat(val);
-    setStock(prev => ({ ...prev, [item]: isNaN(num) ? 0 : Math.round(num * (globalSetMode ? 64 : 1)) }));
-  };
-
   const handleTargetChange = (item: string, val: string) => {
     setTargets(prev => ({ ...prev, [item]: val }));
   };
@@ -622,7 +612,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     const lineTotal = c * q;
     
     const displayCost = c === 0 ? '' : (globalSetMode ? Number((c * 64).toFixed(4)) : Number(c.toFixed(4)));
-    const displayQty = q === 0 ? '' : (globalSetMode ? Number((q / 64).toFixed(4)) : Number(q.toFixed(4)));
     
     return (
       <div key={item} className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-[1rem] p-3 flex flex-col gap-2.5 shadow-sm hover:shadow-md transition-shadow">
@@ -636,8 +625,24 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
           <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 tracking-tight shrink-0">{lineTotal > 0 ? lineTotal.toLocaleString() : '0'} G</span>
         </div>
         <div className="flex gap-2">
-          <input type="number" step="any" value={displayCost} onChange={(e) => handleCostChange(item, e.target.value)} placeholder="단가" className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold focus:ring-1 focus:ring-cyan-500 outline-none transition-colors" />
-          <input type="number" step="any" value={displayQty} onChange={(e) => handleTradeQtyChange(item, e.target.value)} placeholder="수량" className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold focus:ring-1 focus:ring-emerald-500 outline-none transition-colors" />
+          <input type="number" step="any" value={displayCost} onChange={(e) => handleCostChange(item, e.target.value)} placeholder={globalSetMode ? "단가(1셋)" : "단가"} className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold focus:ring-1 focus:ring-cyan-500 outline-none transition-colors" />
+          
+          {globalSetMode ? (
+            <div className="w-full flex items-center gap-1">
+              <input type="number" min="0" placeholder="세트" value={q >= 64 ? Math.floor(q / 64) : ''} onChange={(e) => {
+                 const s = parseInt(e.target.value) || 0;
+                 const u = q % 64;
+                 setTradeQty(prev => ({...prev, [item]: s * 64 + u}));
+              }} className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold text-center focus:ring-1 focus:ring-emerald-500 outline-none transition-colors placeholder:font-normal" />
+              <input type="number" min="0" placeholder="개" value={q % 64 !== 0 ? q % 64 : ''} onChange={(e) => {
+                 const u = parseInt(e.target.value) || 0;
+                 const s = Math.floor(q / 64);
+                 setTradeQty(prev => ({...prev, [item]: s * 64 + u}));
+              }} className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold text-center focus:ring-1 focus:ring-emerald-500 outline-none transition-colors placeholder:font-normal" />
+            </div>
+          ) : (
+            <input type="number" min="0" value={q || ''} onChange={(e) => setTradeQty(prev => ({...prev, [item]: parseInt(e.target.value)||0}))} placeholder="수량" className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold focus:ring-1 focus:ring-emerald-500 outline-none transition-colors" />
+          )}
         </div>
       </div>
     );
@@ -722,7 +727,23 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                             <img src={getImagePath(item) || undefined} alt="" className="w-4 h-4 object-contain shrink-0"/>
                             <span className="text-[10px] text-gray-700 dark:text-gray-200 font-bold truncate tracking-tight">{item}</span>
                           </div>
-                          <input type="number" step="any" value={stock[item] === 0 ? '' : (globalSetMode ? Number((stock[item] / 64).toFixed(4)) : stock[item]) || ''} onChange={(e) => handleStockChange(item, e.target.value)} placeholder="0" className="w-12 bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1.5 py-1 text-gray-900 dark:text-white text-[10px] font-black text-right outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300" />
+                          {globalSetMode ? (
+                            <div className="flex items-center gap-1 w-[80px] shrink-0">
+                              <input type="number" min="0" placeholder="세트" value={stock[item] >= 64 ? Math.floor(stock[item]/64) : ''} onChange={(e) => {
+                                const s = parseInt(e.target.value) || 0;
+                                const u = stock[item] ? stock[item] % 64 : 0;
+                                setStock(prev => ({...prev, [item]: s * 64 + u}));
+                              }} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 py-1 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300 placeholder:font-normal" />
+                              <span className="text-[10px] text-gray-400 font-black">/</span>
+                              <input type="number" min="0" placeholder="개" value={(stock[item] || 0) % 64 !== 0 ? stock[item] % 64 : ''} onChange={(e) => {
+                                const u = parseInt(e.target.value) || 0;
+                                const s = stock[item] ? Math.floor(stock[item]/64) : 0;
+                                setStock(prev => ({...prev, [item]: s * 64 + u}));
+                              }} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 py-1 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300 placeholder:font-normal" />
+                            </div>
+                          ) : (
+                            <input type="number" min="0" value={stock[item] || ''} onChange={(e) => setStock(prev => ({...prev, [item]: parseInt(e.target.value) || 0}))} placeholder="0" className="w-12 shrink-0 bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1.5 py-1 text-gray-900 dark:text-white text-[10px] font-black text-right outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300" />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1109,7 +1130,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                           </label>
                        </div>
                        {!isBlack && (
-                          <input type="number" step="any" value={cost[item] === 0 ? '' : (globalSetMode ? Number((cost[item] * 64).toFixed(4)) : cost[item]) || ''} onChange={(e) => handleCostChange(item, e.target.value)} placeholder="단가" className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2.5 py-1.5 text-[10px] font-black outline-none focus:ring-1 focus:ring-amber-500 transition-colors" />
+                          <input type="number" step="any" value={cost[item] === 0 ? '' : (globalSetMode ? Number((cost[item] * 64).toFixed(4)) : cost[item]) || ''} onChange={(e) => handleCostChange(item, e.target.value)} placeholder={globalSetMode ? "단가(1셋)" : "단가"} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2.5 py-1.5 text-[10px] font-black outline-none focus:ring-1 focus:ring-amber-500 transition-colors" />
                        )}
                     </div>
                   </div>
