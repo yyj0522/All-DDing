@@ -143,9 +143,9 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   const [stock, setStock] = useState<Record<string, number>>({});
   const [blacklist, setBlacklist] = useState<string[]>([]);
   const [tradeQty, setTradeQty] = useState<Record<string, number>>({});
-  const [targets, setTargets] = useState<Record<string, string>>({});
   
   const [craftInputs, setCraftInputs] = useState<Record<string, { sets: string, units: string }>>({});
+  const [pendingCrafts, setPendingCrafts] = useState<Record<string, number>>({});
   
   const [globalSetMode, setGlobalSetMode] = useState<boolean>(false);
   const [allowTierUpgrade, setAllowTierUpgrade] = useState<boolean>(false);
@@ -180,13 +180,14 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     }
   }, [cost, stock, blacklist, globalSetMode, allowTierUpgrade, recommendMode, isLoaded]);
 
+  useEffect(() => {
+    setPendingCrafts({});
+    setCraftInputs({});
+  }, [stock, activeSubTab, recommendMode]);
+
   const handleCostChange = (item: string, val: string) => {
     const num = parseFloat(val);
     setCost(prev => ({ ...prev, [item]: isNaN(num) ? 0 : (globalSetMode ? num / 64 : num) }));
-  };
-
-  const handleTargetChange = (item: string, val: string) => {
-    setTargets(prev => ({ ...prev, [item]: val }));
   };
 
   const toggleBlacklist = (item: string) => {
@@ -373,7 +374,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     return { recommendations: refinedRecommendations, totalExpectedProfit, overallMissingVanilla };
   }, [cost, stock, blacklist, o16Bonus, isLoaded, activeSubTab, allowTierUpgrade, recommendMode]);
 
-  const applySingleCraft = (itemName: string, maxQty: number) => {
+  const handleQueueCraft = (itemName: string, maxQty: number) => {
     const input = craftInputs[itemName] || { sets: '', units: '' };
     let totalQtyToCraft = 0;
     
@@ -395,12 +396,29 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         return;
     }
 
-    if (!confirm(`[${itemName}] 총 ${totalQtyToCraft}개를 제작하시겠습니까?\n(제작 시 연금에 사용된 어패류 및 하위 연금품 재고가 차감됩니다.)`)) return;
-    
-    const sim = simulateCraftPure({ [itemName]: totalQtyToCraft }, stock, allowTierUpgrade);
+    setPendingCrafts(prev => ({
+      ...prev,
+      [itemName]: totalQtyToCraft
+    }));
+  };
+
+  const handleRemovePending = (itemName: string) => {
+    setPendingCrafts(prev => {
+      const next = { ...prev };
+      delete next[itemName];
+      return next;
+    });
+  };
+
+  const executeAllPendingCrafts = () => {
+    if (Object.keys(pendingCrafts).length === 0) return;
+    if (!confirm(`총 ${Object.keys(pendingCrafts).length}종류의 연금품 제작을 창고 재고에 일괄 반영하시겠습니까?`)) return;
+
+    const sim = simulateCraftPure(pendingCrafts, stock, allowTierUpgrade);
     setStock(sim.stock);
-    setCraftInputs(prev => ({ ...prev, [itemName]: { sets: '', units: '' } }));
-    alert('성공적으로 제작되어 재고가 차감되었습니다.');
+    setPendingCrafts({});
+    setCraftInputs({});
+    alert('모든 예약된 제작이 창고에 성공적으로 반영되었습니다.');
   };
 
   const handleCraftInputChange = (itemName: string, field: 'sets' | 'units', value: string) => {
@@ -651,7 +669,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   const SubTabButton = ({ id, label }: { id: typeof activeSubTab, label: string }) => (
     <button 
       onClick={() => setActiveSubTab(id)} 
-      className={`px-4 md:px-5 py-2.5 rounded-xl font-black text-[11px] md:text-xs transition-all border whitespace-nowrap snap-start shadow-sm ${
+      className={`w-full md:w-auto px-2 md:px-5 py-2.5 rounded-xl font-black text-[10px] sm:text-[11px] md:text-xs transition-all border whitespace-nowrap shadow-sm flex items-center justify-center ${
         activeSubTab === id 
         ? 'bg-cyan-600 text-white border-transparent shadow-cyan-500/30' 
         : 'bg-white dark:bg-[#111113] border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10'
@@ -664,7 +682,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   if (!isLoaded) return <div className="bg-gray-100 dark:bg-[#0a0a0a] h-64 rounded-[2rem] animate-pulse w-full border border-gray-200 dark:border-white/10 transition-colors"></div>;
 
   return (
-    <div className="w-full flex flex-col gap-5 md:gap-7 animate-fade-in-up transition-colors duration-300">
+    <div className="w-full flex flex-col gap-5 md:gap-7 animate-fade-in-up transition-colors duration-300 relative pb-24">
       <style dangerouslySetInnerHTML={{__html: `
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button {
@@ -677,7 +695,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
       `}} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2 w-full bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[1.5rem] shadow-sm transition-colors">
-        <div className="flex gap-2 overflow-x-auto custom-scrollbar w-full md:w-auto snap-x">
+        <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full md:w-auto">
           <SubTabButton id="alchemy_optimal" label="연금품 최적 계산" />
           <SubTabButton id="stamina_recommend" label="스태미나 추천" />
           <SubTabButton id="trade" label="거래 계산기" />
@@ -789,12 +807,14 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                       }
                   }
 
+                  const isPending = pendingCrafts[rec.name] !== undefined;
+
                   const dynamicSim = isCustomQty 
                       ? simulateCraftPure({ [rec.name]: targetQty }, rec.stockBeforeCraft, allowTierUpgrade)
                       : { missing: rec.missingForMax, craftedLog: rec.craftedLog };
 
                   return (
-                    <div key={rec.name} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-[1.5rem] p-5 flex flex-col shadow-sm hover:shadow-md transition-shadow">
+                    <div key={rec.name} className={`border rounded-[1.5rem] p-5 flex flex-col shadow-sm transition-all duration-300 ${isPending ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-500/30' : 'bg-gray-50 dark:bg-[#111113] border-gray-200 dark:border-transparent hover:shadow-md'}`}>
                       
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -814,7 +834,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
 
                       <button 
                          onClick={() => toggleExpand(rec.name)}
-                         className="w-full bg-white dark:bg-[#1a1a1e] hover:bg-indigo-50 dark:hover:bg-indigo-900/20 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors border border-gray-200 dark:border-transparent shadow-sm mb-4 group"
+                         className={`w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors border shadow-sm mb-4 group ${isPending ? 'bg-white/50 dark:bg-black/20 border-indigo-100 dark:border-indigo-500/20' : 'bg-white dark:bg-[#1a1a1e] hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border-gray-200 dark:border-transparent'}`}
                       >
                          <span className="text-xs font-bold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                              {expandedRec[rec.name] ? '제작 가이드 닫기' : '제작 가이드 펼쳐보기'}
@@ -822,7 +842,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                       </button>
 
                       <div className={`overflow-hidden transition-all duration-300 ${expandedRec[rec.name] ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                         <div className="bg-white dark:bg-[#16161a] rounded-2xl p-4 md:p-5 mb-4 border border-gray-100 dark:border-white/5 shadow-inner">
+                         <div className={`rounded-2xl p-4 md:p-5 mb-4 border shadow-inner ${isPending ? 'bg-white/50 dark:bg-black/20 border-indigo-100 dark:border-indigo-500/20' : 'bg-white dark:bg-[#16161a] border-gray-100 dark:border-white/5'}`}>
                              <h5 className="text-xs md:text-sm font-black text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                                단계별 연금 체크리스트 <span className="text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md text-[10px] ml-1">({isCustomQty ? `${targetQty}개 기준` : '최대 수량 기준'})</span>
                              </h5>
@@ -899,34 +919,45 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
 
                       <div className="flex flex-col sm:flex-row items-center justify-end gap-2 border-t border-gray-200 dark:border-white/5 pt-4 mt-auto">
                         <div className="flex items-stretch justify-end gap-1.5 w-full sm:w-auto">
-                          <div className="flex items-center bg-white dark:bg-black border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden flex-1 sm:flex-none sm:w-[90px]">
-                              <input 
-                                  type="number" 
-                                  min="0"
-                                  value={craftInputs[rec.name]?.sets !== undefined ? craftInputs[rec.name].sets : ''} 
-                                  onChange={(e) => handleCraftInputChange(rec.name, 'sets', e.target.value)}
-                                  placeholder="0"
-                                  className="w-full bg-transparent px-2 py-1.5 text-[11px] font-black text-center outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/20 transition-colors placeholder:font-normal"
-                              />
-                              <span className="text-[10px] font-bold text-gray-400 pr-2 shrink-0">셋</span>
-                          </div>
-                          <div className="flex items-center bg-white dark:bg-black border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden flex-1 sm:flex-none sm:w-[90px]">
-                              <input 
-                                  type="number" 
-                                  min="0"
-                                  value={craftInputs[rec.name]?.units !== undefined ? craftInputs[rec.name].units : ''} 
-                                  onChange={(e) => handleCraftInputChange(rec.name, 'units', e.target.value)}
-                                  placeholder="0"
-                                  className="w-full bg-transparent px-2 py-1.5 text-[11px] font-black text-center outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/20 transition-colors placeholder:font-normal"
-                              />
-                              <span className="text-[10px] font-bold text-gray-400 pr-2 shrink-0">개</span>
-                          </div>
-                          <button 
-                            onClick={() => applySingleCraft(rec.name, rec.actualCraftedFromGreedy)} 
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black px-4 py-2.5 rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap shrink-0"
-                          >
-                            제작 차감
-                          </button>
+                          {isPending ? (
+                            <button 
+                              onClick={() => handleRemovePending(rec.name)} 
+                              className="bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/20 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 text-[11px] font-black px-6 py-2.5 rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap"
+                            >
+                              예약 취소
+                            </button>
+                          ) : (
+                            <>
+                              <div className="flex items-center bg-white dark:bg-black border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden flex-1 sm:flex-none sm:w-[90px]">
+                                  <input 
+                                      type="number" 
+                                      min="0"
+                                      value={craftInputs[rec.name]?.sets !== undefined ? craftInputs[rec.name].sets : ''} 
+                                      onChange={(e) => handleCraftInputChange(rec.name, 'sets', e.target.value)}
+                                      placeholder="0"
+                                      className="w-full bg-transparent px-2 py-1.5 text-[11px] font-black text-center outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/20 transition-colors placeholder:font-normal"
+                                  />
+                                  <span className="text-[10px] font-bold text-gray-400 pr-2 shrink-0">셋</span>
+                              </div>
+                              <div className="flex items-center bg-white dark:bg-black border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden flex-1 sm:flex-none sm:w-[90px]">
+                                  <input 
+                                      type="number" 
+                                      min="0"
+                                      value={craftInputs[rec.name]?.units !== undefined ? craftInputs[rec.name].units : ''} 
+                                      onChange={(e) => handleCraftInputChange(rec.name, 'units', e.target.value)}
+                                      placeholder="0"
+                                      className="w-full bg-transparent px-2 py-1.5 text-[11px] font-black text-center outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/20 transition-colors placeholder:font-normal"
+                                  />
+                                  <span className="text-[10px] font-bold text-gray-400 pr-2 shrink-0">개</span>
+                              </div>
+                              <button 
+                                onClick={() => handleQueueCraft(rec.name, rec.actualCraftedFromGreedy)} 
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black px-4 py-2.5 rounded-lg shadow-sm transition-all active:scale-95 whitespace-nowrap shrink-0"
+                              >
+                                제작 예약
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1039,7 +1070,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                 <p className="text-[11px] font-black text-gray-500 mb-2 tracking-widest uppercase">2. 균등 채집 시나리오 도출 배경</p>
                 {staminaRecommendation.type === 'single' ? (
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 leading-relaxed pl-1">
-                    단일 타겟 <span className="text-indigo-600 dark:text-indigo-400 font-black">[{staminaRecommendation.target}]</span> 채집 시 창고의 기존 재고 소진 밸런스와 순수익 마진율이 모두 최고점에 달하여, 스태미나를 분산시키지 않고 올인하는 것이 가장 유리하다고 판단했습니다.
+                    단일 타겟 <span className="text-indigo-600 dark:text-indigo-400 font-black">[{staminaRecommendation.target}]</span> 채집 시 창고의 기존 재고 소진 밸런스와 순수익 마진율이 모두 최고점에 달하여, 스태미나를 분산시키지 단일 올인하는 것이 가장 유리하다고 판단했습니다.
                   </p>
                 ) : (
                   <ul className="text-xs font-bold text-gray-700 dark:text-gray-300 space-y-2.5 pl-1">
@@ -1123,8 +1154,11 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                   <div key={item} className={`border rounded-[1rem] p-3 flex items-center justify-between transition-colors ${isBlack ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-transparent' : 'bg-gray-50 dark:bg-[#111113] border-gray-200 dark:border-transparent hover:border-amber-300 dark:hover:border-amber-500/50'}`}>
                     <div className="flex flex-col gap-2 w-full">
                        <div className="flex items-center justify-between">
-                          <span className={`text-[11px] font-black truncate pr-2 ${isBlack ? 'text-rose-600 line-through' : 'text-gray-800 dark:text-gray-200'}`}>{item}</span>
-                          <label className="flex items-center gap-1.5 cursor-pointer">
+                          <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                            <img src={getImagePath(item) || undefined} alt="" className="w-4 h-4 object-contain shrink-0 drop-shadow-sm" />
+                            <span className={`text-[11px] font-black truncate ${isBlack ? 'text-rose-600 line-through' : 'text-gray-800 dark:text-gray-200'}`}>{item}</span>
+                          </div>
+                          <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
                             <input type="checkbox" checked={isBlack} onChange={() => toggleBlacklist(item)} className="w-3.5 h-3.5 rounded border-gray-300 text-rose-500" />
                             <span className="text-[9px] font-bold text-gray-500">제외</span>
                           </label>
@@ -1141,6 +1175,55 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
           
           <div className="pt-6 flex justify-end">
              <button onClick={saveCostData} className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black px-8 py-3.5 rounded-xl transition-all shadow-md active:scale-95">설정 및 단가 저장</button>
+          </div>
+        </div>
+      )}
+
+      {/* --- 총 제작 현황 바 (고정된 하단 UI) --- */}
+      {Object.keys(pendingCrafts).length > 0 && activeSubTab === 'alchemy_optimal' && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-black/90 backdrop-blur-md border-t border-gray-200 dark:border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] transform transition-transform duration-300 animate-fade-in-up">
+          <div className="max-w-5xl mx-auto px-4 py-4 md:py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            <div className="flex flex-col w-full sm:w-auto">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                <span className="text-xs font-black text-gray-900 dark:text-white">총 제작 예약 현황</span>
+                <span className="bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black px-2 py-0.5 rounded-md">{Object.keys(pendingCrafts).length}종목</span>
+              </div>
+              
+              <div className="flex flex-wrap gap-1.5 max-h-[60px] overflow-y-auto custom-scrollbar pr-2">
+                {Object.entries(pendingCrafts).map(([name, qty]) => (
+                  <div key={name} className="flex items-center bg-gray-100 dark:bg-[#16161a] border border-gray-200 dark:border-white/5 rounded-lg px-2 py-1 gap-1.5 group cursor-pointer hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-200 dark:hover:border-rose-500/30 transition-colors" onClick={() => handleRemovePending(name)} title="클릭하여 예약 취소">
+                    <img src={getImagePath(name) || undefined} className="w-3.5 h-3.5 object-contain" alt="" />
+                    <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{name}</span>
+                    <span className="text-[10px] font-black text-indigo-500">{formatQty(qty)}</span>
+                    <span className="text-[8px] text-gray-400 ml-1 opacity-0 group-hover:opacity-100 group-hover:text-rose-500 transition-opacity">✕</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+              <button 
+                onClick={() => {
+                  if(confirm('모든 예약을 취소하시겠습니까?')) {
+                    setPendingCrafts({});
+                    setCraftInputs({});
+                  }
+                }}
+                className="flex-1 sm:flex-none px-4 py-3 rounded-xl border border-gray-300 dark:border-white/20 text-gray-600 dark:text-gray-300 text-xs font-black hover:bg-gray-100 dark:hover:bg-white/10 transition-colors whitespace-nowrap"
+              >
+                전체 취소
+              </button>
+              <button 
+                onClick={executeAllPendingCrafts}
+                className="flex-[2] sm:flex-none bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black px-6 py-3 rounded-xl shadow-md transition-all active:scale-95 whitespace-nowrap flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                일괄 재고 차감
+              </button>
+            </div>
+
           </div>
         </div>
       )}
