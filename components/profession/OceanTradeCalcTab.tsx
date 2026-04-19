@@ -8,7 +8,8 @@ interface Props {
 }
 
 const PATCHED_OCEAN_RECIPES = RAW_OCEAN_RECIPES.map(r => {
-  if (['수호의 정수(1성)', '파동의 정수(1성)', '생명의 정수(1성)', '부식의 정수(1성)', '혼란의 정수(1성)'].includes(r.name)) {
+  if (['수호의 정수(1성)', '파동의 정수(1성)', '생명의 정수(1성)', '부식의 정수(1성)', '혼란의 정수(1성)', 
+       '수호 에센스', '파동 에센스', '생명 에센스', '부식 에센스', '혼란 에센스'].includes(r.name)) {
     return { ...r, note: '1회 2개 제작' };
   }
   return r;
@@ -43,6 +44,8 @@ const ALCHEMY_T2 = ["물결 수호의 핵", "파동 오염의 핵", "질서 파�
 const ALCHEMY_T3 = ["영생의 아쿠티스", "크라켄의 광란체", "리바이던의 깃털", "해구의 파동 코어", "침묵의 심해 비약", "청해룡의 날개", "아쿠아 펄스 파편", "나우틸러스의 손", "무저의 척추", "추출된 희석액"];
 
 const CORE_ITEMS = [...CORE_BASE_SHELLS, ...ALCHEMY_T1, ...ALCHEMY_T2];
+
+const BATCH_MATS = ['수호의 정수(1성)', '파동의 정수(1성)', '생명의 정수(1성)', '부식의 정수(1성)', '혼란의 정수(1성)', '수호 에센스', '파동 에센스', '생명 에센스', '부식 에센스', '혼란 에센스'];
 
 const INVENTORY_GROUPS = [
   { title: "1성 어패류", items: TIER1 },
@@ -336,6 +339,32 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
       }
     }
 
+    let trimmed = true;
+    while (trimmed) {
+      trimmed = false;
+      const keysToTrim = Object.keys(optimalCounts).sort((a, b) => {
+        const pA = itemsWithProfit.find(i=>i.name===a)?.profit || 0;
+        const pB = itemsWithProfit.find(i=>i.name===b)?.profit || 0;
+        return pA - pB; 
+      });
+
+      for (const itemName of keysToTrim) {
+        if (optimalCounts[itemName] > 0) {
+          const currentSim = simulateCraftPure(optimalCounts, stock, allowTierUpgrade);
+          const hasBadLeftover = BATCH_MATS.some(mat => {
+            return (currentSim.stock[mat] || 0) > (stock[mat] || 0);
+          });
+
+          if (hasBadLeftover) {
+            optimalCounts[itemName]--;
+            if (optimalCounts[itemName] === 0) delete optimalCounts[itemName];
+            trimmed = true;
+            break; 
+          }
+        }
+      }
+    }
+
     let trackingStock = { ...stock };
     const refinedRecommendations = [];
     const overallMissingVanilla: Record<string, number> = {};
@@ -503,6 +532,32 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
           tempStock = bestSim.stock;
           crafted[bestItem.name] = (crafted[bestItem.name] || 0) + bestBatchSize;
           keepGoing = true;
+      }
+    }
+
+    let trimmed = true;
+    while (trimmed) {
+      trimmed = false;
+      const keysToTrim = Object.keys(crafted).sort((a, b) => {
+        const pA = sortedItems.find(i=>i.name===a)?.sellPrice || 0;
+        const pB = sortedItems.find(i=>i.name===b)?.sellPrice || 0;
+        return pA - pB;
+      });
+
+      for (const itemName of keysToTrim) {
+        if (crafted[itemName] > 0) {
+          const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
+          const hasBadLeftover = BATCH_MATS.some(mat => {
+            return (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0));
+          });
+
+          if (hasBadLeftover) {
+            crafted[itemName]--;
+            if (crafted[itemName] === 0) delete crafted[itemName];
+            trimmed = true;
+            break; 
+          }
+        }
       }
     }
     
