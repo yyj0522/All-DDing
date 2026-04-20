@@ -39,8 +39,28 @@ const CORE_BASE_SHELLS = [...TIER1, ...TIER2, ...TIER3];
 
 const VANILLA = ["점토", "모래", "자갈", "화강암", "흙", "해초", "참나무잎", "가문비나무잎", "자작나무잎", "아카시아나무잎", "벚나무잎", "켈프", "청금석 블록", "레드스톤 블록", "철 주괴", "금 주괴", "다이아몬드", "불우렁쉥이", "유리병", "네더랙", "마그마블록", "영혼 흙", "진홍빛 자루", "뒤틀린 자루", "말린 켈프", "발광 열매", "죽은 관 산호 블록", "죽은 사방산호 블록", "죽은 거품 산호 블록", "죽은 불 산호 블록", "죽은 뇌 산호 블록", ...FISH];
 
-const ALCHEMY_T1 = ["수호의 정수(1성)", "파동의 정수(1성)", "생명의 정수(1성)", "부식의 정수(1성)", "혼란의 정수(1성)", "수호 에센스", "파동 에센스", "생명 에센스", "부식 에센스", "혼란 에센스", "수호의 엘릭서", "파동의 엘릭서", "생명의 엘릭서", "부식의 엘릭서", "혼란의 엘릭서"];
-const ALCHEMY_T2 = ["물결 수호의 핵", "파동 오염의 핵", "질서 파괴의 핵", "활력 붕괴의 핵", "침식 방어의 핵", "활기 보존의 결정", "파도 침식의 결정", "격류 재생의 결정", "맹독 혼란의 결정", "방어 오염의 결정", "불멸 재생의 영약", "파동 장벽의 영약", "생명 광란의 영약", "맹독 파동의 영약", "타락 침식의 영약"];
+const sortOceanItems = (items: string[]) => {
+  const order = ['수호', '파동', '혼란', '생명', '부식'];
+  return [...items].sort((a, b) => {
+    let scoreA = 99;
+    let scoreB = 99;
+    order.forEach((kw, idx) => { if (a.includes(kw)) scoreA = Math.min(scoreA, idx); });
+    order.forEach((kw, idx) => { if (b.includes(kw)) scoreB = Math.min(scoreB, idx); });
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    return items.indexOf(a) - items.indexOf(b);
+  });
+};
+
+const ALCHEMY_T1_JEONGSU = ["수호의 정수(1성)", "파동의 정수(1성)", "혼란의 정수(1성)", "생명의 정수(1성)", "부식의 정수(1성)"];
+const ALCHEMY_T1_ESSENCE = ["수호 에센스", "파동 에센스", "혼란 에센스", "생명 에센스", "부식 에센스"];
+const ALCHEMY_T1_ELIXIR = ["수호의 엘릭서", "파동의 엘릭서", "혼란의 엘릭서", "생명의 엘릭서", "부식의 엘릭서"];
+const ALCHEMY_T1 = [...ALCHEMY_T1_JEONGSU, ...ALCHEMY_T1_ESSENCE, ...ALCHEMY_T1_ELIXIR];
+
+const ALCHEMY_T2_CORE = sortOceanItems(["물결 수호의 핵", "파동 오염의 핵", "질서 파괴의 핵", "활력 붕괴의 핵", "침식 방어의 핵"]);
+const ALCHEMY_T2_CRYSTAL = sortOceanItems(["활기 보존의 결정", "파도 침식의 결정", "격류 재생의 결정", "맹독 혼란의 결정", "방어 오염의 결정"]);
+const ALCHEMY_T2_POTION = sortOceanItems(["불멸 재생의 영약", "파동 장벽의 영약", "생명 광란의 영약", "맹독 파동의 영약", "타락 침식의 영약"]);
+const ALCHEMY_T2 = [...ALCHEMY_T2_CORE, ...ALCHEMY_T2_CRYSTAL, ...ALCHEMY_T2_POTION];
+
 const ALCHEMY_T3 = ["영생의 아쿠티스", "크라켄의 광란체", "리바이던의 깃털", "해구의 파동 코어", "침묵의 심해 비약", "청해룡의 날개", "아쿠아 펄스 파편", "나우틸러스의 손", "무저의 척추", "추출된 희석액"];
 
 const CORE_ITEMS = [...CORE_BASE_SHELLS, ...ALCHEMY_T1, ...ALCHEMY_T2];
@@ -48,12 +68,12 @@ const CORE_ITEMS = [...CORE_BASE_SHELLS, ...ALCHEMY_T1, ...ALCHEMY_T2];
 const BATCH_MATS = ['수호의 정수(1성)', '파동의 정수(1성)', '생명의 정수(1성)', '부식의 정수(1성)', '혼란의 정수(1성)', '수호 에센스', '파동 에센스', '생명 에센스', '부식 에센스', '혼란 에센스'];
 
 const INVENTORY_GROUPS = [
-  { title: "1성 어패류", items: TIER1 },
-  { title: "2성 어패류", items: TIER2 },
-  { title: "3성 어패류", items: TIER3 },
-  { title: "물고기", items: FISH },
-  { title: "1단계 연금품", items: ALCHEMY_T1 },
-  { title: "2단계 연금품", items: ALCHEMY_T2 }
+  { title: "1성 어패류", subGroups: [TIER1] },
+  { title: "2성 어패류", subGroups: [TIER2] },
+  { title: "3성 어패류", subGroups: [TIER3] },
+  { title: "물고기", subGroups: [FISH] },
+  { title: "1단계 연금품", subGroups: [ALCHEMY_T1_JEONGSU, ALCHEMY_T1_ESSENCE, ALCHEMY_T1_ELIXIR] },
+  { title: "2단계 연금품", subGroups: [ALCHEMY_T2_CORE, ALCHEMY_T2_CRYSTAL, ALCHEMY_T2_POTION] }
 ];
 
 const RECIPE_FIXES: Record<string, {ing: string, req: number, yield: number}> = {
@@ -793,30 +813,34 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
                 {INVENTORY_GROUPS.map((group) => (
                   <div key={group.title}>
                     <h4 className="text-[10px] font-black text-indigo-400/80 mb-2.5 tracking-widest uppercase">{group.title}</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-                      {group.items.map(item => (
-                        <div key={item} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-xl p-2 flex items-center justify-between hover:bg-white dark:hover:bg-black hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all shadow-sm">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <img src={getImagePath(item) || undefined} alt="" className="w-4 h-4 object-contain shrink-0"/>
-                            <span className="text-[10px] text-gray-700 dark:text-gray-200 font-bold truncate tracking-tight">{item}</span>
-                          </div>
-                          {globalSetMode ? (
-                            <div className="flex items-center gap-1 w-[80px] shrink-0">
-                              <input type="number" min="0" placeholder="세트" value={stock[item] >= 64 ? Math.floor(stock[item]/64) : ''} onChange={(e) => {
-                                const s = parseInt(e.target.value) || 0;
-                                const u = stock[item] ? stock[item] % 64 : 0;
-                                setStock(prev => ({...prev, [item]: s * 64 + u}));
-                              }} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 py-1 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300 placeholder:font-normal" />
-                              <span className="text-[10px] text-gray-400 font-black">/</span>
-                              <input type="number" min="0" placeholder="개" value={(stock[item] || 0) % 64 !== 0 ? stock[item] % 64 : ''} onChange={(e) => {
-                                const u = parseInt(e.target.value) || 0;
-                                const s = stock[item] ? Math.floor(stock[item]/64) : 0;
-                                setStock(prev => ({...prev, [item]: s * 64 + u}));
-                              }} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 py-1 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300 placeholder:font-normal" />
+                    <div className="flex flex-col gap-2">
+                      {group.subGroups.map((subGroup, sgIdx) => (
+                        <div key={sgIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                          {subGroup.map(item => (
+                            <div key={item} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-xl p-2 flex items-center justify-between hover:bg-white dark:hover:bg-black hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all shadow-sm">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <img src={getImagePath(item) || undefined} alt="" className="w-4 h-4 object-contain shrink-0"/>
+                                <span className="text-[10px] text-gray-700 dark:text-gray-200 font-bold truncate tracking-tight">{item}</span>
+                              </div>
+                              {globalSetMode ? (
+                                <div className="flex items-center gap-1 w-[80px] shrink-0">
+                                  <input type="number" min="0" placeholder="세트" value={stock[item] >= 64 ? Math.floor(stock[item]/64) : ''} onChange={(e) => {
+                                    const s = parseInt(e.target.value) || 0;
+                                    const u = stock[item] ? stock[item] % 64 : 0;
+                                    setStock(prev => ({...prev, [item]: s * 64 + u}));
+                                  }} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 py-1 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300 placeholder:font-normal" />
+                                  <span className="text-[10px] text-gray-400 font-black">/</span>
+                                  <input type="number" min="0" placeholder="개" value={(stock[item] || 0) % 64 !== 0 ? stock[item] % 64 : ''} onChange={(e) => {
+                                    const u = parseInt(e.target.value) || 0;
+                                    const s = stock[item] ? Math.floor(stock[item]/64) : 0;
+                                    setStock(prev => ({...prev, [item]: s * 64 + u}));
+                                  }} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 py-1 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300 placeholder:font-normal" />
+                                </div>
+                              ) : (
+                                <input type="number" min="0" value={stock[item] || ''} onChange={(e) => setStock(prev => ({...prev, [item]: parseInt(e.target.value) || 0}))} placeholder="0" className="w-12 shrink-0 bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1.5 py-1 text-gray-900 dark:text-white text-[10px] font-black text-right outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300" />
+                              )}
                             </div>
-                          ) : (
-                            <input type="number" min="0" value={stock[item] || ''} onChange={(e) => setStock(prev => ({...prev, [item]: parseInt(e.target.value) || 0}))} placeholder="0" className="w-12 shrink-0 bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1.5 py-1 text-gray-900 dark:text-white text-[10px] font-black text-right outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300" />
-                          )}
+                          ))}
                         </div>
                       ))}
                     </div>
