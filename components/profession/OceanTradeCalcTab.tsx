@@ -39,14 +39,26 @@ const CORE_BASE_SHELLS = [...TIER1, ...TIER2, ...TIER3];
 
 const VANILLA = ["점토", "모래", "자갈", "화강암", "흙", "해초", "참나무잎", "가문비나무잎", "자작나무잎", "아카시아나무잎", "벚나무잎", "켈프", "청금석 블록", "레드스톤 블록", "철 주괴", "금 주괴", "다이아몬드", "불우렁쉥이", "유리병", "네더랙", "마그마블록", "영혼 흙", "진홍빛 자루", "뒤틀린 자루", "말린 켈프", "발광 열매", "죽은 관 산호 블록", "죽은 사방산호 블록", "죽은 거품 산호 블록", "죽은 불 산호 블록", "죽은 뇌 산호 블록", ...FISH];
 
+const sortOceanItems = (items: string[]) => {
+  const order = ['수호', '파동', '혼란', '생명', '부식'];
+  return [...items].sort((a, b) => {
+    let scoreA = 99;
+    let scoreB = 99;
+    order.forEach((kw, idx) => { if (a.includes(kw)) scoreA = Math.min(scoreA, idx); });
+    order.forEach((kw, idx) => { if (b.includes(kw)) scoreB = Math.min(scoreB, idx); });
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    return items.indexOf(a) - items.indexOf(b);
+  });
+};
+
 const ALCHEMY_T1_JEONGSU = ["수호의 정수(1성)", "파동의 정수(1성)", "혼란의 정수(1성)", "생명의 정수(1성)", "부식의 정수(1성)"];
 const ALCHEMY_T1_ESSENCE = ["수호 에센스", "파동 에센스", "혼란 에센스", "생명 에센스", "부식 에센스"];
 const ALCHEMY_T1_ELIXIR = ["수호의 엘릭서", "파동의 엘릭서", "혼란의 엘릭서", "생명의 엘릭서", "부식의 엘릭서"];
 const ALCHEMY_T1 = [...ALCHEMY_T1_JEONGSU, ...ALCHEMY_T1_ESSENCE, ...ALCHEMY_T1_ELIXIR];
 
-const ALCHEMY_T2_CORE = ["물결 수호의 핵", "파동 오염의 핵", "질서 파괴의 핵", "활력 붕괴의 핵", "침식 방어의 핵"];
-const ALCHEMY_T2_CRYSTAL = ["활기 보존의 결정", "파도 침식의 결정", "격류 재생의 결정", "맹독 혼란의 결정", "방어 오염의 결정"];
-const ALCHEMY_T2_POTION = ["불멸 재생의 영약", "파동 장벽의 영약", "생명 광란의 영약", "맹독 파동의 영약", "타락 침식의 영약"];
+const ALCHEMY_T2_CORE = sortOceanItems(["물결 수호의 핵", "파동 오염의 핵", "질서 파괴의 핵", "활력 붕괴의 핵", "침식 방어의 핵"]);
+const ALCHEMY_T2_CRYSTAL = sortOceanItems(["활기 보존의 결정", "파도 침식의 결정", "격류 재생의 결정", "맹독 혼란의 결정", "방어 오염의 결정"]);
+const ALCHEMY_T2_POTION = sortOceanItems(["불멸 재생의 영약", "파동 장벽의 영약", "생명 광란의 영약", "맹독 파동의 영약", "타락 침식의 영약"]);
 const ALCHEMY_T2 = [...ALCHEMY_T2_CORE, ...ALCHEMY_T2_CRYSTAL, ...ALCHEMY_T2_POTION];
 
 const ALCHEMY_T3 = ["영생의 아쿠티스", "크라켄의 광란체", "리바이던의 깃털", "해구의 파동 코어", "침묵의 심해 비약", "청해룡의 날개", "아쿠아 펄스 파편", "나우틸러스의 손", "무저의 척추", "추출된 희석액"];
@@ -348,28 +360,42 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     }
 
     let trimmed = true;
-    while (trimmed) {
+    let loopSafetyTrim = 0;
+    while (trimmed && loopSafetyTrim < 1000) {
       trimmed = false;
-      const keysToTrim = Object.keys(optimalCounts).sort((a, b) => {
-        const pA = itemsWithProfit.find(i=>i.name===a)?.profit || 0;
-        const pB = itemsWithProfit.find(i=>i.name===b)?.profit || 0;
-        return pA - pB; 
-      });
+      loopSafetyTrim++;
 
-      for (const itemName of keysToTrim) {
-        if (optimalCounts[itemName] > 0) {
-          const currentSim = simulateCraftPure(optimalCounts, stock, allowTierUpgrade);
-          const hasBadLeftover = BATCH_MATS.some(mat => {
-            return (currentSim.stock[mat] || 0) > (stock[mat] || 0);
+      const currentSim = simulateCraftPure(optimalCounts, stock, allowTierUpgrade);
+      const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > (stock[mat] || 0));
+
+      if (badMats.length > 0) {
+        const candidates = Object.keys(optimalCounts).filter(k => optimalCounts[k] > 0).sort((a, b) => {
+          const pA = itemsWithProfit.find(i=>i.name===a)?.profit || 0;
+          const pB = itemsWithProfit.find(i=>i.name===b)?.profit || 0;
+          return pA - pB; 
+        });
+
+        for (const itemName of candidates) {
+          const testCounts = { ...optimalCounts };
+          testCounts[itemName]--;
+          if (testCounts[itemName] === 0) delete testCounts[itemName];
+
+          const testSim = simulateCraftPure(testCounts, stock, allowTierUpgrade);
+          let oldLeftover = 0;
+          let newLeftover = 0;
+          badMats.forEach(mat => {
+            oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - (stock[mat] || 0));
+            newLeftover += Math.max(0, (testSim.stock[mat] || 0) - (stock[mat] || 0));
           });
 
-          if (hasBadLeftover) {
+          if (newLeftover < oldLeftover) {
             optimalCounts[itemName]--;
             if (optimalCounts[itemName] === 0) delete optimalCounts[itemName];
             trimmed = true;
             break; 
           }
         }
+        if (!trimmed) break;
       }
     }
 
@@ -544,28 +570,42 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     }
 
     let trimmed = true;
-    while (trimmed) {
+    let loopSafetyTrim = 0;
+    while (trimmed && loopSafetyTrim < 1000) {
       trimmed = false;
-      const keysToTrim = Object.keys(crafted).sort((a, b) => {
-        const pA = sortedItems.find(i=>i.name===a)?.sellPrice || 0;
-        const pB = sortedItems.find(i=>i.name===b)?.sellPrice || 0;
-        return pA - pB;
-      });
+      loopSafetyTrim++;
 
-      for (const itemName of keysToTrim) {
-        if (crafted[itemName] > 0) {
-          const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
-          const hasBadLeftover = BATCH_MATS.some(mat => {
-            return (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0));
+      const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
+      const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0)));
+
+      if (badMats.length > 0) {
+        const candidates = Object.keys(crafted).filter(k => crafted[k] > 0).sort((a, b) => {
+          const pA = sortedItems.find(i=>i.name===a)?.sellPrice || 0;
+          const pB = sortedItems.find(i=>i.name===b)?.sellPrice || 0;
+          return pA - pB;
+        });
+
+        for (const itemName of candidates) {
+          const testCounts = { ...crafted };
+          testCounts[itemName]--;
+          if (testCounts[itemName] === 0) delete testCounts[itemName];
+
+          const testSim = simulateCraftPure(testCounts, { ...stock, ...addedStock }, allowTierUpgrade);
+          let oldLeftover = 0;
+          let newLeftover = 0;
+          badMats.forEach(mat => {
+            oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
+            newLeftover += Math.max(0, (testSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
           });
 
-          if (hasBadLeftover) {
+          if (newLeftover < oldLeftover) {
             crafted[itemName]--;
             if (crafted[itemName] === 0) delete crafted[itemName];
             trimmed = true;
             break; 
           }
         }
+        if (!trimmed) break;
       }
     }
     
@@ -1246,6 +1286,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         </div>
       )}
 
+      {/* --- 총 제작 현황 바 (고정된 하단 UI) --- */}
       {Object.keys(pendingCrafts).length > 0 && activeSubTab === 'alchemy_optimal' && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-black/90 backdrop-blur-md border-t border-gray-200 dark:border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] transform transition-transform duration-300 animate-fade-in-up">
           <div className="max-w-5xl mx-auto px-4 py-4 md:py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
