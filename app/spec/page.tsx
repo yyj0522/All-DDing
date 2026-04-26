@@ -102,7 +102,8 @@ export default function SpecUpPage() {
   }, [activeTab]);
 
   const handlePriceChange = (key: string, value: string) => {
-    const next = { ...marketPrices, [key]: isNaN(parseFloat(value)) ? 0 : parseFloat(value) };
+    const num = parseFloat(value);
+    const next = { ...marketPrices, [key]: isNaN(num) ? 0 : Math.round(num) };
     setMarketPrices(next);
     localStorage.setItem('alldding_spec_prices', JSON.stringify(next));
   };
@@ -110,15 +111,16 @@ export default function SpecUpPage() {
   const handleImprintPriceChange = (id: string, prob: number, val: string) => {
     const updated = { ...imprintPrices };
     if (!updated[id]) updated[id] = { 10: 0, 20: 0, 30: 0 };
-    updated[id][prob] = isNaN(parseFloat(val)) ? 0 : parseFloat(val);
+    const num = parseFloat(val);
+    updated[id][prob] = isNaN(num) ? 0 : Math.round(num);
     setImprintPrices(updated);
     localStorage.setItem('alldding_spec_imprint_prices', JSON.stringify(updated));
   };
 
   const valuableUnitValueBase = 436333;
-  const craftMaterialCost = marketPrices.royalCert + (3 * marketPrices.gemBlock) + marketPrices.redstoneSet + marketPrices.lapisSet + ((10/64) * marketPrices.goldSet);
-  const ingotCost = 20 * Math.max(3500, marketPrices.ingotMarketPrice || 0); 
-  const currentCraftMargin = valuableUnitValueBase - craftMaterialCost - ingotCost;
+  const craftMaterialCost = Math.round(marketPrices.royalCert + (3 * marketPrices.gemBlock) + marketPrices.redstoneSet + marketPrices.lapisSet + ((10/64) * marketPrices.goldSet));
+  const ingotCost = Math.round(20 * Math.max(3500, marketPrices.ingotMarketPrice || 0)); 
+  const currentCraftMargin = Math.round(valuableUnitValueBase - craftMaterialCost - ingotCost);
 
   const simulateRevenue = (tab: string, state: SpecState) => {
     let rev = 0;
@@ -141,7 +143,7 @@ export default function SpecUpPage() {
       
       const m5Lv = state.skills['m5'] || 0;
       const ingotBuff = m5Lv > 0 ? [0.05, 0.07, 0.10, 0.20, 0.30, 0.50][m5Lv - 1] || 0 : 0;
-      const npcIngotPrice = 3500 * (1 + ingotBuff);
+      const npcIngotPrice = Math.round(3500 * (1 + ingotBuff));
       
       const ingotUnitValue = Math.max(npcIngotPrice, marketPrices.ingotMarketPrice || 0);
 
@@ -159,26 +161,26 @@ export default function SpecUpPage() {
       
       const m4Lv = state.skills['m4'] || 0;
       const gemBuff = m4Lv > 0 ? [0.05, 0.07, 0.10, 0.20, 0.30, 0.50][m4Lv - 1] || 0 : 0;
-      const gemUnitValue = 7000 * (1 + gemBuff);
+      const gemUnitValue = Math.round(7000 * (1 + gemBuff));
 
       const possibleCrafts = Math.min(Math.floor(totalIngots / 20), 5); 
       const m16Lv = state.skills['m16'] || 0;
       const m16Buff = m16Lv > 0 ? [0.05, 0.07, 0.10, 0.15, 0.20, 0.30][m16Lv - 1] || 0 : 0;
-      const valuableUnitValue = 436333 * (1 + m16Buff); 
+      const valuableUnitValue = Math.round(436333 * (1 + m16Buff)); 
       
-      const craftCost = marketPrices.royalCert + (3 * marketPrices.gemBlock) + marketPrices.redstoneSet + marketPrices.lapisSet + ((10/64) * marketPrices.goldSet);
+      const craftCost = Math.round(marketPrices.royalCert + (3 * marketPrices.gemBlock) + marketPrices.redstoneSet + marketPrices.lapisSet + ((10/64) * marketPrices.goldSet));
       
       let crafts = 0;
       if (valuableUnitValue - craftCost > (20 * ingotUnitValue)) crafts = possibleCrafts;
 
       const leftoverIngots = totalIngots - (crafts * 20);
-      const alchemyRev = (crafts * (valuableUnitValue - craftCost)) + (leftoverIngots * ingotUnitValue) + (totalGems * gemUnitValue);
+      const alchemyRev = Math.round((crafts * (valuableUnitValue - craftCost)) + (leftoverIngots * ingotUnitValue) + (totalGems * gemUnitValue));
 
       const relicChance = [0, 0.005, 0.01, 0.02][state.imprints['pick_relic'] || 0] || 0;
       const avgSailingPoints = 250; 
-      const relicRev = (actions * relicChance) * (avgSailingPoints / 100) * marketPrices.sailingPoint100;
+      const relicRev = Math.round((actions * relicChance) * (avgSailingPoints / 100) * marketPrices.sailingPoint100);
 
-      rev = alchemyRev + relicRev;
+      rev = Math.round(alchemyRev + relicRev);
     } else if (tab === '해양') {
       const actions = Math.floor(stamina / 15);
       const o11Lv = state.skills['o11'] || 0;
@@ -190,7 +192,7 @@ export default function SpecUpPage() {
       const o16Lv = state.skills['o16'] || 0;
       const o16Bonus = o16Lv > 0 ? [0.05, 0.07, 0.09, 0.12, 0.15, 0.2, 0.25, 0.3][o16Lv - 1] || 0 : 0;
       
-      rev = (Math.floor((totalSeafood * (1 - 0.3 - rate3)) / 12) * Math.ceil(5393 * (1 + o16Bonus))) + (Math.floor((totalSeafood * 0.3) / 3) * Math.ceil(11399 * (1 + o16Bonus))) + (Math.floor((totalSeafood * rate3) / 6) * Math.ceil(19328 * (1 + o16Bonus)));
+      rev = Math.round((Math.floor((totalSeafood * (1 - 0.3 - rate3)) / 12) * Math.ceil(5393 * (1 + o16Bonus))) + (Math.floor((totalSeafood * 0.3) / 3) * Math.ceil(11399 * (1 + o16Bonus))) + (Math.floor((totalSeafood * rate3) / 6) * Math.ceil(19328 * (1 + o16Bonus))));
     } else if (tab === '사냥') {
       const actions = Math.floor(stamina / 10);
       const h2Lv = state.skills['h2'] || 0;
@@ -205,27 +207,27 @@ export default function SpecUpPage() {
       
       const h6Lv = state.skills['h6'] || 0;
       const h14Lv = state.skills['h14'] || 0;
-      rev = (Math.floor(trophies / 15) * 10000 * (1 + (h6Lv > 0 ? [0.05, 0.07, 0.1, 0.2, 0.3, 0.5][h6Lv - 1] || 0 : 0))) + Math.floor(caught * (43605 * (1 + (h14Lv > 0 ? [0.05, 0.07, 0.1, 0.2, 0.3, 0.5][h14Lv - 1] || 0 : 0))));
+      rev = Math.round((Math.floor(trophies / 15) * Math.round(10000 * (1 + (h6Lv > 0 ? [0.05, 0.07, 0.1, 0.2, 0.3, 0.5][h6Lv - 1] || 0 : 0)))) + Math.floor(caught * Math.round(43605 * (1 + (h14Lv > 0 ? [0.05, 0.07, 0.1, 0.2, 0.3, 0.5][h14Lv - 1] || 0 : 0)))));
     }
     return rev;
   };
 
   const getToolCost = (lv: number) => {
     const c = TOOL_UPGRADE_COST[lv - 1];
-    return c ? c.coin + (c.stone1 * marketPrices.lifestone1) + (c.stone2 * marketPrices.lifestone2) + (c.stone3 * marketPrices.lifestone3) : 0;
+    return c ? Math.round(c.coin + (c.stone1 * marketPrices.lifestone1) + (c.stone2 * marketPrices.lifestone2) + (c.stone3 * marketPrices.lifestone3)) : 0;
   };
 
   const getSkillCost = (tab: string, id: string, lv: number) => {
     const s = SKILL_DATA[tab as Profession]?.[id]?.costs[lv - 1];
-    return s ? s.g + (s.p * marketPrices.skillArc) : 0;
+    return s ? Math.round(s.g + (s.p * marketPrices.skillArc)) : 0;
   };
 
   const getImprintCost = (id: string, lv: number, contractPrice: number) => {
     const p = imprintPrices[id] || { 10: 0, 20: 0, 30: 0 };
     const stoneCost10 = p[10] * 10000; const stoneCost20 = p[20] * 10000; const stoneCost30 = p[30] * 10000;
-    const c10 = 10 * (100000 + marketPrices.abilityStone + (lv * 5 * contractPrice) + stoneCost10);
-    const c20 = 5 * (200000 + marketPrices.abilityStone + (lv * 5 * contractPrice) + stoneCost20);
-    const c30 = 3.333 * (300000 + marketPrices.abilityStone + (lv * 5 * contractPrice) + stoneCost30);
+    const c10 = Math.round(10 * (100000 + marketPrices.abilityStone + (lv * 5 * contractPrice) + stoneCost10));
+    const c20 = Math.round(5 * (200000 + marketPrices.abilityStone + (lv * 5 * contractPrice) + stoneCost20));
+    const c30 = Math.round(3.333 * (300000 + marketPrices.abilityStone + (lv * 5 * contractPrice) + stoneCost30));
     const best = Math.min(c10, c20, c30);
     return { best, prob: best === c10 ? 10 : best === c20 ? 20 : 30 };
   };
@@ -372,7 +374,7 @@ export default function SpecUpPage() {
         type: firstStep.type,
         img,
         targetLevel: firstStep.lv,
-        costGold: stepCost || 1,
+        costGold: Math.round(stepCost) || 1,
         increaseDailyRev: Math.round(stepDelta),
         efficiency: stepCost > 0 ? (stepDelta / stepCost) * 100 : 0,
         pathEfficiency: bestTarget.eff,
@@ -421,7 +423,7 @@ export default function SpecUpPage() {
                       <label className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{item.label}</label>
                       {item.desc && <span className="text-[8px] font-bold text-violet-500">{item.desc}</span>}
                     </div>
-                    <input type="number" step="any" value={marketPrices[item.id as keyof typeof marketPrices] === 0 ? '' : marketPrices[item.id as keyof typeof marketPrices]} onChange={(e) => handlePriceChange(item.id, e.target.value)} placeholder="0" className={inputBaseClass} />
+                    <input type="number" value={marketPrices[item.id as keyof typeof marketPrices] === 0 ? '' : marketPrices[item.id as keyof typeof marketPrices]} onChange={(e) => handlePriceChange(item.id, e.target.value)} placeholder="0" className={inputBaseClass} />
                   </div>
                 ))}
                 
