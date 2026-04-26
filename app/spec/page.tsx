@@ -538,7 +538,6 @@ export default function SpecUpPage() {
           </div>
         ) : (
           <div className="w-full py-40 flex flex-col items-center justify-center bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-gray-200 dark:border-white/5 shadow-sm">
-            <span className="text-4xl mb-4">🚧</span>
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">{activeTab} 전문가 스펙업 가이드</h3>
             <p className="text-sm font-bold text-gray-500">현재 더욱 정밀한 효율 계산 로직을 구현 예정입니다.</p>
           </div>
