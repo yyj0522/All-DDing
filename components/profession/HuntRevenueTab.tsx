@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { getImagePath } from '@/lib/professionData';
 
 interface HuntRevenueTabProps {
@@ -15,6 +16,7 @@ interface HuntRevenueTabProps {
     h14Lv: number;
     h15Lv: number;
   };
+  toolImprints?: Record<string, Record<string, number>>;
 }
 
 const SWORD_TROPHY = [1, 2, 2, 2, 3, 3, 3, 4, 4, 6, 6, 7, 7, 8, 10];
@@ -31,18 +33,60 @@ const H15_CATCH_RATE = [0, 0.12, 0.15, 0.17, 0.20, 0.25, 0.30];
 
 const CARNIVORE_BASE_AVG_VALUE = (26775 * 0.6) + (53550 * 0.3) + (114750 * 0.1); 
 
-export default function HuntRevenueTab({ userStats }: HuntRevenueTabProps) {
+const IMPRINT_SWORD_LOOT_CHANCE = [0, 0.25, 0.50, 0.75, 1.00];
+const IMPRINT_SWORD_PIECE_CHANCE = [0, 0.01, 0.03, 0.05];
+const IMPRINT_SWORD_RESONANCE_CHANCE = [0, 0.005, 0.01, 0.015, 0.02, 0.03];
+const IMPRINT_SWORD_BLACKHOLE_CHANCE = [0, 0.02, 0.04, 0.06, 0.08, 0.10];
+const IMPRINT_SWORD_ROULETTE_CHANCE = [0, 0.01, 0.02, 0.03, 0.04, 0.05];
+
+const SWORD_IMPRINTS_MAP: Record<string, string> = {
+  'sword_power': '공격 강화',
+  'sword_speed': '공격 가속',
+  'sword_loot': '전리품 행운',
+  'sword_piece': '조각 탐색',
+  'sword_fast': '빠른 사냥꾼',
+  'sword_track': '흔적 추적',
+  'sword_resonance': '조각 공명',
+  'sword_blackhole': '흡인 사냥',
+  'sword_roulette': '사냥꾼 룰렛'
+};
+
+export default function HuntRevenueTab({ userStats, toolImprints }: HuntRevenueTabProps) {
   const [weakenBonus, setWeakenBonus] = useState<number>(40); 
   const [haggleRate, setHaggleRate] = useState<number>(10);
 
   const results = useMemo(() => {
-    const totalKills = Math.floor(userStats.stamina / 10);
+    let totalKills = Math.floor(userStats.stamina / 10);
+    const swordImprints = toolImprints?.['sword'] || {};
+
+    const blackholeLv = swordImprints['sword_blackhole'] || 0;
+    const blackholeChance = IMPRINT_SWORD_BLACKHOLE_CHANCE[blackholeLv];
+    
+    let simulatedStamina = userStats.stamina;
+    let actualKills = 0;
+    
+    if (blackholeChance > 0) {
+      let attempts = Math.floor(simulatedStamina / 10);
+      actualKills = attempts;
+    } else {
+      actualKills = totalKills;
+    }
 
     const baseTrophy = userStats.swordLv > 0 ? SWORD_TROPHY[userStats.swordLv - 1] : 1;
     const comboDropBonus = COMBO_BONUS[userStats.h2Lv] || 0;
     const h5Bonus = H5_TROPHY_BONUS[userStats.h5Lv] || 0;
+    
+    const lootImprintLv = swordImprints['sword_loot'] || 0;
+    const extraLootChance = IMPRINT_SWORD_LOOT_CHANCE[lootImprintLv];
+    const extraLootCount = actualKills * extraLootChance;
+
+    const rouletteImprintLv = swordImprints['sword_roulette'] || 0;
+    const rouletteChance = IMPRINT_SWORD_ROULETTE_CHANCE[rouletteImprintLv];
+    const rouletteEncounters = actualKills * rouletteChance;
+    const rouletteAvgTrophies = rouletteEncounters * ((3.5 * 5 * 0.9) + (3.5 * 10 * 0.1));
+
     const totalTrophyMultiplier = 1 + comboDropBonus + h5Bonus;
-    const expectedTrophies = Math.floor(totalKills * baseTrophy * totalTrophyMultiplier);
+    const expectedTrophies = Math.floor((actualKills * baseTrophy * totalTrophyMultiplier) + extraLootCount + rouletteAvgTrophies);
     
     const craftableSouls = Math.floor(expectedTrophies / 15);
     const expectedContracts = Math.floor(craftableSouls / 2);
@@ -50,11 +94,19 @@ export default function HuntRevenueTab({ userStats }: HuntRevenueTabProps) {
 
     const baseStoneChance = userStats.swordLv > 0 ? SWORD_STONE_CHANCE[userStats.swordLv - 1] : 0.01;
     const h12Bonus = H12_STONE_MULT[userStats.h12Lv] || 0;
-    const expectedStonePieces = Math.floor(totalKills * baseStoneChance * (1 + h12Bonus));
+    
+    const pieceImprintLv = swordImprints['sword_piece'] || 0;
+    const extraPieceChance = IMPRINT_SWORD_PIECE_CHANCE[pieceImprintLv];
+    
+    const resonanceImprintLv = swordImprints['sword_resonance'] || 0;
+    const resonanceChance = IMPRINT_SWORD_RESONANCE_CHANCE[resonanceImprintLv];
+    const resonanceAvgPieces = (actualKills * resonanceChance) * 3; 
+
+    const expectedStonePieces = Math.floor((actualKills * (baseStoneChance + extraPieceChance) * (1 + h12Bonus)) + resonanceAvgPieces);
     const expectedStones = Math.floor(expectedStonePieces / 5);
 
     const carnivoreSpawnRate = H13_SPAWN_RATE[userStats.h13Lv] || 0;
-    const carnivoreEncounters = totalKills * carnivoreSpawnRate;
+    const carnivoreEncounters = actualKills * carnivoreSpawnRate;
     
     const baseCatchRate = 0.10;
     const h15Bonus = H15_CATCH_RATE[userStats.h15Lv] || 0;
@@ -66,45 +118,18 @@ export default function HuntRevenueTab({ userStats }: HuntRevenueTabProps) {
     const totalGold = Math.floor(expectedCaught * boostedCarniPrice * haggleMultiplier);
 
     return { 
-      totalKills, expectedTrophies, craftableSouls, expectedContracts, requiredMonsterHearts,
+      totalKills: actualKills, expectedTrophies, craftableSouls, expectedContracts, requiredMonsterHearts,
       expectedStonePieces, expectedStones, carnivoreEncounters, expectedCaught, 
       totalGold, totalTrophyMultiplier, finalCatchRate 
     };
-  }, [userStats, weakenBonus, haggleRate]);
-
-  const activeSpecs = [
-    { name: '대검 강화', val: userStats.swordLv > 0 ? `+${userStats.swordLv}` : '미장착', isLv: false },
-    { name: '끝까지 간다!', val: userStats.h2Lv, isLv: true },
-    { name: '남들과는 다르게', val: userStats.h5Lv, isLv: true },
-    { name: '값어치 증명', val: userStats.h6Lv, isLv: true },
-    { name: '검증된 방식', val: userStats.h12Lv, isLv: true },
-    { name: '피 냄새가 나', val: userStats.h13Lv, isLv: true },
-    { name: '상태 좋네!', val: userStats.h14Lv, isLv: true },
-    { name: '넌 이제 내 거야!', val: userStats.h15Lv, isLv: true },
-  ];
+  }, [userStats, weakenBonus, haggleRate, toolImprints]);
 
   return (
-    <div className="w-full animate-fade-in space-y-6 md:space-y-8 transition-colors duration-300">
+    <div className="flex flex-col gap-6 md:gap-8 w-full relative transition-colors duration-300 animate-fade-in-up">
       
-      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-6 shadow-md dark:shadow-2xl transition-colors">
-        <div className="flex items-center gap-2 mb-4 md:mb-5 px-1">
-          <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tight transition-colors">적용 중인 내 사냥 스펙</h3>
-        </div>
-        <div className="flex flex-wrap gap-2 md:gap-3">
-          {activeSpecs.map((spec, idx) => (
-            <div key={idx} className="flex items-center gap-2 bg-gray-100 dark:bg-[#111113] border border-gray-300 dark:border-transparent rounded-xl px-3 py-2 shadow-sm transition-colors">
-              <span className="text-[10px] md:text-xs text-gray-600 dark:text-gray-400 font-bold whitespace-nowrap">{spec.name}</span>
-              <span className={`text-xs md:text-sm font-black ${spec.val === '미장착' || spec.val === 0 ? 'text-gray-400 dark:text-gray-600' : 'text-rose-600 dark:text-rose-400'} whitespace-nowrap transition-colors`}>
-                {spec.isLv && spec.val !== 0 ? 'Lv.' : ''}{spec.val}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-8 shadow-md dark:shadow-2xl transition-colors">
         <div className="flex items-center gap-2 mb-6 px-1">
-          <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tight transition-colors">수익 계산기 환경 변수</h3>
+          <h3 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tight transition-colors">수익 계산기 환경 변수</h3>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 px-1">
@@ -139,6 +164,7 @@ export default function HuntRevenueTab({ userStats }: HuntRevenueTabProps) {
                 ))}
               </select>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 dark:text-gray-400 transition-colors">
+                ▼
               </div>
             </div>
             <p className="text-[11px] text-gray-500 dark:text-gray-400 break-keep font-bold leading-relaxed transition-colors">
@@ -148,78 +174,269 @@ export default function HuntRevenueTab({ userStats }: HuntRevenueTabProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-        {[
-          { label: '초식동물 총 처치 수', val: results.totalKills, unit: '마리 (스태미나 10 기준)', img: '사슴의 뿔', sub: null, color: 'text-gray-900 dark:text-white' },
-          { label: '획득 예상 전리품', val: results.expectedTrophies, unit: `개 (배율 ${(results.totalTrophyMultiplier * 100).toFixed(0)}%)`, img: '사슴의 뿔', sub: null, color: 'text-rose-600 dark:text-rose-400' },
-          { label: '수상한 각인석 조각', val: results.expectedStonePieces, unit: '개', img: '수상한 각인석 조각', sub: null, color: 'text-purple-600 dark:text-purple-400' },
-          { label: '육식동물 조우 기댓값', val: results.carnivoreEncounters.toFixed(1), unit: `마리 (포획률 ${(results.finalCatchRate * 100).toFixed(0)}%)`, img: '육식 동물 덫', sub: null, color: 'text-amber-600 dark:text-amber-400' }
-        ].map((stat, i) => (
-          <div key={i} className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent p-5 md:p-6 rounded-[1.5rem] flex flex-col items-center text-center shadow-sm hover:shadow-md dark:shadow-2xl transition-all duration-300 group">
-            <span className="text-[11px] text-gray-500 dark:text-gray-400 font-bold mb-4 tracking-tight transition-colors">{stat.label}</span>
-            <div className="w-12 h-12 bg-gray-50 dark:bg-[#111113] rounded-2xl border border-gray-200 dark:border-transparent flex items-center justify-center p-2.5 mb-3 group-hover:scale-110 transition-transform shadow-inner">
-              <img src={getImagePath(stat.img) || ''} alt={stat.img} className="w-full h-full object-contain drop-shadow-sm" style={{imageRendering: 'pixelated'}} />
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] shadow-md dark:shadow-2xl relative overflow-hidden flex flex-col lg:flex-row transition-colors items-stretch">
+        <div className="w-full lg:w-1/3 bg-gray-50 dark:bg-[#111113] p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/5 flex flex-col transition-colors rounded-t-[2rem] lg:rounded-tr-none lg:rounded-l-[2rem]">
+          <div className="mb-6 pb-5 border-b border-gray-200 dark:border-white/5 flex justify-between items-start transition-colors">
+            <div>
+              <h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-1.5 tracking-tight transition-colors">적용된 내 능력치</h3>
+              <p className="text-[10px] md:text-[11px] font-bold text-gray-500 leading-relaxed">개인설정 보드에서 저장된 데이터가<br/>시뮬레이션에 자동 반영됩니다.</p>
             </div>
-            <span className={`text-2xl font-black ${stat.color} tracking-tight transition-colors`}>{typeof stat.val === 'number' ? stat.val.toLocaleString() : stat.val}</span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold mt-1.5 transition-colors">{stat.unit}</span>
+            <Link href="/settings" className="bg-white dark:bg-black hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 text-[10px] md:text-xs font-bold px-3 py-2 rounded-xl border border-gray-300 dark:border-transparent shadow-sm transition-colors whitespace-nowrap">설정 변경</Link>
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-        {[
-          { label: '수상한 각인석', val: results.expectedStones, unit: '개', img: '수상한 각인석', bg: 'bg-purple-50 dark:bg-purple-900/10', border: 'border-purple-200 dark:border-purple-500/20', text: 'text-purple-900 dark:text-white', subText: 'text-purple-700 dark:text-purple-400' },
-          { label: '영혼의 계약서', val: results.expectedContracts, unit: '장', img: '번영의 영혼 계약서', bg: 'bg-emerald-50 dark:bg-emerald-900/10', border: 'border-emerald-200 dark:border-emerald-500/20', text: 'text-emerald-900 dark:text-white', subText: 'text-emerald-700 dark:text-emerald-400' },
-          { label: '소모 몬스터 심장', val: results.requiredMonsterHearts, unit: '개', img: '좀비의 심장', bg: 'bg-rose-50 dark:bg-rose-900/10', border: 'border-rose-200 dark:border-rose-500/20', text: 'text-rose-900 dark:text-white', subText: 'text-rose-700 dark:text-rose-400' }
-        ].map((item, i) => (
-          <div key={i} className={`${item.bg} border ${item.border} p-5 md:p-6 rounded-[1.5rem] flex items-center justify-between shadow-sm hover:shadow-md transition-all duration-300`}>
-            <div className="flex flex-col">
-              <span className={`text-[11px] md:text-xs ${item.subText} font-black mb-1.5 tracking-tight transition-colors`}>{item.label}</span>
-              <span className={`text-2xl md:text-3xl font-black ${item.text} tracking-tight transition-colors`}>
-                {item.val.toLocaleString()} <span className={`text-sm font-black ${item.subText} ml-0.5`}>{item.unit}</span>
-              </span>
+          
+          <div className="space-y-5 flex-1 w-full">
+            <div>
+              <h4 className="text-[10px] font-black text-gray-400 mb-2 px-1 tracking-widest uppercase">기본 능력치</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
+                  <span className="text-[10px] md:text-[11px] font-bold text-gray-600 dark:text-gray-400 tracking-tight">가용 스태미나</span>
+                  <span className="text-[11px] md:text-xs font-black text-indigo-600 dark:text-indigo-400 whitespace-nowrap">{userStats.stamina.toLocaleString()}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
+                  <span className="text-[10px] md:text-[11px] font-bold text-gray-600 dark:text-gray-400 tracking-tight">세이지 대검</span>
+                  <span className="text-[11px] md:text-xs font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">{userStats.swordLv > 0 ? `+${userStats.swordLv}` : '미장착'}</span>
+                </div>
+              </div>
             </div>
-            <div className="w-14 h-14 bg-white/50 dark:bg-black/20 rounded-2xl p-2.5 flex items-center justify-center border border-white/50 dark:border-white/5 shadow-inner">
-              <img src={getImagePath(item.img) || ''} alt={item.label} className="w-full h-full object-contain drop-shadow-md" style={{imageRendering: 'pixelated'}} />
+
+            <div>
+              <h4 className="text-[10px] font-black text-gray-400 mb-2 px-1 tracking-widest uppercase">전문가 스킬</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
+                  <span className="text-[10px] md:text-[11px] font-bold text-gray-600 dark:text-gray-400 tracking-tight">[끝까지 간다!]</span>
+                  <span className="text-[11px] md:text-xs font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">Lv.{userStats.h2Lv}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
+                  <span className="text-[10px] md:text-[11px] font-bold text-gray-600 dark:text-gray-400 tracking-tight">[남들과는 다르게]</span>
+                  <span className="text-[11px] md:text-xs font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">Lv.{userStats.h5Lv}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
+                  <span className="text-[10px] md:text-[11px] font-bold text-gray-600 dark:text-gray-400 tracking-tight">[값어치 증명]</span>
+                  <span className="text-[11px] md:text-xs font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">Lv.{userStats.h6Lv}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
+                  <span className="text-[10px] md:text-[11px] font-bold text-purple-600 dark:text-purple-400 tracking-tight">[검증된 방식]</span>
+                  <span className="text-[11px] md:text-xs font-black text-purple-600 dark:text-purple-400 whitespace-nowrap">Lv.{userStats.h12Lv}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
+                  <span className="text-[10px] md:text-[11px] font-bold text-amber-600 dark:text-amber-400 tracking-tight">[피 냄새가 나]</span>
+                  <span className="text-[11px] md:text-xs font-black text-amber-600 dark:text-amber-400 whitespace-nowrap">Lv.{userStats.h13Lv}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
+                  <span className="text-[10px] md:text-[11px] font-bold text-amber-600 dark:text-amber-400 tracking-tight">[상태 좋네!]</span>
+                  <span className="text-[11px] md:text-xs font-black text-amber-600 dark:text-amber-400 whitespace-nowrap">Lv.{userStats.h14Lv}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0 col-span-1 sm:col-span-2 lg:col-span-1 xl:col-span-2">
+                  <span className="text-[10px] md:text-[11px] font-bold text-amber-600 dark:text-amber-400 tracking-tight">[넌 이제 내 거야!]</span>
+                  <span className="text-[11px] md:text-xs font-black text-amber-600 dark:text-amber-400 whitespace-nowrap">Lv.{userStats.h15Lv}</span>
+                </div>
+              </div>
+            </div>
+
+            {toolImprints?.['sword'] && Object.values(toolImprints['sword']).some(lv => lv > 0) && (
+              <div>
+                <h4 className="text-[10px] font-black text-gray-400 mb-2 px-1 tracking-widest uppercase">부여된 각인석</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(toolImprints['sword']).map(([key, lv]) => {
+                    if (lv === 0) return null;
+                    const name = SWORD_IMPRINTS_MAP[key];
+                    if (!name) return null;
+                    return (
+                      <div key={key} className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
+                        <span className="text-[10px] md:text-[11px] font-bold text-gray-600 dark:text-gray-400 tracking-tight truncate">[{name}]</span>
+                        <span className="text-[11px] md:text-xs font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Lv.{lv}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
+            {userStats.stamina === 3000 && userStats.swordLv === 0 && (
+              <p className="text-[10px] text-rose-600 dark:text-rose-400/80 font-bold mt-4 text-center bg-rose-50 dark:bg-rose-500/10 py-2.5 rounded-xl border border-rose-200 dark:border-transparent transition-colors">능력치가 기본값입니다. 정확한 계산을 위해 개인설정에서 데이터를 최신화해주세요.</p>
+            )}
+          </div>
+        </div>
+        
+        <div className="w-full lg:w-2/3 p-6 md:p-8 flex flex-col justify-between bg-white dark:bg-gradient-to-br dark:from-[#0a0a0a] dark:to-[#0f0f13] transition-colors rounded-b-[2rem] lg:rounded-bl-none lg:rounded-r-[2rem]">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+              <h3 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white mb-1.5 tracking-tight transition-colors">일일 사냥 획득 및 수익 분석</h3>
+              <p className="text-xs md:text-sm font-bold text-gray-500 dark:text-gray-400 transition-colors">스태미나 효율 및 입력된 환경 변수를 바탕으로 기댓값을 계산합니다.</p>
             </div>
           </div>
-        ))}
-      </div>
-
-      <div className="bg-gradient-to-br from-rose-50 to-orange-50 dark:from-[#1a0f12] dark:to-[#170e0a] p-8 md:p-10 rounded-[2rem] border border-rose-200 dark:border-rose-500/20 shadow-md dark:shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 transition-colors">
-        <div className="flex flex-col items-center md:items-start text-center md:text-left">
-          <h3 className="text-xl md:text-2xl font-black mb-2 md:mb-3 tracking-tight text-gray-900 dark:text-white transition-colors">육식동물 판매 최종 수익</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-[11px] md:text-xs font-bold leading-relaxed break-keep max-w-sm transition-colors">
-            스폰 기댓값, 흥정 확률, 포획물 상태(쇠약/평범/건강 비율) 기댓값을 모두 연산한 순수 골드 수익입니다.
-          </p>
-        </div>
-        <div className="bg-white dark:bg-[#050505] border border-rose-100 dark:border-rose-500/30 px-8 py-5 rounded-[1.5rem] shadow-sm dark:shadow-inner flex items-baseline gap-2 transition-colors">
-          <span className="text-4xl md:text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-500 drop-shadow-sm">
-            {results.totalGold.toLocaleString()}
-          </span>
-          <span className="text-2xl md:text-3xl font-black text-rose-500 dark:text-rose-400 transition-colors">G</span>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-8 shadow-sm dark:shadow-2xl transition-colors">
-        <div className="flex items-center gap-2 mb-4 px-1">
-          <p className="font-black text-gray-900 dark:text-white transition-colors">연산 로직 안내</p>
-        </div>
-        <ul className="space-y-3 pl-2">
-          {[
-            { t: '초식동물', d: '총 스태미나를 10 단위로 나눈 값을 기준으로 기본 처치 수를 산출합니다. (스태미나 20 소모 개체는 2마리 분량으로 취급)' },
-            { t: '전리품 및 계약서', d: '대검 고유 드랍 수 × (1 + [끝까지 간다!] 보너스 + [남들과는 다르게] 보너스) 배율을 적용합니다. 전리품 15개당 1개의 영혼, 영혼 2개당 1장의 계약서를 산출합니다. 계약서 1장(영혼 2개)당 총 16개의 몬스터 심장이 요구됩니다.' },
-            { t: '각인석', d: '대검 고유 확률에 [검증된 방식] 스킬 배율을 적용하여 획득한 각인석 조각 5개를 완제품 1개로 환산합니다.' },
-            { t: '육식동물 판매', d: '초식동물 처치 수 × [피 냄새가 나] 스킬 확률로 조우 기댓값을 산출합니다. 상태 비율 평균 가치(43,605G)에 [상태 좋네!] 버프 및 흥정 기댓값을 곱하여 산출합니다.' }
-          ].map((item, i) => (
-            <li key={i} className="flex gap-3 items-start text-xs sm:text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 mt-1.5 flex-shrink-0 transition-colors"></span>
-              <p className="text-gray-600 dark:text-gray-400 font-medium leading-relaxed transition-colors break-keep">
-                <strong className="text-gray-800 dark:text-gray-200 font-bold transition-colors">{item.t}:</strong> {item.d}
+          
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <div className="relative p-4 rounded-2xl border border-blue-400 shadow-md bg-blue-50 dark:bg-blue-950/20 transition-all">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg text-[9px] font-black tracking-widest text-white shadow-sm bg-blue-500">
+                처치
+              </div>
+              <p className="text-[10px] font-black text-gray-500 mt-1 mb-2 text-center tracking-tight truncate px-1">초식동물 총 처치 수</p>
+              <p className="text-lg md:text-xl font-black text-center tracking-tighter text-blue-600 dark:text-blue-400">
+                {results.totalKills.toLocaleString()} <span className="text-xs font-bold">마리</span>
               </p>
-            </li>
-          ))}
-        </ul>
+            </div>
+            
+            <div className="relative p-4 rounded-2xl border border-cyan-400 shadow-md bg-cyan-50 dark:bg-cyan-950/20 transition-all">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg text-[9px] font-black tracking-widest text-white shadow-sm bg-cyan-500">
+                획득
+              </div>
+              <p className="text-[10px] font-black text-gray-500 mt-1 mb-2 text-center tracking-tight truncate px-1">획득 예상 전리품</p>
+              <div className="flex flex-col items-center">
+                <p className="text-lg md:text-xl font-black text-center tracking-tighter text-cyan-600 dark:text-cyan-400">
+                  {results.expectedTrophies.toLocaleString()} <span className="text-xs font-bold">개</span>
+                </p>
+                <p className="text-[9px] text-cyan-500 font-bold mt-0.5">배율 {(results.totalTrophyMultiplier * 100).toFixed(0)}%</p>
+              </div>
+            </div>
+
+            <div className="relative p-4 rounded-2xl border border-indigo-400 shadow-md bg-indigo-50 dark:bg-indigo-950/20 transition-all">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg text-[9px] font-black tracking-widest text-white shadow-sm bg-indigo-500">
+                획득
+              </div>
+              <p className="text-[10px] font-black text-gray-500 mt-1 mb-2 text-center tracking-tight truncate px-1">수상한 각인석 조각</p>
+              <p className="text-lg md:text-xl font-black text-center tracking-tighter text-indigo-600 dark:text-indigo-400">
+                {results.expectedStonePieces.toLocaleString()} <span className="text-xs font-bold">개</span>
+              </p>
+            </div>
+
+            <div className="relative p-4 rounded-2xl border border-emerald-400 shadow-md bg-emerald-50 dark:bg-emerald-950/20 transition-all">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg text-[9px] font-black tracking-widest text-white shadow-sm bg-emerald-500 whitespace-nowrap">
+                포획 기댓값
+              </div>
+              <p className="text-[10px] font-black text-gray-500 mt-1 mb-2 text-center tracking-tight truncate px-1">육식동물 조우</p>
+              <div className="flex flex-col items-center">
+                <p className="text-lg md:text-xl font-black text-center tracking-tighter text-emerald-600 dark:text-emerald-400">
+                  {results.carnivoreEncounters.toFixed(1)} <span className="text-xs font-bold">마리</span>
+                </p>
+                <p className="text-[9px] text-emerald-500 font-bold mt-0.5">포획률 {(results.finalCatchRate * 100).toFixed(0)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-transparent rounded-3xl p-6 md:p-8 flex flex-col xl:flex-row items-stretch gap-8 shadow-inner transition-colors mb-6">
+            <div className="flex-1 flex flex-col">
+              <h4 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter transition-colors">획득 및 소모 연산결과</h4>
+              <p className="text-[10px] md:text-[11px] font-bold text-indigo-700/70 dark:text-indigo-400 mb-6 transition-colors break-keep">전리품과 각인석 조각을 영혼과 완제품으로 변환한 최종 수량입니다.</p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+                <div className="bg-white dark:bg-black/40 p-4 rounded-2xl border border-purple-200 dark:border-purple-500/20 shadow-sm transition-colors flex flex-col justify-between">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 flex items-center justify-center border border-gray-200 dark:border-white/10 shrink-0">
+                        <img src={getImagePath('수상한 각인석') || ''} alt="수상한 각인석" className="w-5 h-5 object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <p className="text-[9px] font-black mb-0.5 tracking-widest uppercase text-purple-600 dark:text-purple-400">완제품 획득</p>
+                        <p className="text-sm font-black text-gray-900 dark:text-white transition-colors tracking-tight leading-tight truncate">수상한 각인석</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-purple-50 dark:border-white/5">
+                    <div className="flex justify-between items-center text-[10px] md:text-[11px] font-bold text-gray-500 transition-colors">
+                      <span>최종 수량</span>
+                      <span className="text-xs md:text-sm font-black text-purple-700 dark:text-purple-400">{results.expectedStones.toLocaleString()}개</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-black/40 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-sm transition-colors flex flex-col justify-between">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 flex items-center justify-center border border-gray-200 dark:border-white/10 shrink-0">
+                        <img src={getImagePath('정복의 영혼 계약서') || ''} alt="영혼의 계약서" className="w-5 h-5 object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <p className="text-[9px] font-black mb-0.5 tracking-widest uppercase text-emerald-600 dark:text-emerald-400">완제품 획득</p>
+                        <p className="text-sm font-black text-gray-900 dark:text-white transition-colors tracking-tight leading-tight truncate">영혼의 계약서</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-emerald-50 dark:border-white/5">
+                    <div className="flex justify-between items-center text-[10px] md:text-[11px] font-bold text-gray-500 transition-colors">
+                      <span>최종 수량</span>
+                      <span className="text-xs md:text-sm font-black text-emerald-700 dark:text-emerald-400">{results.expectedContracts.toLocaleString()}장</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-black/40 p-4 rounded-2xl border border-rose-200 dark:border-rose-500/20 shadow-sm transition-colors flex flex-col justify-between">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 flex items-center justify-center border border-gray-200 dark:border-white/10 shrink-0">
+                        <img src={getImagePath('좀비의 심장') || ''} alt="몬스터 심장" className="w-5 h-5 object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <p className="text-[9px] font-black mb-0.5 tracking-widest uppercase text-rose-600 dark:text-rose-400">필요 재료</p>
+                        <p className="text-sm font-black text-gray-900 dark:text-white transition-colors tracking-tight leading-tight truncate max-w-[100px] sm:max-w-[130px]">소모 몬스터 심장</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-rose-50 dark:border-white/5">
+                    <div className="flex justify-between items-center text-[10px] md:text-[11px] font-bold text-gray-500 transition-colors">
+                      <span>필요 수량</span>
+                      <span className="text-xs md:text-sm font-black text-rose-700 dark:text-rose-400">{results.requiredMonsterHearts.toLocaleString()}개</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white dark:bg-black border border-indigo-200 dark:border-transparent p-6 rounded-3xl shadow-xl flex flex-col items-center justify-center min-w-[220px]">
+              <p className="text-[11px] font-black text-gray-500 mb-1.5">제작 영혼의 기운</p>
+              <p className="text-2xl lg:text-3xl font-black text-indigo-600 tracking-tighter">{results.craftableSouls.toLocaleString()} 개</p>
+            </div>
+          </div>
+
+          <div className="bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-transparent rounded-[1.5rem] p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors shadow-inner dark:shadow-none mb-6">
+            <div>
+              <p className="text-sm md:text-base font-black text-gray-900 dark:text-white mb-1 tracking-tight transition-colors">육식동물 판매 최종 수익</p>
+              <p className="text-[10px] md:text-[11px] font-bold text-gray-500 break-keep">
+                ※ 스폰 기댓값, 흥정 확률, 포획물 상태(쇠약/평범/건강 비율) 기댓값을 모두 연산한 순수 골드 수익입니다.<br/>
+              </p>
+            </div>
+            <span className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-500 dark:from-rose-400 dark:to-orange-400 drop-shadow-sm tracking-tighter whitespace-nowrap">
+              {results.totalGold.toLocaleString()} <span className="text-2xl text-orange-500 font-black">G</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-8 shadow-md dark:shadow-2xl transition-colors mt-4">
+        <div className="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-white/5 pb-4 transition-colors">
+          <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight transition-colors">일일 수익 연산 로직 안내</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div> 1단계: 초식동물 처치 및 전리품 획득</h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed break-keep">
+                총 스태미나를 10 단위로 나눈 값을 기준으로 기본 처치 수를 산출합니다. 대검 고유 드랍 수 × (1 + [끝까지 간다!] + [남들과는 다르게]) 배율을 적용합니다.<br/>
+                <strong className="text-rose-500 dark:text-rose-400 mt-1 block">각인석 보너스: 전리품 행운, 사냥꾼 룰렛 효과가 기댓값에 추가 합산되어 최종 전리품을 증가시킵니다.</strong>
+              </p>
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div> 2단계: 영혼석 및 계약서 가공</h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed break-keep">
+                전리품 15개당 1개의 영혼, 영혼 2개당 1장의 계약서를 산출합니다. 계약서 1장당 16개의 몬스터 심장이 요구되며 필요 심장 수를 안내합니다.
+              </p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div> 각인석 조각 계산</h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed break-keep">
+                대검 고유 확률에 [검증된 방식] 스킬 배율을 적용하고, 추가로 각인석(조각 탐색, 조각 공명) 효과를 합산하여 획득한 조각 5개를 완제품 1개로 환산합니다.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div> 육식동물 판매 수익</h4>
+              <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed break-keep">
+                처치 수 × [피 냄새가 나] 스킬 확률로 조우 기댓값을 산출합니다. 육식동물 상태 평균 가치에 [상태 좋네!] 버프 및 흥정 기댓값을 곱하여 산출합니다.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>

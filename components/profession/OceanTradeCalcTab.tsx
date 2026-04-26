@@ -155,9 +155,18 @@ ALL_ITEMS.forEach(name => {
   ITEM_BASE_REQS[name] = simulateCraftPure({ [name]: 1 }, {}).missing;
 });
 
-type StaminaScenario = 
-  | { type: 'single'; target: string; profit: number; stockConsumed: number; crafted: Record<string, number>; finalStock: Record<string, number>; totalStamina: number }
-  | { type: 'split'; target1: string; stamina1: number; target2: string; stamina2: number; profit: number; stockConsumed: number; crafted: Record<string, number>; finalStock: Record<string, number> };
+// 조합을 구하는 헬퍼 함수 (다중 분할 스태미나용)
+const getCombinations = (bins: number, items: number): number[][] => {
+  if (bins === 1) return [[items]];
+  const combos: number[][] = [];
+  for (let i = 0; i <= items; i++) {
+    const subCombos = getCombinations(bins - 1, items - i);
+    for (let j = 0; j < subCombos.length; j++) {
+      combos.push([i, ...subCombos[j]]);
+    }
+  }
+  return combos;
+};
 
 export default function OceanTradeCalcTab({ userStats }: Props) {
   const [activeSubTab, setActiveSubTab] = useState<'alchemy_optimal' | 'stamina_recommend' | 'trade' | 'settings'>('alchemy_optimal');
@@ -270,9 +279,145 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     return eq;
   };
 
+  // 평가 엔진 (스태미나 시나리오 분석에 쓰임)
+  const evalStockFast = (addedStock: Record<string, number>, sortedItems: any[]) => {
+    let tempStock = { ...stock };
+    for(const k in addedStock) tempStock[k] = (tempStock[k] || 0) + addedStock[k];
+    
+    const initialEqSum = Object.values(getBaseEquivalents(tempStock)).reduce((a, b) => a + b, 0);
+    const crafted: Record<string, number> = {};
+    const baseInvSnapshot = { ...tempStock };
+    
+    let keepGoing = true;
+    let loopSafety = 0;
+    
+    while(keepGoing && loopSafety < 1000) {
+      keepGoing = false;
+      loopSafety++;
+      let bestItem = null;
+      let bestScore = -Infinity;
+      let bestSim = null;
+      let bestBatchSize = 1;
+
+      const eqStock = getBaseEquivalents(tempStock);
+
+      for (const item of sortedItems) {
+        let maxPossible = Infinity;
+        let possible = true;
+        for (const [mat, count] of Object.entries(ITEM_BASE_REQS[item.name] || {})) {
+            const countNum = count as number; // 타입 에러 해결 (2번)
+            if (CORE_ITEMS.includes(mat)) {
+                const avail = eqStock[mat] || 0;
+                if (avail < countNum) { possible = false; break; }
+                maxPossible = Math.min(maxPossible, Math.floor(avail / countNum));
+            }
+        }
+        if (!possible) continue;
+
+        const batchSize = Math.max(1, Math.floor(maxPossible / 5));
+
+        const sim = simulateCraftPure({ [item.name]: batchSize }, tempStock, allowTierUpgrade);
+        const missingKeys = Object.keys(sim.missing);
+        const canCraft = missingKeys.every(k => VANILLA.includes(k) && !blacklist.includes(k));
+
+        if (canCraft) {
+            let penaltyCost = 0;
+            for (const mat of CORE_BASE_SHELLS) {
+                const before = tempStock[mat] || 0;
+                const after = sim.stock[mat] || 0;
+                const consumed = before - after;
+                if (consumed > 0) {
+                    const initial = Math.max(1, baseInvSnapshot[mat] || 1);
+                    const ratio = initial / (after + 1); 
+                    
+                    if (recommendMode === 'balance') {
+                        penaltyCost += consumed * Math.pow(ratio, 10);
+                    } else {
+                        penaltyCost += consumed * Math.pow(ratio, 3);
+                    }
+                }
+            }
+
+            if (penaltyCost === 0) penaltyCost = 0.001; 
+            const score = (item.profit * batchSize) / penaltyCost;
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestItem = item;
+                bestSim = sim;
+                bestBatchSize = batchSize;
+            }
+        }
+      }
+
+      if (bestItem && bestSim) {
+          tempStock = bestSim.stock;
+          crafted[bestItem.name] = (crafted[bestItem.name] || 0) + bestBatchSize;
+          keepGoing = true;
+      }
+    }
+
+    let trimmed = true;
+    let loopSafetyTrim = 0;
+    while (trimmed && loopSafetyTrim < 1000) {
+      trimmed = false;
+      loopSafetyTrim++;
+
+      const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
+      const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0)));
+
+      if (badMats.length > 0) {
+        const candidates = Object.keys(crafted).filter(k => crafted[k] > 0).sort((a, b) => {
+          const pA = sortedItems.find(i=>i.name===a)?.sellPrice || 0;
+          const pB = sortedItems.find(i=>i.name===b)?.sellPrice || 0;
+          return pA - pB; 
+        });
+
+        for (const itemName of candidates) {
+          const testCounts = { ...crafted };
+          testCounts[itemName]--;
+          if (testCounts[itemName] === 0) delete testCounts[itemName];
+
+          const testSim = simulateCraftPure(testCounts, { ...stock, ...addedStock }, allowTierUpgrade);
+          let oldLeftover = 0;
+          let newLeftover = 0;
+          badMats.forEach(mat => {
+            oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
+            newLeftover += Math.max(0, (testSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
+          });
+
+          if (newLeftover < oldLeftover) {
+            crafted[itemName]--;
+            if (crafted[itemName] === 0) delete crafted[itemName];
+            trimmed = true;
+            break; 
+          }
+        }
+        if (!trimmed) break;
+      }
+    }
+    
+    let totalP = 0;
+    const finalSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
+    let totalVanillaCost = 0;
+    Object.entries(finalSim.missing).forEach(([m, q]) => totalVanillaCost += (q as number) * (cost[m] || 0));
+
+    Object.entries(crafted).forEach(([m, q]) => {
+        const itemDef = sortedItems.find(i => i.name === m);
+        if (itemDef) totalP += itemDef.sellPrice * (q as number);
+    });
+    totalP -= totalVanillaCost;
+
+    const finalEqSum = Object.values(getBaseEquivalents(tempStock)).reduce((a, b) => a + b, 0);
+    const stockConsumed = initialEqSum - finalEqSum;
+
+    return { profit: totalP, stockConsumed, crafted, resultingStock: tempStock };
+  };
+
   const optimalCalculations = useMemo(() => {
     if (!isLoaded || activeSubTab === 'trade' || activeSubTab === 'settings') return { recommendations: [], totalExpectedProfit: 0, overallMissingVanilla: {} };
     
+    // (해결포인트 3) 1320줄 뼈대 복원 (10종류 모두 출력)
     const itemsWithProfit = OCEAN_FIXED_PRICES.map(item => {
       const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
       const baseMats = ITEM_BASE_REQS[item.name] || {};
@@ -307,11 +452,12 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
       for (const item of itemsWithProfit) {
         let maxPossible = Infinity;
         let possible = true;
-        for (const [mat, qty] of Object.entries(item.baseMats)) {
+        for (const [mat, count] of Object.entries(item.baseMats)) {
+            const countNum = count as number;
             if (CORE_ITEMS.includes(mat)) {
                 const avail = eqStock[mat] || 0;
-                if (avail < qty) { possible = false; break; }
-                maxPossible = Math.min(maxPossible, Math.floor(avail / qty));
+                if (avail < countNum) { possible = false; break; }
+                maxPossible = Math.min(maxPossible, Math.floor(avail / countNum));
             }
         }
         if (!possible) continue;
@@ -494,138 +640,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
       }));
   };
 
-  const evalStockFast = (addedStock: Record<string, number>, sortedItems: any[]) => {
-    let tempStock = { ...stock };
-    for(const k in addedStock) tempStock[k] = (tempStock[k] || 0) + addedStock[k];
-    
-    const initialEqSum = Object.values(getBaseEquivalents(tempStock)).reduce((a, b) => a + b, 0);
-    const crafted: Record<string, number> = {};
-    const baseInvSnapshot = { ...tempStock };
-    
-    let keepGoing = true;
-    let loopSafety = 0;
-    
-    while(keepGoing && loopSafety < 1000) {
-      keepGoing = false;
-      loopSafety++;
-      let bestItem = null;
-      let bestScore = -Infinity;
-      let bestSim = null;
-      let bestBatchSize = 1;
-
-      const eqStock = getBaseEquivalents(tempStock);
-
-      for (const item of sortedItems) {
-        let maxPossible = Infinity;
-        let possible = true;
-        for (const [mat, count] of Object.entries(ITEM_BASE_REQS[item.name] || {})) {
-            if (CORE_ITEMS.includes(mat)) {
-                const avail = eqStock[mat] || 0;
-                if (avail < count) { possible = false; break; }
-                maxPossible = Math.min(maxPossible, Math.floor(avail / count));
-            }
-        }
-        if (!possible) continue;
-
-        const batchSize = Math.max(1, Math.floor(maxPossible / 5));
-
-        const sim = simulateCraftPure({ [item.name]: batchSize }, tempStock, allowTierUpgrade);
-        const missingKeys = Object.keys(sim.missing);
-        const canCraft = missingKeys.every(k => VANILLA.includes(k) && !blacklist.includes(k));
-
-        if (canCraft) {
-            let penaltyCost = 0;
-            for (const mat of CORE_BASE_SHELLS) {
-                const before = tempStock[mat] || 0;
-                const after = sim.stock[mat] || 0;
-                const consumed = before - after;
-                if (consumed > 0) {
-                    const initial = Math.max(1, baseInvSnapshot[mat] || 1);
-                    const ratio = initial / (after + 1);
-                    
-                    if (recommendMode === 'balance') {
-                        penaltyCost += consumed * Math.pow(ratio, 10);
-                    } else {
-                        penaltyCost += consumed * Math.pow(ratio, 3);
-                    }
-                }
-            }
-            if (penaltyCost === 0) penaltyCost = 0.001;
-            const score = (item.profit * batchSize) / penaltyCost;
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestItem = item;
-                bestSim = sim;
-                bestBatchSize = batchSize;
-            }
-        }
-      }
-
-      if (bestItem && bestSim) {
-          tempStock = bestSim.stock;
-          crafted[bestItem.name] = (crafted[bestItem.name] || 0) + bestBatchSize;
-          keepGoing = true;
-      }
-    }
-
-    let trimmed = true;
-    let loopSafetyTrim = 0;
-    while (trimmed && loopSafetyTrim < 1000) {
-      trimmed = false;
-      loopSafetyTrim++;
-
-      const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
-      const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0)));
-
-      if (badMats.length > 0) {
-        const candidates = Object.keys(crafted).filter(k => crafted[k] > 0).sort((a, b) => {
-          const pA = sortedItems.find(i=>i.name===a)?.sellPrice || 0;
-          const pB = sortedItems.find(i=>i.name===b)?.sellPrice || 0;
-          return pA - pB;
-        });
-
-        for (const itemName of candidates) {
-          const testCounts = { ...crafted };
-          testCounts[itemName]--;
-          if (testCounts[itemName] === 0) delete testCounts[itemName];
-
-          const testSim = simulateCraftPure(testCounts, { ...stock, ...addedStock }, allowTierUpgrade);
-          let oldLeftover = 0;
-          let newLeftover = 0;
-          badMats.forEach(mat => {
-            oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
-            newLeftover += Math.max(0, (testSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
-          });
-
-          if (newLeftover < oldLeftover) {
-            crafted[itemName]--;
-            if (crafted[itemName] === 0) delete crafted[itemName];
-            trimmed = true;
-            break; 
-          }
-        }
-        if (!trimmed) break;
-      }
-    }
-    
-    let totalP = 0;
-    const finalSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
-    let totalVanillaCost = 0;
-    Object.entries(finalSim.missing).forEach(([m, q]) => totalVanillaCost += q * (cost[m] || 0));
-
-    Object.entries(crafted).forEach(([m, q]) => {
-        const itemDef = sortedItems.find(i => i.name === m);
-        if (itemDef) totalP += itemDef.sellPrice * q;
-    });
-    totalP -= totalVanillaCost;
-
-    const finalEqSum = Object.values(getBaseEquivalents(tempStock)).reduce((a, b) => a + b, 0);
-    const stockConsumed = initialEqSum - finalEqSum;
-
-    return { profit: totalP, stockConsumed, crafted, resultingStock: tempStock };
-  };
-
   const staminaRecommendation = useMemo(() => {
     if (!isLoaded || activeSubTab !== 'stamina_recommend') return null;
     const sortedItems = OCEAN_FIXED_PRICES.map(item => {
@@ -636,7 +650,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         return { name: item.name, sellPrice, profit: sellPrice - totalCost };
     }).filter(i => i.profit > 0);
 
-    if (userStats.stamina < 15) return null;
+    if (!userStats.stamina || userStats.stamina < 15) return null;
 
     const o11Mult = 1 + (O11_BONUS[userStats.o11Lv] || 0);
     const rodLevel = Math.min(15, Math.max(0, userStats.rodLv));
@@ -661,59 +675,60 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     };
 
     const TARGET_CATEGORIES = ['굴', '소라', '문어', '미역', '성게'];
-
-    let bestScenario: StaminaScenario | null = null;
-    let maxFoundConsumed = -1;
-    let maxFoundProfitForConsumed = -1;
-    
     const totalStamina = userStats.stamina;
     const maxActions = Math.floor(totalStamina / 15);
-    
-    const singleResults = [];
-    for(const cat of TARGET_CATEGORIES) {
-        const yieldA = getYield(totalStamina, cat);
-        const res = evalStockFast(yieldA, sortedItems);
-        singleResults.push({ cat, profit: res.profit, stockConsumed: res.stockConsumed, crafted: res.crafted, finalStock: res.resultingStock });
-        
-        if (res.stockConsumed > maxFoundConsumed || (res.stockConsumed === maxFoundConsumed && res.profit > maxFoundProfitForConsumed)) {
-            maxFoundConsumed = res.stockConsumed;
-            maxFoundProfitForConsumed = res.profit;
-            bestScenario = { type: 'single', target: cat, profit: res.profit, stockConsumed: res.stockConsumed, crafted: res.crafted, finalStock: res.resultingStock, totalStamina };
-        }
-    }
 
-    singleResults.sort((a, b) => b.stockConsumed !== a.stockConsumed ? b.stockConsumed - a.stockConsumed : b.profit - a.profit);
-    const topCandidates = singleResults.slice(0, 4).map(r => r.cat);
+    let bestScenario: any = null;
+    let maxFoundConsumed = -1;
+    let maxFoundProfitForConsumed = -1;
 
-    const step = Math.max(1, Math.floor(maxActions / 6)); 
-    
-    for(let i=0; i<topCandidates.length; i++) {
-        for(let j=i+1; j<topCandidates.length; j++) {
-            const cat1 = topCandidates[i];
-            const cat2 = topCandidates[j];
-            
-            for(let a1 = step; a1 < maxActions; a1 += step) {
-                const a2 = maxActions - a1;
-                const yield1 = getYield(a1 * 15, cat1);
-                const yield2 = getYield(a2 * 15, cat2);
-                const combined = { ...yield1 };
-                for(const k in yield2) combined[k] = (combined[k]||0) + yield2[k];
+    if (maxActions > 0) {
+        // (해결포인트 1) 1~5종류 분할 탐색 알고리즘 이식
+        const NUM_CHUNKS = Math.min(maxActions, 10);
+        const actionsPerChunk = Math.floor(maxActions / NUM_CHUNKS);
+        const remainderActions = maxActions % NUM_CHUNKS;
 
-                const res = evalStockFast(combined, sortedItems);
-                if (res.stockConsumed > maxFoundConsumed || (res.stockConsumed === maxFoundConsumed && res.profit > maxFoundProfitForConsumed)) {
-                    maxFoundConsumed = res.stockConsumed;
-                    maxFoundProfitForConsumed = res.profit;
-                    bestScenario = { 
-                        type: 'split', 
-                        target1: cat1, stamina1: a1 * 15, 
-                        target2: cat2, stamina2: a2 * 15,
-                        profit: res.profit, stockConsumed: res.stockConsumed, crafted: res.crafted, finalStock: res.resultingStock
-                    };
+        const chunksCombos = getCombinations(5, NUM_CHUNKS);
+
+        for (let c = 0; c < chunksCombos.length; c++) {
+            const combo = chunksCombos[c];
+            let combinedYield: Record<string, number> = {};
+            let distribution: Record<string, number> = {};
+
+            let maxChunkVal = Math.max(...combo);
+            let remainderAdded = false;
+
+            for (let i = 0; i < 5; i++) {
+                let actions = combo[i] * actionsPerChunk;
+                if (!remainderAdded && combo[i] === maxChunkVal) {
+                    actions += remainderActions;
+                    remainderAdded = true;
                 }
+
+                if (actions > 0) {
+                    const cat = TARGET_CATEGORIES[i];
+                    distribution[cat] = actions * 15;
+                    const catYield = getYield(actions * 15, cat);
+                    for (const k in catYield) combinedYield[k] = (combinedYield[k] || 0) + catYield[k];
+                }
+            }
+
+            const res = evalStockFast(combinedYield, sortedItems);
+
+            if (res.stockConsumed > maxFoundConsumed || (res.stockConsumed === maxFoundConsumed && res.profit > maxFoundProfitForConsumed)) {
+                maxFoundConsumed = res.stockConsumed;
+                maxFoundProfitForConsumed = res.profit;
+                bestScenario = {
+                    type: 'multi',
+                    distribution,
+                    profit: res.profit,
+                    stockConsumed: res.stockConsumed,
+                    crafted: res.crafted,
+                    finalStock: res.resultingStock
+                };
             }
         }
     }
-
     return bestScenario;
   }, [stock, cost, blacklist, userStats, isLoaded, activeSubTab, allowTierUpgrade, o16Bonus, recommendMode]);
 
@@ -1124,17 +1139,23 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
             <div className="py-16 text-center bg-gray-50 dark:bg-[#111113] rounded-[1.5rem] border border-gray-200 dark:border-transparent flex flex-col items-center justify-center">
               <p className="text-[11px] font-bold text-gray-500 mb-2">현재 가용 스태미나와 재고로는 어떤 완성품도 제작할 수 없습니다.</p>
               <p className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-transparent">
-                [{staminaRecommendation.type === 'single' ? staminaRecommendation.target : staminaRecommendation.target1}] 채집을 통해 재고를 우선 비축해 보세요.
+                기초 재료를 채집하여 재고를 비축해 보세요.
               </p>
             </div>
           ) : (
             <div className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-xl p-6 md:p-8 shadow-sm transition-colors text-center md:text-left">
               <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-loose break-keep">
                 현재 가용 스태미나 <span className="font-black text-gray-900 dark:text-white">{userStats.stamina.toLocaleString()}</span> 중, 창고의 재고를 분석했을 때 <br className="hidden md:block"/>
-                {staminaRecommendation.type === 'single' ? (
-                  <span>전체 스태미나를 <span className="font-black text-indigo-600 dark:text-indigo-400">[{staminaRecommendation.target}]</span> 채집에 집중하는 것을 추천드립니다.</span>
+                {Object.keys(staminaRecommendation.distribution).length === 1 ? (
+                  <span>전체 스태미나를 <span className="font-black text-indigo-600 dark:text-indigo-400">[{Object.keys(staminaRecommendation.distribution)[0]}]</span> 채집에 집중하는 것을 추천드립니다.</span>
                 ) : (
-                  <span><span className="font-black text-emerald-600 dark:text-emerald-400">{staminaRecommendation.stamina1.toLocaleString()}</span> 스태미나는 <span className="font-black text-emerald-600 dark:text-emerald-400">[{staminaRecommendation.target1}]</span> 채집에 사용하고,<br className="block md:hidden"/> 나머지 <span className="font-black text-indigo-600 dark:text-indigo-400">{staminaRecommendation.stamina2.toLocaleString()}</span> 스태미나는 <span className="font-black text-indigo-600 dark:text-indigo-400">[{staminaRecommendation.target2}]</span> 채집에 사용하는 것을 추천드립니다.</span>
+                  <span>
+                    {Object.entries(staminaRecommendation.distribution).map(([cat, stam], idx, arr) => (
+                        <span key={cat}>
+                            <span className="font-black text-emerald-600 dark:text-emerald-400">{(stam as number).toLocaleString()}</span> 스태미나는 <span className="font-black text-emerald-600 dark:text-emerald-400">[{cat}]</span> 채집에{idx === arr.length - 1 ? ' 사용하는 것을 추천드립니다.' : ', '}
+                        </span>
+                    ))}
+                  </span>
                 )}
               </p>
               <div className="mt-6 pt-5 border-t border-gray-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1174,20 +1195,20 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
               </div>
 
               <div className="bg-gray-50 dark:bg-[#111113] p-4 rounded-xl border border-gray-200 dark:border-transparent shadow-inner">
-                <p className="text-[11px] font-black text-gray-500 mb-2 tracking-widest uppercase">2. 균등 채집 시나리오 도출 배경</p>
-                {staminaRecommendation.type === 'single' ? (
+                <p className="text-[11px] font-black text-gray-500 mb-2 tracking-widest uppercase">2. 채집 시나리오 도출 배경</p>
+                {Object.keys(staminaRecommendation.distribution).length === 1 ? (
                   <p className="text-xs font-bold text-gray-700 dark:text-gray-300 leading-relaxed pl-1">
-                    단일 타겟 <span className="text-indigo-600 dark:text-indigo-400 font-black">[{staminaRecommendation.target}]</span> 채집 시 창고의 기존 재고 소진 밸런스와 순수익 마진율이 모두 최고점에 달하여, 스태미나를 분산시키지 단일 올인하는 것이 가장 유리하다고 판단했습니다.
+                    단일 타겟 <span className="text-indigo-600 dark:text-indigo-400 font-black">[{Object.keys(staminaRecommendation.distribution)[0]}]</span> 채집 시 창고의 기존 재고 소진 밸런스와 순수익 마진율이 모두 최고점에 달하여, 스태미나를 분산시키지 않고 올인하는 것이 가장 유리하다고 판단했습니다.
                   </p>
                 ) : (
                   <ul className="text-xs font-bold text-gray-700 dark:text-gray-300 space-y-2.5 pl-1">
-                    <li>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-black">1순위 타겟 [{staminaRecommendation.target1}]:</span> 스태미나 {staminaRecommendation.stamina1.toLocaleString()} 할당<br/>
-                      <span className="text-[11px] text-gray-500">창고에 보유 중인 고가치 연금품의 부족한 기초 재료를 가장 균형 있게 채워 넣기 위한 스태미나입니다.</span>
-                    </li>
-                    <li>
-                      <span className="text-indigo-600 dark:text-indigo-400 font-black">2순위 타겟 [{staminaRecommendation.target2}]:</span> 스태미나 {staminaRecommendation.stamina2.toLocaleString()} 할당<br/>
-                      <span className="text-[11px] text-gray-500">재고 밸런스 소진 후 남은 스태미나로, 유저가 입력한 시세 기준 마진율이 가장 높은 품목을 집중 채집합니다.</span>
+                    {Object.entries(staminaRecommendation.distribution).map(([cat, stam], idx) => (
+                      <li key={cat}>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-black">{idx + 1}순위 타겟 [{cat}]:</span> 스태미나 {(stam as number).toLocaleString()} 할당
+                      </li>
+                    ))}
+                    <li className="text-[11px] text-gray-500 mt-2">
+                      창고에 보유 중인 고가치 연금품의 부족한 기초 재료를 가장 균형 있게 채워 넣기 위한 다중 분할 스태미나 최적화 결과입니다.
                     </li>
                   </ul>
                 )}
@@ -1286,7 +1307,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         </div>
       )}
 
-      {/* --- 총 제작 현황 바 (고정된 하단 UI) --- */}
       {Object.keys(pendingCrafts).length > 0 && activeSubTab === 'alchemy_optimal' && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-black/90 backdrop-blur-md border-t border-gray-200 dark:border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] transform transition-transform duration-300 animate-fade-in-up">
           <div className="max-w-5xl mx-auto px-4 py-4 md:py-5 flex flex-col sm:flex-row items-center justify-between gap-4">

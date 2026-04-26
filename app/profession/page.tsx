@@ -47,6 +47,8 @@ export default function ProfessionPage() {
     o11Lv: 0, o12Lv: 0, o14Lv: 0, o16Lv: 0, o17Lv: 0,
     h2Lv: 0, h5Lv: 0, h6Lv: 0, h12Lv: 0, h13Lv: 0, h14Lv: 0, h15Lv: 0
   });
+  
+  const [toolImprints, setToolImprints] = useState<Record<string, Record<string, number>>>({});
 
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -86,10 +88,19 @@ export default function ProfessionPage() {
     }
 
     if (sTools) {
-      const t = JSON.parse(sTools);
-      parsedPickaxe = t['pickaxe'] || 0;
-      parsedRod = t['rod'] || 0;
-      parsedSword = t['sword'] || 0;
+      try {
+        const t = JSON.parse(sTools);
+        if (t.levels) {
+          parsedPickaxe = t.levels['pickaxe'] || 0;
+          parsedRod = t.levels['rod'] || 0;
+          parsedSword = t.levels['sword'] || 0;
+          setToolImprints(t.imprints || {});
+        } else {
+          parsedPickaxe = t['pickaxe'] || 0;
+          parsedRod = t['rod'] || 0;
+          parsedSword = t['sword'] || 0;
+        }
+      } catch(e) {}
     }
     
     if (sMisc) {
@@ -266,6 +277,7 @@ export default function ProfessionPage() {
               targetZone={targetZone} 
               setTargetZone={setTargetZone} 
               results={results} 
+              toolImprints={toolImprints}
             />
           )}
           
@@ -274,12 +286,12 @@ export default function ProfessionPage() {
           {activeTab === '재배' && subTab === '바리스타' && <BaristaTab />}
 
           {activeTab === '해양' && subTab === '조합법' && <RecipeTab recipes={OCEAN_RECIPES} />}
-          {activeTab === '해양' && subTab === '시세수익' && <OceanRevenueTab userStats={userStats} />}
+          {activeTab === '해양' && subTab === '시세수익' && <OceanRevenueTab userStats={userStats} toolImprints={toolImprints} />}
           {activeTab === '해양' && subTab === '변동시세' && <OceanStatsTab />}
           {activeTab === '해양' && subTab === '거래계산기' && <OceanTradeCalcTab userStats={userStats} />}
 
           {activeTab === '사냥' && subTab === '조합법' && <RecipeTab recipes={HUNT_RECIPES} />}
-          {activeTab === '사냥' && subTab === '시세수익' && <HuntRevenueTab userStats={userStats} />}
+          {activeTab === '사냥' && subTab === '시세수익' && <HuntRevenueTab userStats={userStats} toolImprints={toolImprints} />}
         </div>
       </main>
 

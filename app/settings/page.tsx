@@ -39,10 +39,16 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'트리'|'도구'|'단가'|'기타'>('트리');
   const [profTab, setProfTab] = useState<Profession>('재배');
   const [activeToolId, setActiveToolId] = useState<string>('hoe');
+  
   const [levels, setLevels] = useState<Record<string, number>>({});
   const [savedLevels, setSavedLevels] = useState<Record<string, number>>({});
+  
   const [toolLevels, setToolLevels] = useState<Record<string, number>>({});
   const [savedToolLevels, setSavedToolLevels] = useState<Record<string, number>>({});
+  
+  const [toolImprints, setToolImprints] = useState<Record<string, Record<string, number>>>({});
+  const [savedToolImprints, setSavedToolImprints] = useState<Record<string, Record<string, number>>>({});
+  
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [townRank, setTownRank] = useState<string>('씨앗');
   const [drinkRoutine, setDrinkRoutine] = useState<number[]>([]);
@@ -54,17 +60,34 @@ export default function SettingsPage() {
       const sTools = localStorage.getItem('alldding_sage_tools');
       const sPrices = localStorage.getItem('alldding_prices');
       const sMisc = localStorage.getItem('alldding_misc_settings');
+      
       if (sLevels) { const p = JSON.parse(sLevels); setLevels(p); setSavedLevels(p); }
-      if (sTools) { const t = JSON.parse(sTools); setToolLevels(t); setSavedToolLevels(t); }
+      if (sTools) { 
+        try {
+          const parsed = JSON.parse(sTools);
+          if (parsed.levels) {
+            setToolLevels(parsed.levels);
+            setSavedToolLevels(parsed.levels);
+            setToolImprints(parsed.imprints || {});
+            setSavedToolImprints(parsed.imprints || {});
+          } else {
+            setToolLevels(parsed);
+            setSavedToolLevels(parsed);
+          }
+        } catch(e) {}
+      }
+      
       if (sMisc) {
         const m = JSON.parse(sMisc);
         setTownRank(m.townRank || '씨앗');
         if (m.drinkRoutine) setDrinkRoutine(m.drinkRoutine);
         else if (m.drinkType && m.drinkCount) setDrinkRoutine(Array(m.drinkCount).fill(m.drinkType));
       }
+      
       let initialPrices: Record<string, number> = sPrices ? JSON.parse(sPrices) : {};
       const allData = await getCachedPrices();
       const data = allData.filter((d: any) => d.category === 'ingredient');
+      
       if (data && data.length > 0) {
         const finalPrices: Record<string, number> = {};
         data.forEach((row: any) => { 
@@ -97,6 +120,13 @@ export default function SettingsPage() {
     setToolLevels(prev => ({ ...prev, [id]: Math.max(0, Math.min(max, current + delta)) }));
   };
 
+  const handleImprintChange = (toolId: string, imprintId: string, level: number) => {
+    setToolImprints(prev => ({
+      ...prev,
+      [toolId]: { ...(prev[toolId] || {}), [imprintId]: level }
+    }));
+  };
+
   const handlePriceChange = (item: string, value: string) => {
     const num = parseFloat(value);
     setPrices(prev => ({ ...prev, [item]: isNaN(num) ? 0 : num }));
@@ -107,16 +137,27 @@ export default function SettingsPage() {
 
   const saveAll = () => {
     localStorage.setItem('alldding_profession', JSON.stringify(levels));
-    localStorage.setItem('alldding_sage_tools', JSON.stringify(toolLevels));
+    localStorage.setItem('alldding_sage_tools', JSON.stringify({ levels: toolLevels, imprints: toolImprints }));
     localStorage.setItem('alldding_prices', JSON.stringify(prices));
     localStorage.setItem('alldding_misc_settings', JSON.stringify({ townRank, drinkRoutine }));
     localStorage.setItem('alldding_skill', String(levels['f15'] || 0));
-    setSavedLevels(levels); setSavedToolLevels(toolLevels);
+    setSavedLevels(levels); 
+    setSavedToolLevels(toolLevels);
+    setSavedToolImprints(toolImprints);
     alert('개인 설정이 성공적으로 저장되었습니다.');
   };
 
   const resetTree = () => { if(confirm('스킬 트리를 초기화 하시겠습니까?')) { setLevels({}); setSavedLevels({}); localStorage.removeItem('alldding_profession'); } };
-  const resetTools = () => { if(confirm('도구 현황을 초기화 하시겠습니까?')) { setToolLevels({}); setSavedToolLevels({}); localStorage.removeItem('alldding_sage_tools'); } };
+  
+  const resetTools = () => { 
+    if(confirm('도구 및 각인 현황을 초기화 하시겠습니까?')) { 
+      setToolLevels({}); 
+      setSavedToolLevels({}); 
+      setToolImprints({});
+      setSavedToolImprints({});
+      localStorage.removeItem('alldding_sage_tools'); 
+    } 
+  };
 
   const diffCost = useMemo(() => {
     let gold = 0, stone = 0, point = 0;
@@ -219,7 +260,7 @@ export default function SettingsPage() {
 
         <div className="w-full animate-fade-in px-1 md:px-0 flex flex-col items-center">
           {activeTab === '트리' && <SkillTreeTab profTab={profTab} setProfTab={setProfTab} levels={levels} handleLevelChange={handleLevelChange} resetTree={resetTree} saveAll={saveAll} diffCost={diffCost} activeEffects={activeEffects} />}
-          {activeTab === '도구' && <SageToolsTab activeToolId={activeToolId} setActiveToolId={setActiveToolId} toolLevels={toolLevels} handleToolLevelChange={handleToolLevelChange} resetTools={resetTools} saveAll={saveAll} diffToolCost={diffToolCost} getToolImageName={getToolImageName} />}
+          {activeTab === '도구' && <SageToolsTab activeToolId={activeToolId} setActiveToolId={setActiveToolId} toolLevels={toolLevels} handleToolLevelChange={handleToolLevelChange} resetTools={resetTools} saveAll={saveAll} diffToolCost={diffToolCost} getToolImageName={getToolImageName} toolImprints={toolImprints} savedToolImprints={savedToolImprints} handleImprintChange={handleImprintChange} />}
           {activeTab === '단가' && <PriceSheetTab prices={prices} handlePriceChange={handlePriceChange} saveAll={saveAll} />}
           {activeTab === '기타' && <MiscSettingsTab townRank={townRank} setTownRank={setTownRank} drinkRoutine={drinkRoutine} addDrinkToRoutine={addDrinkToRoutine} removeDrinkFromRoutine={removeDrinkFromRoutine} saveAll={saveAll} currentTownEmoji={currentTownEmoji} currentMaxStamina={currentMaxStamina} dailyDrinkRecovery={dailyDrinkRecovery} totalDailyStamina={totalDailyStamina} TOWN_RANKS={TOWN_RANKS} STAMINA_DRINKS={STAMINA_DRINKS} />}
         </div>

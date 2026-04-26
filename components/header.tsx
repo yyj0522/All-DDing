@@ -53,7 +53,7 @@ export default function Header() {
   const navLinks = [
     { name: '요리 효율', href: '/efficiency', color: 'text-indigo-600 dark:text-indigo-400' },
     { name: '전문가', href: '/profession', color: 'text-amber-600 dark:text-amber-400' },
-    { name: 'RPG', href: '/rpg', color: 'text-violet-600 dark:text-violet-400' },
+    { name: '스펙업 가이드', href: '/spec', color: 'text-violet-600 dark:text-violet-400' },
     { name: '확률형 아이템', href: '/gacha', color: 'text-fuchsia-600 dark:text-fuchsia-400' },
     { name: '아일랜드 지도', href: '/map', color: 'text-emerald-600 dark:text-emerald-400' },
     { name: '자료실', href: '/resources', color: 'text-cyan-600 dark:text-cyan-400' },
@@ -92,11 +92,11 @@ export default function Header() {
             </Link>
 
             {loggedInUser ? (
-              <button onClick={handleLogout} className="p-2 rounded-xl text-indigo-600 dark:text-indigo-400 hover:text-white hover:bg-indigo-500 transition-all border-2 border-transparent active:translate-y-0.5" title="로그아웃 (클라우드 연동 중)">
+              <button onClick={handleLogout} className="p-2 rounded-xl text-indigo-600 dark:text-indigo-400 hover:text-white hover:bg-indigo-500 transition-all border-2 border-transparent active:translate-y-0.5" title="로그아웃">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
               </button>
             ) : (
-              <button onClick={() => setIsAuthModalOpen(true)} className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all border-2 border-transparent active:translate-y-0.5" title="클라우드 동기화 (로그인)">
+              <button onClick={() => setIsAuthModalOpen(true)} className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-all border-2 border-transparent active:translate-y-0.5" title="로그인">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               </button>
             )}
@@ -127,7 +127,7 @@ export default function Header() {
       </div>
 
       <div className={`fixed inset-0 z-50 md:hidden bg-slate-50/95 dark:bg-zinc-900/95 backdrop-blur-xl transition-all duration-500 ease-in-out ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-        <div className="flex flex-col items-center justify-center h-full gap-8 px-6 text-center">
+        <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-6 text-center">
           {navLinks.map((link, idx) => {
             const isActive = pathname && pathname.startsWith(link.href);
             return (
