@@ -129,13 +129,24 @@ export default function SpecUpPage() {
       const baseDrop = state.toolLv > 0 ? getBaseDrop(state.toolLv) : 1;
       
       const m6Lv = state.skills['m6'] || 0;
-      const luckyHitChance = m6Lv > 0 ? [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50][m6Lv - 1] || 0 : 0;
+      const luckyHitExpected = m6Lv > 0 ? [
+        0.01 * 1,   
+        0.02 * 2,   
+        0.03 * 3,   
+        0.04 * 4,   
+        0.05 * 6,   
+        0.06 * 8,   
+        0.07 * 10,  
+        0.08 * 12,  
+        0.10 * 16,  
+        0.15 * 20   
+      ][m6Lv - 1] || 0 : 0;
       
       const oreImprint = [0, 0.25, 0.5, 0.75, 1][state.imprints['pick_ore'] || 0] || 0;
       const rouletteImprint = [0, 0.01, 0.02, 0.03, 0.04, 0.05][state.imprints['pick_roulette'] || 0] || 0;
       const cartImprint = [0, 0.01, 0.02, 0.03, 0.04, 0.05][state.imprints['pick_cart'] || 0] || 0; 
 
-      const totalOres = (actions * baseDrop) + (actions * luckyHitChance * 1) + (actions * oreImprint) + (actions * rouletteImprint * 23.1) + (actions * cartImprint * 30);
+      const totalOres = (actions * baseDrop) + (actions * luckyHitExpected) + (actions * oreImprint) + (actions * rouletteImprint * 23.1) + (actions * cartImprint * 30);
 
       const m7Lv = state.skills['m7'] || 0;
       const flamingChance = m7Lv > 0 ? [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.15][m7Lv - 1] || 0 : 0;
@@ -148,7 +159,7 @@ export default function SpecUpPage() {
       const ingotUnitValue = Math.max(npcIngotPrice, marketPrices.ingotMarketPrice || 0);
 
       const m3Lv = state.skills['m3'] || 0;
-      const gemDropChance = m3Lv > 0 ? [0.05, 0.10, 0.15][m3Lv - 1] || 0 : 0;
+      const gemDropExpected = m3Lv > 0 ? [0.03 * 1, 0.07 * 1, 0.10 * 2][m3Lv - 1] || 0 : 0;
       
       const baseCoby = state.toolLv > 0 ? getBaseCoby(state.toolLv) : 0;
       const m11Lv = state.skills['m11'] || 0;
@@ -157,11 +168,11 @@ export default function SpecUpPage() {
       const finalCobyChance = baseCoby + m11Bonus + pickCobyBonus;
       const gemCobyChance = [0, 0.05, 0.1, 0.2, 0.3, 0.5][state.imprints['pick_gem_coby'] || 0] || 0;
       
-      const totalGems = (actions * gemDropChance * 1) + (actions * finalCobyChance * gemCobyChance);
+      const totalGems = (actions * gemDropExpected) + (actions * finalCobyChance * gemCobyChance);
       
       const m4Lv = state.skills['m4'] || 0;
       const gemBuff = m4Lv > 0 ? [0.05, 0.07, 0.10, 0.20, 0.30, 0.50][m4Lv - 1] || 0 : 0;
-      const gemUnitValue = Math.round(7000 * (1 + gemBuff));
+      const gemUnitValue = Math.round(7500 * (1 + gemBuff));
 
       const possibleCrafts = Math.min(Math.floor(totalIngots / 20), 5); 
       const m16Lv = state.skills['m16'] || 0;
@@ -264,18 +275,23 @@ export default function SpecUpPage() {
       if (goal.type === 'tool') {
         for (let l = state.toolLv + 1; l <= goal.lv; l++) steps.push({ type: 'tool', id: goal.id, lv: l });
       } else if (goal.type === 'skill') {
-        let reqs = [];
-        let curr = goal.id;
+        let reqs: any[] = [];
+        let curr: string | null = goal.id;
         while (curr) {
           const sData = SKILL_DATA[activeTab as Profession][curr];
           if (!sData) break;
+          
+          let tempReqs: any[] = [];
           if (curr === goal.id) {
-            for (let l = (state.skills[curr] || 0) + 1; l <= goal.lv; l++) reqs.unshift({ type: 'skill', id: curr, lv: l });
+            for (let l = (state.skills[curr] || 0) + 1; l <= goal.lv; l++) tempReqs.push({ type: 'skill', id: curr, lv: l });
           } else {
-            if ((state.skills[curr] || 0) < 1) reqs.unshift({ type: 'skill', id: curr, lv: 1 });
+            if ((state.skills[curr] || 0) < 1) tempReqs.push({ type: 'skill', id: curr, lv: 1 });
             else break;
           }
-          curr = sData.req as string;
+          
+          // 💡 [치명적 버그 수정 완료] 배열 합치기 순서를 정상(오름차순)으로 보정
+          reqs = [...tempReqs, ...reqs];
+          curr = sData.req as string | null;
         }
         steps = reqs;
       } else if (goal.type === 'imprint') {
