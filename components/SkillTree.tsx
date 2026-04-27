@@ -27,7 +27,8 @@ export default function SkillTree({ profTab, levels, onLevelChange, selectedSkil
     return '해당 스킬의 고유 능력이 강화됩니다.';
   };
 
-  const SkillBox = ({ id }: { id: string }) => {
+  // 💡 isRoot 프롭스를 추가하여, 최상단 스킬일 경우 툴팁이 아래쪽으로 열리도록 처리
+  const SkillBox = ({ id, isRoot = false }: { id: string, isRoot?: boolean }) => {
     const skill = SKILL_DATA[profTab]?.[id];
     if(!skill) return null;
     const lv = levels[id] || 0;
@@ -95,15 +96,16 @@ export default function SkillTree({ profTab, levels, onLevelChange, selectedSkil
             style={{ imageRendering: 'pixelated' }}
           />
 
-          {/* 💡 툴팁 수정: w-[250px]로 확장, items-center 및 text-center 추가하여 중앙 정렬 및 자동 줄바꿈 적용 */}
-          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-[250px] bg-gray-900 border border-gray-700 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-[9999] scale-95 group-hover:scale-100 origin-bottom flex flex-col gap-2 items-center text-center">
+          {/* 💡 isRoot 여부에 따라 툴팁이 위로 갈지 아래로 갈지 동적으로 결정 */}
+          <div className={`absolute ${isRoot ? 'top-full mt-3' : 'bottom-full mb-2'} left-1/2 -translate-x-1/2 w-[250px] bg-gray-900 border border-gray-700 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-[9999] scale-95 group-hover:scale-100 ${isRoot ? 'origin-top' : 'origin-bottom'} flex flex-col gap-2 items-center text-center`}>
             <p className="text-[11px] font-bold text-gray-300 leading-relaxed break-keep w-full">{getBaseDesc(skill.costs[0].effect)}</p>
             <div className="w-full h-[1px] bg-gray-700"></div>
             <div className="w-full">
               <p className="text-[10px] text-gray-500 font-bold mb-0.5">현재 {lv}레벨 효과</p>
               <p className="text-[12px] font-black text-amber-400 break-keep whitespace-normal">{currentEffect}</p>
             </div>
-            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-gray-900 border-b border-r border-gray-700 rotate-45"></div>
+            {/* 💡 꼬리표(화살표) 방향도 동적으로 위/아래 반전 */}
+            <div className={`absolute ${isRoot ? '-top-1.5 border-t border-l' : '-bottom-1.5 border-b border-r'} left-1/2 -translate-x-1/2 w-3 h-3 bg-gray-900 border-gray-700 rotate-45`}></div>
           </div>
         </div>
         
@@ -135,7 +137,8 @@ export default function SkillTree({ profTab, levels, onLevelChange, selectedSkil
     return (
       <div className="skill-tree flex justify-center min-w-max mx-auto transform scale-[0.85] md:scale-100 origin-top [&_li]:!px-[1px] sm:[&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
         <ul>
-          <li><SkillBox id="f1" />
+          {/* 최상단 노드에만 isRoot={true} 부여 */}
+          <li><SkillBox id="f1" isRoot={true} />
             <ul>
               <li><SkillBox id="f2" />
                 <ul>
@@ -192,7 +195,8 @@ export default function SkillTree({ profTab, levels, onLevelChange, selectedSkil
     return (
       <div className="skill-tree flex justify-center min-w-max mx-auto transform scale-[0.85] md:scale-100 origin-top [&_li]:!px-[1px] sm:[&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
         <ul>
-          <li><SkillBox id="m1" />
+          {/* 최상단 노드에만 isRoot={true} 부여 */}
+          <li><SkillBox id="m1" isRoot={true} />
             <ul>
               <li><SkillBox id="m2" />
                 <ul>
@@ -246,7 +250,8 @@ export default function SkillTree({ profTab, levels, onLevelChange, selectedSkil
     return (
       <div className="skill-tree flex justify-center min-w-max mx-auto transform scale-[0.85] md:scale-100 origin-top [&_li]:!px-[1px] sm:[&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
         <ul>
-          <li><SkillBox id="o1" />
+          {/* 최상단 노드에만 isRoot={true} 부여 */}
+          <li><SkillBox id="o1" isRoot={true} />
             <ul>
               <li><SkillBox id="o2" />
                 <ul>
@@ -289,7 +294,8 @@ export default function SkillTree({ profTab, levels, onLevelChange, selectedSkil
     return (
       <div className="skill-tree flex justify-center min-w-max mx-auto transform scale-[0.85] md:scale-100 origin-top [&_li]:!px-[1px] sm:[&_li]:!px-[2px] [&_li]:!mx-0 transition-colors duration-300">
         <ul>
-          <li><SkillBox id="h1" />
+          {/* 최상단 노드에만 isRoot={true} 부여 */}
+          <li><SkillBox id="h1" isRoot={true} />
             <ul>
               <li><SkillBox id="h2" />
                 <ul className="!pb-0">
