@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { Profession } from '@/lib/skillData';
+import { useState } from 'react';
+import { Profession, SKILL_DATA } from '@/lib/skillData';
 import SkillTree from '@/components/SkillTree';
 
 interface Props {
@@ -17,6 +18,14 @@ interface Props {
 
 export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelChange, resetTree, saveAll, diffCost, activeEffects }: Props) {
   const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
+  
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const [lastChangedSkill, setLastChangedSkill] = useState<string | null>(null);
+
+  const onLevelChangeWrap = (id: string, delta: number) => {
+    setLastChangedSkill(id);
+    handleLevelChange(id, delta);
+  };
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in-up w-full max-w-[1600px] mx-auto px-1 sm:px-0 transition-colors duration-300">
@@ -25,7 +34,7 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
           {(['재배', '채광', '해양', '사냥'] as Profession[]).map((tab) => (
             <button
               key={tab}
-              onClick={() => setProfTab(tab)}
+              onClick={() => { setProfTab(tab); setSelectedSkill(null); setLastChangedSkill(null); }}
               className={`flex items-center justify-center py-2 md:py-2.5 rounded-[14px] md:rounded-[16px] font-bold transition-all text-[11px] sm:text-xs shadow-sm ${
                 profTab === tab 
                 ? 'bg-gray-900 text-white dark:bg-white dark:text-black scale-100 shadow-gray-300 dark:shadow-white/10' 
@@ -39,13 +48,14 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 w-full justify-center items-start transition-colors">
-        <div className="w-full lg:flex-1 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-transparent rounded-[2rem] p-5 sm:p-8 shadow-sm dark:shadow-2xl overflow-hidden flex flex-col order-1 lg:max-w-[1500px] transition-colors">
+        {/* overflow-hidden을 overflow-visible로 변경하여 툴팁이 짤리지 않게 수정 */}
+        <div className="w-full lg:flex-1 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-transparent rounded-[2rem] p-5 sm:p-8 shadow-sm dark:shadow-2xl overflow-visible flex flex-col order-1 lg:max-w-[1500px] transition-colors z-10">
           <div className="flex justify-between items-center mb-6 transition-colors">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-6 bg-amber-500 rounded-full"></div>
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white transition-colors">{profTab} 전문가 스킬</h2>
             </div>
-            <button onClick={resetTree} className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-transparent px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">트리 초기화</button>
+            <button onClick={() => { resetTree(); setLastChangedSkill(null); setSelectedSkill(null); }} className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-transparent px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">트리 초기화</button>
           </div>
           
           {profTab === '재배' && (
@@ -55,9 +65,15 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
             </div>
           )}
           
-          <div className="w-full overflow-x-auto custom-scrollbar pb-6 flex-1 cursor-grab active:cursor-grabbing">
-            <div className="min-w-max flex justify-center">
-              <SkillTree profTab={profTab} levels={levels} onLevelChange={handleLevelChange} />
+          <div className="w-full overflow-x-auto overflow-y-visible custom-scrollbar pb-6 flex-1 cursor-grab active:cursor-grabbing">
+            <div className="min-w-max flex justify-center pt-2">
+              <SkillTree 
+                profTab={profTab} 
+                levels={levels} 
+                onLevelChange={onLevelChangeWrap} 
+                selectedSkill={selectedSkill}
+                onSelectSkill={setSelectedSkill}
+              />
             </div>
             <div className="mt-6 flex justify-center lg:hidden transition-colors">
               <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold bg-gray-100 dark:bg-white/5 px-3 py-1 rounded-full border border-gray-200 dark:border-transparent transition-colors">
@@ -68,7 +84,7 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
           </div>
         </div>
 
-        <div className="w-full lg:w-80 flex flex-col gap-6 flex-shrink-0 order-2 transition-colors">
+        <div className="w-full lg:w-80 flex flex-col gap-6 flex-shrink-0 order-2 transition-colors z-0">
           <div className="bg-white dark:bg-[#0a0a0a] dark:bg-gradient-to-br dark:from-amber-900/20 dark:to-black border border-gray-200 dark:border-transparent rounded-[2rem] p-6 shadow-sm dark:shadow-2xl transition-colors">
             <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1 transition-colors">추가 요구 재화</h3>
             <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-6 transition-colors">저장 시점 대비 소모 예상 비용</p>
@@ -101,11 +117,26 @@ export default function SkillTreeTab({ profTab, setProfTab, levels, handleLevelC
               활성 효과 요약
             </h3>
             <div className="overflow-y-auto custom-scrollbar flex-1 space-y-2 pr-1 transition-colors">
-              {activeEffects.length > 0 ? activeEffects.map((eff, i) => (
-                <div key={i} className="text-[11px] font-bold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/5 px-3 py-2.5 rounded-xl border border-gray-100 dark:border-transparent leading-tight transition-colors">
-                  {eff}
-                </div>
-              )) : (
+              {activeEffects.length > 0 ? activeEffects.map((eff, i) => {
+                const effName = eff.split(':')[0].trim();
+                const isSelected = selectedSkill && SKILL_DATA[profTab]?.[selectedSkill]?.name.includes(effName);
+                const isLastChanged = lastChangedSkill && SKILL_DATA[profTab]?.[lastChangedSkill]?.name.includes(effName);
+
+                return (
+                  <div 
+                    key={i} 
+                    className={`text-[11px] font-bold px-3 py-2.5 rounded-xl border leading-tight transition-all duration-300 ${
+                      isSelected 
+                      ? 'border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:border-rose-500/50 dark:text-rose-300 shadow-sm'
+                      : isLastChanged
+                      ? 'border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:border-blue-500/50 dark:text-blue-300 shadow-sm'
+                      : 'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-transparent'
+                    }`}
+                  >
+                    {eff}
+                  </div>
+                );
+              }) : (
                 <div className="text-xs text-gray-400 dark:text-gray-600 text-center py-16 font-bold transition-colors">활성화된 스킬이 없습니다.</div>
               )}
             </div>

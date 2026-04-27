@@ -7,10 +7,25 @@ interface SkillTreeProps {
   profTab: Profession;
   levels: Record<string, number>;
   onLevelChange: (id: string, delta: number) => void;
+  selectedSkill?: string | null;
+  onSelectSkill?: (id: string | null) => void;
 }
 
-export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeProps) {
+export default function SkillTree({ profTab, levels, onLevelChange, selectedSkill, onSelectSkill }: SkillTreeProps) {
   const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
+
+  const getBaseDesc = (effect: string) => {
+    if (effect.includes('경험치')) return '관련 활동 시 획득하는 경험치량이 증가합니다.';
+    if (effect.includes('판매가')) return '생산품 및 전리품의 판매 가격이 영구적으로 증가합니다.';
+    if (effect.includes('시간') || effect.includes('초')) return '작업 및 가공에 소요되는 시간이 단축됩니다.';
+    if (effect.includes('확률')) return '특수 아이템 획득 및 이벤트 발생 확률이 증가합니다.';
+    if (effect.includes('슬롯')) return '작업 대기 및 보관에 필요한 슬롯 개수가 확장됩니다.';
+    if (effect.includes('콤보')) return '연속 작업 시 발동하는 콤보 효과가 강화됩니다.';
+    if (effect.includes('해금')) return '새로운 기능이나 NPC가 잠금 해제됩니다.';
+    if (effect.includes('범위')) return '한 번에 작업이 적용되는 타일 범위가 확장됩니다.';
+    if (effect.includes('추가') || effect.includes('드롭')) return '채집 시 추가 아이템 획득량이 증가합니다.';
+    return '해당 스킬의 고유 능력이 강화됩니다.';
+  };
 
   const SkillBox = ({ id }: { id: string }) => {
     const skill = SKILL_DATA[profTab]?.[id];
@@ -37,27 +52,36 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
     if (id === 'h15') imageId = 'h14';
     if (id === 'h16') imageId = 'h15';
     if (id === 'f22') imageId = 'f15';
-    if (id === 'f23') imageId = 'f4'; // 식은 커피 먹기지 -> 불 더 올려! 아이콘 공유
-    if (id === 'm16') imageId = 'm5'; // 귀하신 몸값 -> 주괴 좀 사주괴 아이콘 공유
-    if (id === 'o19') imageId = 'o18'; // 연금은 계속된다 -> 바다처럼 넓은 아이콘 공유
+    if (id === 'f23') imageId = 'f4'; 
+    if (id === 'm16') imageId = 'm5'; 
+    if (id === 'o19') imageId = 'o18'; 
+
+    const isSelected = selectedSkill === id;
+    const currentEffect = lv > 0 ? skill.costs[lv - 1].effect : "효과 없음";
 
     return (
-      <div className={`relative inline-flex flex-col items-center w-[100px] sm:w-[145px] border-2 rounded-[1.25rem] p-2 sm:p-2.5 gap-1.5 shadow-sm hover:shadow-md transition-all z-10 ${
+      <div 
+        onClick={() => {
+          if (lv > 0) {
+            onSelectSkill?.(isSelected ? null : id);
+          }
+        }}
+        className={`relative inline-flex flex-col items-center w-[100px] sm:w-[145px] border-2 rounded-[1.25rem] p-2 sm:p-2.5 gap-1.5 shadow-sm transition-all z-10 hover:z-50 ${lv > 0 ? 'cursor-pointer hover:shadow-md' : 'cursor-default'} ${
         isUnlocked 
         ? (lv > 0 
-            ? 'border-amber-400 dark:border-amber-500/50 bg-amber-50 dark:bg-[#1a140a] shadow-md' 
-            : 'border-gray-300 dark:border-transparent bg-white dark:bg-[#111113]') 
-        : 'border-gray-200 dark:border-transparent bg-gray-50 dark:bg-[#0a0a0a] opacity-70'
+            ? (isSelected ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/20 shadow-md ring-2 ring-rose-200 dark:ring-rose-900/50' : 'border-amber-400 dark:border-amber-500/50 bg-amber-50 dark:bg-[#1a140a]') 
+            : (isSelected ? 'border-rose-400 bg-rose-50/50 dark:bg-rose-950/10 ring-2 ring-rose-200 dark:ring-rose-900/30' : 'border-gray-300 dark:border-transparent bg-white dark:bg-[#111113]')) 
+        : 'border-gray-200 dark:border-transparent bg-gray-50 dark:bg-[#0a0a0a]' 
       }`}>
         <div className={`absolute -top-3 px-2.5 py-0.5 rounded-lg text-[9px] sm:text-[10px] font-black z-20 shadow-sm transition-colors ${
           lv > 0 
-          ? 'bg-amber-500 text-white dark:bg-amber-500 dark:text-white' 
+          ? (isSelected ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white dark:bg-amber-500') 
           : (isUnlocked ? 'bg-gray-700 text-white dark:bg-gray-600' : 'bg-gray-300 text-gray-500 dark:bg-gray-800 dark:text-gray-600')
         }`}>
           {lv} / {skill.max}
         </div>
         
-        <div className={`relative w-9 h-9 sm:w-11 sm:h-11 mt-1 rounded-xl border flex items-center justify-center overflow-hidden transition-colors shadow-inner ${
+        <div className={`relative w-9 h-9 sm:w-11 sm:h-11 mt-1 rounded-xl border flex items-center justify-center overflow-visible transition-colors shadow-inner group cursor-help ${
           isUnlocked ? 'bg-gray-100 dark:bg-black/50 border-transparent' : 'bg-gray-200 dark:bg-black/80 border-transparent'
         }`}>
           <Image 
@@ -70,24 +94,35 @@ export default function SkillTree({ profTab, levels, onLevelChange }: SkillTreeP
             className={`object-contain p-1.5 transition-all duration-300 ${lv > 0 ? 'grayscale-0 opacity-100 drop-shadow-sm' : 'grayscale opacity-60 dark:opacity-40 blur-[0.3px]'}`}
             style={{ imageRendering: 'pixelated' }}
           />
+
+          {/* 💡 툴팁 수정: w-[250px]로 확장, items-center 및 text-center 추가하여 중앙 정렬 및 자동 줄바꿈 적용 */}
+          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-[250px] bg-gray-900 border border-gray-700 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-[9999] scale-95 group-hover:scale-100 origin-bottom flex flex-col gap-2 items-center text-center">
+            <p className="text-[11px] font-bold text-gray-300 leading-relaxed break-keep w-full">{getBaseDesc(skill.costs[0].effect)}</p>
+            <div className="w-full h-[1px] bg-gray-700"></div>
+            <div className="w-full">
+              <p className="text-[10px] text-gray-500 font-bold mb-0.5">현재 {lv}레벨 효과</p>
+              <p className="text-[12px] font-black text-amber-400 break-keep whitespace-normal">{currentEffect}</p>
+            </div>
+            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-gray-900 border-b border-r border-gray-700 rotate-45"></div>
+          </div>
         </div>
         
-        <div className={`text-[9px] sm:text-[11px] font-black text-center leading-tight h-6 flex items-center justify-center break-keep w-full tracking-tight ${isUnlocked ? 'text-gray-900 dark:text-gray-200' : 'text-gray-400 dark:text-gray-600'}`}>
+        <div className={`text-[9px] sm:text-[11px] font-black text-center leading-tight h-6 flex items-center justify-center break-keep w-full tracking-tight ${isUnlocked ? (isSelected ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-gray-200') : 'text-gray-400 dark:text-gray-600'}`}>
           {skill.name}
         </div>
         
         <div className="flex w-full gap-1.5 mt-0.5">
           <button 
-            onClick={() => onLevelChange(id, -1)} 
+            onClick={(e) => { e.stopPropagation(); onLevelChange(id, -1); }} 
             disabled={lv === 0} 
-            className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-gray-100 disabled:dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 rounded-lg py-1 transition-all active:scale-95 shadow-sm disabled:shadow-none"
+            className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-gray-100 disabled:dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 rounded-lg py-1 transition-all active:scale-95 shadow-sm disabled:shadow-none cursor-pointer"
           >
             <span className="text-xs sm:text-sm font-black leading-none mb-[1px]">-</span>
           </button>
           <button 
-            onClick={() => onLevelChange(id, 1)} 
+            onClick={(e) => { e.stopPropagation(); onLevelChange(id, 1); }} 
             disabled={!isUnlocked || lv === skill.max} 
-            className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-gray-100 disabled:dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 rounded-lg py-1 transition-all active:scale-95 shadow-sm disabled:shadow-none"
+            className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-gray-100 disabled:dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 rounded-lg py-1 transition-all active:scale-95 shadow-sm disabled:shadow-none cursor-pointer"
           >
             <span className="text-xs sm:text-sm font-black leading-none mb-[1px]">+</span>
           </button>
