@@ -4,13 +4,11 @@ import { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { Profession } from '@/lib/skillData';
-
 import { 
   TOWN_RANKS, STAMINA_DRINKS, MINE_RECIPES, FARMING_RECIPES, OCEAN_RECIPES, HUNT_RECIPES, MINE_FIXED_PRICES,
   PICKAXE_BASE_DROPS, PICKAXE_RELIC_CHANCES, LUCKY_HIT_EFFECTS, 
   GEM_DROP_EFFECTS, FLAMING_PICKAXE_EFFECTS, PRICE_BUFF_EFFECTS, AVG_RELIC_POINTS 
 } from '@/lib/professionData';
-
 import RecipeTab from '@/components/profession/RecipeTab';
 import MiningStatsTab from '@/components/profession/MiningStatsTab';
 import FarmingStatsTab from '@/components/profession/FarmingStatsTab';
@@ -41,15 +39,14 @@ export default function ProfessionPage() {
   const [subTab, setSubTab] = useState<string>('조합법');
   const [targetZone, setTargetZone] = useState<'코룸' | '리프톤' | '세렌트'>('코룸');
 
-  const [userStats, setUserStats] = useState({
+  const [userStats, setUserStats] = useState<any>({
     stamina: 3000, pickaxeLv: 0, rodLv: 0, swordLv: 0, 
     luckyHitLv: 0, gemDropLv: 0, flamingPickLv: 0, ingotBuffLv: 0, gemBuffLv: 0, m16Lv: 0,
     o11Lv: 0, o12Lv: 0, o14Lv: 0, o16Lv: 0, o17Lv: 0,
     h2Lv: 0, h5Lv: 0, h6Lv: 0, h12Lv: 0, h13Lv: 0, h14Lv: 0, h15Lv: 0
   });
   
-  const [toolImprints, setToolImprints] = useState<Record<string, Record<string, number>>>({});
-
+  const [toolImprints, setToolImprints] = useState<any>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -71,13 +68,11 @@ export default function ProfessionPage() {
       parsedIngotBuff = p[SKILL_IDS.ingotBuff] || 0; 
       parsedGemBuff = p[SKILL_IDS.gemBuff] || 0; 
       parsedM16 = p[SKILL_IDS.m16] || 0;
-
       parsedO11 = p['o11'] || 0;
       parsedO12 = p['o12'] || 0;
       parsedO14 = p['o14'] || 0;
       parsedO16 = p['o16'] || 0;
       parsedO17 = p['o17'] || 0;
-
       parsedH2 = p['h2'] || 0;
       parsedH5 = p['h5'] || 0;
       parsedH6 = p['h6'] || 0;
@@ -288,7 +283,7 @@ export default function ProfessionPage() {
           {activeTab === '해양' && subTab === '조합법' && <RecipeTab recipes={OCEAN_RECIPES} />}
           {activeTab === '해양' && subTab === '시세수익' && <OceanRevenueTab userStats={userStats} toolImprints={toolImprints} />}
           {activeTab === '해양' && subTab === '변동시세' && <OceanStatsTab />}
-          {activeTab === '해양' && subTab === '거래계산기' && <OceanTradeCalcTab userStats={userStats} />}
+          {activeTab === '해양' && subTab === '거래계산기' && <OceanTradeCalcTab userStats={userStats} toolImprints={toolImprints} />}
 
           {activeTab === '사냥' && subTab === '조합법' && <RecipeTab recipes={HUNT_RECIPES} />}
           {activeTab === '사냥' && subTab === '시세수익' && <HuntRevenueTab userStats={userStats} toolImprints={toolImprints} />}
