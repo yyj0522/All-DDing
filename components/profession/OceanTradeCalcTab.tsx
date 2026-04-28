@@ -63,7 +63,7 @@ const ALCHEMY_T2 = [...ALCHEMY_T2_CORE, ...ALCHEMY_T2_CRYSTAL, ...ALCHEMY_T2_POT
 
 const ALCHEMY_T3 = ["영생의 아쿠티스", "크라켄의 광란체", "리바이던의 깃털", "해구의 파동 코어", "침묵의 심해 비약", "청해룡의 날개", "아쿠아 펄스 파편", "나우틸러스의 손", "무저의 척추", "추출된 희석액"];
 
-const CORE_ITEMS = [...CORE_BASE_SHELLS, ...ALCHEMY_T1, ...ALCHEMY_T2];
+const CORE_ITEMS = [...CORE_BASE_SHELLS, ...FISH, ...ALCHEMY_T1, ...ALCHEMY_T2];
 
 const BATCH_MATS = ['수호의 정수(1성)', '파동의 정수(1성)', '생명의 정수(1성)', '부식의 정수(1성)', '혼란의 정수(1성)', '수호 에센스', '파동 에센스', '생명 에센스', '부식 에센스', '혼란 에센스'];
 
@@ -149,13 +149,8 @@ const simulateCraftPure = (targetList: Record<string, number>, initialStock: Rec
   return { missing, stock: tempStock, craftedLog };
 };
 
-const ITEM_BASE_REQS: Record<string, Record<string, number>> = {};
 const ALL_ITEMS = Array.from(new Set([...TIER1, ...TIER2, ...TIER3, ...FISH, ...ALCHEMY_T1, ...ALCHEMY_T2, ...ALCHEMY_T3, ...OCEAN_FIXED_PRICES.map(i=>i.name)]));
-ALL_ITEMS.forEach(name => {
-  ITEM_BASE_REQS[name] = simulateCraftPure({ [name]: 1 }, {}).missing;
-});
 
-// 조합을 구하는 헬퍼 함수 (다중 분할 스태미나용)
 const getCombinations = (bins: number, items: number): number[][] => {
   if (bins === 1) return [[items]];
   const combos: number[][] = [];
@@ -263,12 +258,25 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     alert('모든 재고가 초기화되었습니다.');
   };
 
+  const itemBaseReqsPerUnit = useMemo(() => {
+    const reqsMap: Record<string, Record<string, number>> = {};
+    ALL_ITEMS.forEach(name => {
+      const sim = simulateCraftPure({ [name]: 1000 }, {}, allowTierUpgrade);
+      const reqs: Record<string, number> = {};
+      Object.entries(sim.missing).forEach(([m, q]) => {
+        reqs[m] = (q as number) / 1000;
+      });
+      reqsMap[name] = reqs;
+    });
+    return reqsMap;
+  }, [allowTierUpgrade]);
+
   const getBaseEquivalents = (currentStock: Record<string, number>) => {
     const eq: Record<string, number> = {};
     Object.entries(currentStock).forEach(([name, qty]) => {
       if (qty > 0) {
-        if (ITEM_BASE_REQS[name]) {
-          Object.entries(ITEM_BASE_REQS[name]).forEach(([bName, bQty]) => {
+        if (itemBaseReqsPerUnit[name] && Object.keys(itemBaseReqsPerUnit[name]).length > 0) {
+          Object.entries(itemBaseReqsPerUnit[name]).forEach(([bName, bQty]) => {
             eq[bName] = (eq[bName] || 0) + (bQty * qty);
           });
         } else {
@@ -279,7 +287,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     return eq;
   };
 
-  // 평가 엔진 (스태미나 시나리오 분석에 쓰임)
   const evalStockFast = (addedStock: Record<string, number>, sortedItems: any[]) => {
     let tempStock = { ...stock };
     for(const k in addedStock) tempStock[k] = (tempStock[k] || 0) + addedStock[k];
@@ -304,9 +311,9 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
       for (const item of sortedItems) {
         let maxPossible = Infinity;
         let possible = true;
-        for (const [mat, count] of Object.entries(ITEM_BASE_REQS[item.name] || {})) {
-            const countNum = count as number; // 타입 에러 해결 (2번)
-            if (CORE_ITEMS.includes(mat)) {
+        for (const [mat, count] of Object.entries(itemBaseReqsPerUnit[item.name] || {})) {
+            const countNum = count as number;
+            if (CORE_BASE_SHELLS.includes(mat) || FISH.includes(mat)) {
                 const avail = eqStock[mat] || 0;
                 if (avail < countNum) { possible = false; break; }
                 maxPossible = Math.min(maxPossible, Math.floor(avail / countNum));
@@ -322,7 +329,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
 
         if (canCraft) {
             let penaltyCost = 0;
-            for (const mat of CORE_BASE_SHELLS) {
+            for (const mat of CORE_ITEMS) {
                 const before = tempStock[mat] || 0;
                 const after = sim.stock[mat] || 0;
                 const consumed = before - after;
@@ -364,7 +371,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
       loopSafetyTrim++;
 
       const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
-      const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0)));
+      const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0) + 1));
 
       if (badMats.length > 0) {
         const candidates = Object.keys(crafted).filter(k => crafted[k] > 0).sort((a, b) => {
@@ -417,10 +424,9 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
   const optimalCalculations = useMemo(() => {
     if (!isLoaded || activeSubTab === 'trade' || activeSubTab === 'settings') return { recommendations: [], totalExpectedProfit: 0, overallMissingVanilla: {} };
     
-    // (해결포인트 3) 1320줄 뼈대 복원 (10종류 모두 출력)
     const itemsWithProfit = OCEAN_FIXED_PRICES.map(item => {
       const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
-      const baseMats = ITEM_BASE_REQS[item.name] || {};
+      const baseMats = itemBaseReqsPerUnit[item.name] || {};
       let totalCost = 0;
       let hasBlacklist = false;
 
@@ -454,7 +460,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         let possible = true;
         for (const [mat, count] of Object.entries(item.baseMats)) {
             const countNum = count as number;
-            if (CORE_ITEMS.includes(mat)) {
+            if (CORE_BASE_SHELLS.includes(mat) || FISH.includes(mat)) {
                 const avail = eqStock[mat] || 0;
                 if (avail < countNum) { possible = false; break; }
                 maxPossible = Math.min(maxPossible, Math.floor(avail / countNum));
@@ -470,7 +476,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
 
         if (canCraft) {
             let penaltyCost = 0;
-            for (const mat of CORE_BASE_SHELLS) {
+            for (const mat of CORE_ITEMS) {
                 const before = tempStock[mat] || 0;
                 const after = sim.stock[mat] || 0;
                 const consumed = before - after;
@@ -512,7 +518,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
       loopSafetyTrim++;
 
       const currentSim = simulateCraftPure(optimalCounts, stock, allowTierUpgrade);
-      const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > (stock[mat] || 0));
+      const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + 1));
 
       if (badMats.length > 0) {
         const candidates = Object.keys(optimalCounts).filter(k => optimalCounts[k] > 0).sort((a, b) => {
@@ -581,7 +587,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     }
 
     return { recommendations: refinedRecommendations, totalExpectedProfit, overallMissingVanilla };
-  }, [cost, stock, blacklist, o16Bonus, isLoaded, activeSubTab, allowTierUpgrade, recommendMode]);
+  }, [cost, stock, blacklist, o16Bonus, isLoaded, activeSubTab, allowTierUpgrade, recommendMode, itemBaseReqsPerUnit]);
 
   const handleQueueCraft = (itemName: string, maxQty: number) => {
     const input = craftInputs[itemName] || { sets: '', units: '' };
@@ -644,7 +650,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     if (!isLoaded || activeSubTab !== 'stamina_recommend') return null;
     const sortedItems = OCEAN_FIXED_PRICES.map(item => {
         const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
-        const baseMats = ITEM_BASE_REQS[item.name] || {};
+        const baseMats = itemBaseReqsPerUnit[item.name] || {};
         let totalCost = 0;
         Object.entries(baseMats).forEach(([mat, qty]) => totalCost += (cost[mat] || 0) * qty);
         return { name: item.name, sellPrice, profit: sellPrice - totalCost };
@@ -683,7 +689,6 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
     let maxFoundProfitForConsumed = -1;
 
     if (maxActions > 0) {
-        // (해결포인트 1) 1~5종류 분할 탐색 알고리즘 이식
         const NUM_CHUNKS = Math.min(maxActions, 10);
         const actionsPerChunk = Math.floor(maxActions / NUM_CHUNKS);
         const remainderActions = maxActions % NUM_CHUNKS;
@@ -730,7 +735,7 @@ export default function OceanTradeCalcTab({ userStats }: Props) {
         }
     }
     return bestScenario;
-  }, [stock, cost, blacklist, userStats, isLoaded, activeSubTab, allowTierUpgrade, o16Bonus, recommendMode]);
+  }, [stock, cost, blacklist, userStats, isLoaded, activeSubTab, allowTierUpgrade, o16Bonus, recommendMode, itemBaseReqsPerUnit]);
 
   const formatQty = (qty: number) => {
     if (qty === 0) return '0개';
