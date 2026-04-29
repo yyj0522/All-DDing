@@ -26,7 +26,7 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
   
   const [globalSetMode, setGlobalSetMode] = useState<boolean>(false);
   const [allowTierUpgrade, setAllowTierUpgrade] = useState<boolean>(false);
-  const [recommendMode, setRecommendMode] = useState<'balance' | 'efficiency'>('balance');
+  const [recommendMode, setRecommendMode] = useState<'balance' | 'max_profit'>('balance');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInventoryVisible, setIsInventoryVisible] = useState(false);
 
@@ -307,21 +307,46 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
       )}
 
       {activeSubTab === 'alchemy_optimal' && (
-        <OceanAlchemyOptimal
-          stock={stock}
-          cost={cost}
-          blacklist={blacklist}
-          allowTierUpgrade={allowTierUpgrade}
-          recommendMode={recommendMode}
-          userStats={userStats}
-          globalSetMode={globalSetMode}
-          craftInputs={craftInputs}
-          pendingCrafts={pendingCrafts}
-          handleCraftInputChange={handleCraftInputChange}
-          handleQueueCraft={handleQueueCraft}
-          handleRemovePending={handleRemovePending}
-          itemBaseReqsPerUnit={itemBaseReqsPerUnit}
-        />
+        <div className="animate-fade-in-up">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 px-2">
+            <div>
+              <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
+                연금품 최적 계산
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">창고 재고를 기반으로 제작할 연금품을 추천합니다.</p>
+            </div>
+            <div className="flex bg-gray-200/50 dark:bg-white/5 p-1 rounded-xl shrink-0">
+              <button 
+                onClick={() => setRecommendMode('balance')}
+                className={`px-4 py-2 rounded-lg text-[11px] font-black transition-all ${recommendMode === 'balance' ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              >
+                실전 압축 모드
+              </button>
+              <button 
+                onClick={() => setRecommendMode('max_profit')}
+                className={`px-4 py-2 rounded-lg text-[11px] font-black transition-all ${recommendMode === 'max_profit' ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              >
+                수익 최우선 모드
+              </button>
+            </div>
+          </div>
+
+          <OceanAlchemyOptimal
+            stock={stock}
+            cost={cost}
+            blacklist={blacklist}
+            allowTierUpgrade={allowTierUpgrade}
+            recommendMode={recommendMode}
+            userStats={userStats}
+            globalSetMode={globalSetMode}
+            craftInputs={craftInputs}
+            pendingCrafts={pendingCrafts}
+            handleCraftInputChange={handleCraftInputChange}
+            handleQueueCraft={handleQueueCraft}
+            handleRemovePending={handleRemovePending}
+            itemBaseReqsPerUnit={itemBaseReqsPerUnit}
+          />
+        </div>
       )}
 
       {activeSubTab === 'stamina_recommend' && (

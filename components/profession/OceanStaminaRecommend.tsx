@@ -12,7 +12,7 @@ interface Props {
   cost: Record<string, number>;
   blacklist: string[];
   allowTierUpgrade: boolean;
-  recommendMode: 'balance' | 'efficiency';
+  recommendMode: 'balance' | 'max_profit';
   userStats: any;
   toolImprints: any;
   globalSetMode: boolean;
@@ -39,6 +39,7 @@ export default function OceanStaminaRecommend({
   stock, cost, blacklist, allowTierUpgrade, recommendMode, userStats, toolImprints, globalSetMode,
   itemBaseReqsPerUnit
 }: Props) {
+  const [isStaminaModalOpen, setIsStaminaModalOpen] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [staminaRecommendation, setStaminaRecommendation] = useState<any>(null);
 
@@ -88,20 +89,19 @@ export default function OceanStaminaRecommend({
 
             if (canCraft) {
                 let penaltyCost = 0;
-                for (const mat of CORE_ITEMS) {
-                    const before = tempStock[mat] || 0;
-                    const after = sim.stock[mat] || 0;
-                    const consumed = before - after;
-                    if (consumed > 0) {
-                        const initial = Math.max(1, baseInvSnapshot[mat] || 1);
-                        const ratio = initial / (after + 1); 
-                        
-                        if (recommendMode === 'balance') {
+                if (recommendMode === 'balance') {
+                    for (const mat of CORE_ITEMS) {
+                        const before = tempStock[mat] || 0;
+                        const after = sim.stock[mat] || 0;
+                        const consumed = before - after;
+                        if (consumed > 0) {
+                            const initial = Math.max(1, baseInvSnapshot[mat] || 1);
+                            const ratio = initial / (after + 1); 
                             penaltyCost += consumed * Math.pow(ratio, 10);
-                        } else {
-                            penaltyCost += consumed * Math.pow(ratio, 3);
                         }
                     }
+                } else {
+                    penaltyCost = 1;
                 }
 
                 if (penaltyCost === 0) penaltyCost = 0.001; 
@@ -123,44 +123,46 @@ export default function OceanStaminaRecommend({
           }
         }
 
-        let trimmed = true;
-        let loopSafetyTrim = 0;
-        while (trimmed && loopSafetyTrim < 1000) {
-          trimmed = false;
-          loopSafetyTrim++;
+        if (recommendMode === 'balance') {
+            let trimmed = true;
+            let loopSafetyTrim = 0;
+            while (trimmed && loopSafetyTrim < 1000) {
+              trimmed = false;
+              loopSafetyTrim++;
 
-          const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
-          const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0) + 1));
+              const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock }, allowTierUpgrade);
+              const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0) + 1));
 
-          if (badMats.length > 0) {
-            const candidates = Object.keys(crafted).filter(k => crafted[k] > 0).sort((a, b) => {
-              const pA = sortedItems.find(i=>i.name===a)?.sellPrice || 0;
-              const pB = sortedItems.find(i=>i.name===b)?.sellPrice || 0;
-              return pA - pB; 
-            });
+              if (badMats.length > 0) {
+                const candidates = Object.keys(crafted).filter(k => crafted[k] > 0).sort((a, b) => {
+                  const pA = sortedItems.find(i=>i.name===a)?.sellPrice || 0;
+                  const pB = sortedItems.find(i=>i.name===b)?.sellPrice || 0;
+                  return pA - pB; 
+                });
 
-            for (const itemName of candidates) {
-              const testCounts = { ...crafted };
-              testCounts[itemName]--;
-              if (testCounts[itemName] === 0) delete testCounts[itemName];
+                for (const itemName of candidates) {
+                  const testCounts = { ...crafted };
+                  testCounts[itemName]--;
+                  if (testCounts[itemName] === 0) delete testCounts[itemName];
 
-              const testSim = simulateCraftPure(testCounts, { ...stock, ...addedStock }, allowTierUpgrade);
-              let oldLeftover = 0;
-              let newLeftover = 0;
-              badMats.forEach(mat => {
-                oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
-                newLeftover += Math.max(0, (testSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
-              });
+                  const testSim = simulateCraftPure(testCounts, { ...stock, ...addedStock }, allowTierUpgrade);
+                  let oldLeftover = 0;
+                  let newLeftover = 0;
+                  badMats.forEach(mat => {
+                    oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
+                    newLeftover += Math.max(0, (testSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
+                  });
 
-              if (newLeftover < oldLeftover) {
-                crafted[itemName]--;
-                if (crafted[itemName] === 0) delete crafted[itemName];
-                trimmed = true;
-                break; 
+                  if (newLeftover < oldLeftover) {
+                    crafted[itemName]--;
+                    if (crafted[itemName] === 0) delete crafted[itemName];
+                    trimmed = true;
+                    break; 
+                  }
+                }
+                if (!trimmed) break;
               }
             }
-            if (!trimmed) break;
-          }
         }
         
         let totalP = 0;
