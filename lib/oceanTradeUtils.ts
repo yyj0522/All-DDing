@@ -18,6 +18,7 @@ export const PARSED_RECIPES = PATCHED_OCEAN_RECIPES.map(r => {
   return {
     name: r.name,
     yieldAmount,
+    time: r.time,
     ingredients: r.ingredients.map(ing => {
       const match = ing.match(/(.+?)(?:\s+(\d+)개)?$/);
       return { name: match ? match[1].trim() : ing, req: match && match[2] ? parseInt(match[2], 10) : 1 };
@@ -86,8 +87,39 @@ export const RECIPE_FIXES: Record<string, {ing: string, req: number, yield: numb
 
 export const ROD_BASE_DROPS = [1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 10];
 export const O11_BONUS = [0, 0.05, 0.07, 0.10, 0.15, 0.20];
+export const O13_EFFECTS = [0, 0.1, 0.2, 0.3, 0.5, 0.7];
 export const O14_BONUS = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10];
 export const O17_BONUS = [0, 0.01, 0.03, 0.05, 0.07, 0.10, 0.15];
+
+export const parseCraftTime = (timeStr: string) => {
+  if (!timeStr || timeStr === '즉시' || timeStr === '0초') return 0;
+  let sec = 0;
+  if (timeStr.includes('시간')) {
+    const match = timeStr.match(/(\d+)시간/);
+    if (match) sec += parseInt(match[1]) * 3600;
+  }
+  if (timeStr.includes('분')) {
+    const match = timeStr.match(/(\d+)분/);
+    if (match) sec += parseInt(match[1]) * 60;
+  }
+  if (timeStr.includes('초')) {
+    const match = timeStr.match(/(\d+)초/);
+    if (match) sec += parseInt(match[1]);
+  }
+  return sec;
+};
+
+export const formatTime = (seconds: number) => {
+  if (seconds <= 0) return '즉시';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  let res = [];
+  if (h > 0) res.push(`${h}시간`);
+  if (m > 0) res.push(`${m}분`);
+  if (s > 0 || res.length === 0) res.push(`${s}초`);
+  return res.join(' ');
+};
 
 export const simulateCraftPure = (targetList: Record<string, number>, initialStock: Record<string, number>, allowTierUpgrade: boolean = false) => {
   const tempStock = { ...initialStock };
@@ -167,28 +199,18 @@ export const getItemBaseReqsPerUnit = (allowTierUpgrade: boolean) => {
   return reqsMap;
 };
 
-export const getBaseEquivalents = (currentStock: Record<string, number>, itemBaseReqsPerUnit: Record<string, Record<string, number>>) => {
-  const eq: Record<string, number> = {};
-  Object.entries(currentStock).forEach(([name, qty]) => {
-    if (qty > 0) {
-      if (itemBaseReqsPerUnit[name] && Object.keys(itemBaseReqsPerUnit[name]).length > 0) {
-        Object.entries(itemBaseReqsPerUnit[name]).forEach(([bName, bQty]) => {
-          eq[bName] = (eq[bName] || 0) + (bQty * qty);
-        });
-      } else {
-        eq[name] = (eq[name] || 0) + qty;
-      }
-    }
-  });
-  return eq;
-};
-
 export const formatQty = (qty: number, globalSetMode: boolean) => {
   if (qty === 0) return '0개';
   if (!globalSetMode) return `${qty.toLocaleString()}개`;
-  const sets = Math.floor(qty / 64);
-  const rem = qty % 64;
-  if (sets === 0) return `${rem}개`;
-  if (rem === 0) return `${sets.toLocaleString()}셋`;
-  return `${sets.toLocaleString()}셋 ${rem}개`;
+  const BOX_SIZE = 3456;
+  const SET_SIZE = 64;
+  const boxes = Math.floor(qty / BOX_SIZE);
+  const remAfterBoxes = qty % BOX_SIZE;
+  const sets = Math.floor(remAfterBoxes / SET_SIZE);
+  const items = remAfterBoxes % SET_SIZE;
+  let result = [];
+  if (boxes > 0) result.push(`${boxes.toLocaleString()}상자`);
+  if (sets > 0) result.push(`${sets.toLocaleString()}셋`);
+  if (items > 0) result.push(`${items.toLocaleString()}개`);
+  return result.join(' ');
 };

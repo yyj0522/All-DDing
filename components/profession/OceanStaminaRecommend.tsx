@@ -5,7 +5,7 @@ import {
   simulateCraftPure, CORE_ITEMS, CORE_BASE_SHELLS,
   VANILLA, BATCH_MATS, formatQty, getCombinations, FISH
 } from '@/lib/oceanTradeUtils';
-import { OCEAN_FIXED_PRICES } from '@/lib/professionData';
+import { OCEAN_FIXED_PRICES, getImagePath } from '@/lib/professionData';
 
 interface Props {
   stock: Record<string, number>;
@@ -39,7 +39,6 @@ export default function OceanStaminaRecommend({
   stock, cost, blacklist, allowTierUpgrade, recommendMode, userStats, toolImprints, globalSetMode,
   itemBaseReqsPerUnit
 }: Props) {
-  const [isStaminaModalOpen, setIsStaminaModalOpen] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [staminaRecommendation, setStaminaRecommendation] = useState<any>(null);
 
@@ -178,7 +177,7 @@ export default function OceanStaminaRecommend({
         const finalEqSum = Object.values(getBaseEquivalents(tempStock, itemBaseReqsPerUnit)).reduce((a: number, b: number) => a + b, 0);
         const stockConsumed = initialEqSum - finalEqSum;
 
-        return { profit: totalP, stockConsumed, crafted, resultingStock: tempStock };
+        return { profit: totalP, totalVanillaCost, stockConsumed, crafted, resultingStock: tempStock };
       };
 
       const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
@@ -266,7 +265,9 @@ export default function OceanStaminaRecommend({
                   bestScenario = {
                       type: 'multi',
                       distribution,
+                      combinedYield,
                       profit: res.profit,
+                      totalVanillaCost: res.totalVanillaCost,
                       stockConsumed: res.stockConsumed,
                       crafted: res.crafted,
                       finalStock: res.resultingStock
@@ -286,132 +287,146 @@ export default function OceanStaminaRecommend({
 
   if (isCalculating) {
     return (
-      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-8 shadow-md transition-colors">
-        <div className="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-white/5 pb-4">
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-6 shadow-md transition-colors">
+        <div className="flex justify-between items-center mb-5 border-b border-gray-200 dark:border-white/5 pb-4">
           <div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tighter">스태미나 추천</h3>
-            <p className="text-[11px] text-gray-500 mt-1.5">현재 창고에 보유 중인 재고를 가장 효율적으로 소모할 수 있는 채집 경로입니다.</p>
+            <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tighter">스태미나 추천</h3>
+            <p className="text-[10px] text-gray-500 mt-1">현재 창고에 보유 중인 재고를 가장 효율적으로 소모할 수 있는 채집 경로입니다.</p>
           </div>
         </div>
-        <div className="py-20 flex flex-col items-center justify-center bg-gray-50 dark:bg-[#111113] rounded-[1.5rem] border border-gray-200 dark:border-transparent">
-          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-sm font-black text-gray-700 dark:text-gray-300">최적의 채집 경로를 계산하고 있습니다...</p>
-          <p className="text-[10px] font-bold text-gray-500 mt-2">보유 재고량에 따라 수 초가 소요될 수 있습니다.</p>
+        <div className="py-16 flex flex-col items-center justify-center bg-gray-50 dark:bg-[#111113] rounded-xl border border-gray-200 dark:border-transparent">
+          <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p className="text-[11px] font-black text-gray-700 dark:text-gray-300">최적의 채집 경로를 계산하고 있습니다...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-8 shadow-md transition-colors">
-        <div className="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-white/5 pb-4">
-          <div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tighter">스태미나 추천</h3>
-            <p className="text-[11px] text-gray-500 mt-1.5">현재 창고에 보유 중인 재고를 가장 효율적으로 소모할 수 있는 채집 경로입니다.</p>
-          </div>
-          {staminaRecommendation && staminaRecommendation.profit > 0 && (
-            <button onClick={() => setIsStaminaModalOpen(true)} className="bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 text-[10px] font-black px-3 py-1.5 rounded border border-gray-200 dark:border-transparent transition-colors">자세히 보기</button>
-          )}
+    <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-6 shadow-md transition-colors">
+      <div className="flex justify-between items-center mb-5 border-b border-gray-200 dark:border-white/5 pb-4">
+        <div>
+          <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tighter">스태미나 추천</h3>
+          <p className="text-[10px] text-gray-500 mt-1">현재 창고에 보유 중인 재고를 가장 효율적으로 소모할 수 있는 채집 경로입니다.</p>
         </div>
-        
-        {!userStats.stamina || userStats.stamina < 15 ? (
-          <div className="py-16 text-center bg-gray-50 dark:bg-[#111113] rounded-[1.5rem] border border-gray-200 dark:border-transparent">
-            <p className="text-sm font-bold text-rose-500">가용 스태미나가 15 미만입니다. 우측 상단 개인설정에서 스태미나를 올바르게 입력해 주세요.</p>
-          </div>
-        ) : !staminaRecommendation ? (
-          <div className="py-16 text-center bg-gray-50 dark:bg-[#111113] rounded-[1.5rem] border border-gray-200 dark:border-transparent">
-            <p className="text-sm font-bold text-gray-500">분석 가능한 데이터를 찾을 수 없습니다.</p>
-          </div>
-        ) : staminaRecommendation.profit === 0 ? (
-          <div className="py-16 text-center bg-gray-50 dark:bg-[#111113] rounded-[1.5rem] border border-gray-200 dark:border-transparent flex flex-col items-center justify-center">
-            <p className="text-[11px] font-bold text-gray-500 mb-2">현재 가용 스태미나와 재고로는 어떤 완성품도 제작할 수 없습니다.</p>
-            <p className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-transparent">
-              기초 재료를 채집하여 재고를 비축해 보세요.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-xl p-6 md:p-8 shadow-sm transition-colors text-center md:text-left">
-            <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-loose break-keep">
+      </div>
+      
+      {!userStats.stamina || userStats.stamina < 15 ? (
+        <div className="py-12 text-center bg-gray-50 dark:bg-[#111113] rounded-xl border border-gray-200 dark:border-transparent">
+          <p className="text-[10px] font-bold text-rose-500">가용 스태미나가 15 미만입니다. 우측 상단 개인설정에서 스태미나를 올바르게 입력해 주세요.</p>
+        </div>
+      ) : !staminaRecommendation ? (
+        <div className="py-12 text-center bg-gray-50 dark:bg-[#111113] rounded-xl border border-gray-200 dark:border-transparent">
+          <p className="text-[10px] font-bold text-gray-500">분석 가능한 데이터를 찾을 수 없습니다.</p>
+        </div>
+      ) : staminaRecommendation.profit === 0 ? (
+        <div className="py-12 text-center bg-gray-50 dark:bg-[#111113] rounded-xl border border-gray-200 dark:border-transparent flex flex-col items-center justify-center">
+          <p className="text-[10px] font-bold text-gray-500 mb-1.5">현재 가용 스태미나와 재고로는 어떤 완성품도 제작할 수 없습니다.</p>
+          <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-200 dark:border-transparent">
+            기초 재료를 채집하여 재고를 비축해 보세요.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-xl p-4 shadow-sm transition-colors text-center md:text-left">
+            <p className="text-[11px] font-bold text-gray-700 dark:text-gray-300 leading-loose break-keep">
               현재 가용 스태미나 <span className="font-black text-gray-900 dark:text-white">{userStats.stamina.toLocaleString()}</span> 중, 창고의 재고를 분석했을 때 <br className="hidden md:block"/>
               {Object.keys(staminaRecommendation.distribution).length === 1 ? (
-                <span>전체 스태미나를 <span className="font-black text-indigo-600 dark:text-indigo-400">[{Object.keys(staminaRecommendation.distribution)[0]}]</span> 채집에 집중하는 것을 추천드립니다.</span>
+                <span className="flex items-center gap-1 mt-1 justify-center md:justify-start">
+                  전체 스태미나를
+                  <span className="flex items-center gap-1 font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded">
+                    <img src={getImagePath(`${Object.keys(staminaRecommendation.distribution)[0]}(1성)`)||undefined} className="w-3.5 h-3.5 object-contain" />
+                    {Object.keys(staminaRecommendation.distribution)[0]}
+                  </span>
+                  채집에 집중하는 것을 추천드립니다.
+                </span>
               ) : (
-                <span>
+                <span className="flex flex-wrap items-center gap-1 mt-1 justify-center md:justify-start">
                   {Object.entries(staminaRecommendation.distribution).map(([cat, stam], idx, arr) => (
-                      <span key={cat}>
-                          <span className="font-black text-emerald-600 dark:text-emerald-400">{(stam as number).toLocaleString()}</span> 스태미나는 <span className="font-black text-emerald-600 dark:text-emerald-400">[{cat}]</span> 채집에{idx === arr.length - 1 ? ' 사용하는 것을 추천드립니다.' : ', '}
+                      <span key={cat} className="flex items-center gap-1">
+                          <span className="font-black text-emerald-600 dark:text-emerald-400">{(stam as number).toLocaleString()}</span> 스태미나는 
+                          <span className="flex items-center gap-1 font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                            <img src={getImagePath(`${cat}(1성)`)||undefined} className="w-3.5 h-3.5 object-contain" />
+                            {cat}
+                          </span>
+                          채집에{idx === arr.length - 1 ? ' 사용하는 것을 추천드립니다.' : ', '}
                       </span>
                   ))}
                 </span>
               )}
             </p>
-            <div className="mt-6 pt-5 border-t border-gray-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="mt-4 pt-3 border-t border-gray-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex flex-wrap justify-center md:justify-start gap-1.5">
                 {Object.entries(staminaRecommendation.crafted).map(([item, qty]) => (
-                  <span key={item} className="bg-white dark:bg-[#1a1a1e] border border-gray-200 dark:border-transparent px-2.5 py-1 rounded-md text-[10px] font-black text-gray-900 dark:text-white shadow-sm transition-colors">
-                    {item} <span className="text-gray-500 ml-1">{formatQty(qty as number, globalSetMode)}</span>
+                  <span key={item} className="bg-white dark:bg-[#1a1a1e] border border-gray-200 dark:border-transparent px-2 py-1 rounded text-[9px] font-black text-gray-900 dark:text-white shadow-sm transition-colors flex items-center gap-1">
+                    <img src={getImagePath(item)||undefined} className="w-3 h-3 object-contain" />
+                    {item} <span className="text-gray-500 ml-0.5">{formatQty(qty as number, globalSetMode)}</span>
                   </span>
                 ))}
               </div>
-              <div className="text-center sm:text-right shrink-0">
-                <p className="text-[10px] font-black text-gray-500 tracking-widest uppercase mb-0.5">총 예상 순수익</p>
-                <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter">{Math.round(staminaRecommendation.profit).toLocaleString()} G</p>
-              </div>
             </div>
           </div>
-        )}
-      </div>
 
-      {isStaminaModalOpen && staminaRecommendation && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 dark:bg-black/80 backdrop-blur-sm" onClick={() => setIsStaminaModalOpen(false)}></div>
-          <div className="relative z-10 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-transparent rounded-[2rem] p-6 md:p-8 shadow-xl dark:shadow-2xl max-w-lg w-full transition-colors animate-fade-in-up">
-            <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-white/5 pb-4">
-              <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">스태미나 추천 알고리즘 상세</h3>
-              <button onClick={() => setIsStaminaModalOpen(false)} className="text-sm font-black text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">닫기</button>
-            </div>
+          <div className="mt-5 space-y-3">
+            <h4 className="text-[11px] font-black text-gray-900 dark:text-white tracking-tight mb-3 ml-1">스태미나 분배 상세 리포트</h4>
             
-            <div className="space-y-5">
-              <div className="bg-gray-50 dark:bg-[#111113] p-4 rounded-xl border border-gray-200 dark:border-transparent shadow-inner">
-                <p className="text-[11px] font-black text-gray-500 mb-2 tracking-widest uppercase">1. 나의 현재 스펙 기준 예상 획득량</p>
-                <ul className="text-xs font-bold text-gray-700 dark:text-gray-300 space-y-1.5 pl-1">
-                  <li> 가용 스태미나: <span className="text-gray-900 dark:text-white font-black">{userStats.stamina.toLocaleString()}</span> (총 {Math.floor(userStats.stamina / 15)}회 액션)</li>
-                  <li> 각인석 옵션(어패 행운/어부 룰렛) 및 스킬 효과를 모두 반영하여 기댓값을 정밀 계산했습니다.</li>
-                </ul>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-[#111113] p-4 rounded-xl border border-gray-200 dark:border-transparent shadow-inner">
-                <p className="text-[11px] font-black text-gray-500 mb-2 tracking-widest uppercase">2. 채집 시나리오 도출 배경</p>
-                {Object.keys(staminaRecommendation.distribution).length === 1 ? (
-                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300 leading-relaxed pl-1">
-                    단일 타겟 <span className="text-indigo-600 dark:text-indigo-400 font-black">[{Object.keys(staminaRecommendation.distribution)[0]}]</span> 채집 시 창고의 기존 재고 소진 밸런스와 순수익 마진율이 모두 최고점에 달하여, 스태미나를 분산시키지 않고 올인하는 것이 가장 유리하다고 판단했습니다.
-                  </p>
-                ) : (
-                  <ul className="text-xs font-bold text-gray-700 dark:text-gray-300 space-y-2.5 pl-1">
-                    {Object.entries(staminaRecommendation.distribution).map(([cat, stam], idx) => (
-                      <li key={cat}>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-black">{idx + 1}순위 타겟 [{cat}]:</span> 스태미나 {(stam as number).toLocaleString()} 할당
-                      </li>
-                    ))}
-                    <li className="text-[11px] text-gray-500 mt-2">
-                      창고에 보유 중인 고가치 연금품의 부족한 기초 재료를 가장 균형 있게 채워 넣기 위한 다중 분할 스태미나 최적화 결과입니다.
-                    </li>
-                  </ul>
-                )}
-              </div>
-
-              <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200 dark:border-transparent shadow-sm">
-                <p className="text-[11px] font-black text-amber-700 dark:text-amber-400 mb-1.5 tracking-widest uppercase">3. 특이사항: 희소성 가중치 적용</p>
-                <p className="text-[11px] font-bold text-amber-800/80 dark:text-amber-300/80 leading-relaxed">
-                  재고를 소진할 때 특정 어패류가 고갈되지 않도록, 희소성이 높아진 재료를 사용하는 레시피에는 페널티를 부여하여 남는 재료가 최소화되도록 설계되었습니다.
-                </p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 p-3.5 rounded-xl border border-amber-100 dark:border-transparent shadow-sm">
+              <p className="text-[10px] font-black text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> STEP 1. 부족한 기초 재료 수급 계획
+              </p>
+              <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300 mb-2.5 leading-relaxed">
+                현재 창고 재고를 최대한 효율적으로 소모하여 최고 수익 연금품을 만들기 위해 아래 재료를 집중 채집합니다.
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {Object.entries(staminaRecommendation.distribution).map(([cat, stam]) => {
+                  const yieldSum = (staminaRecommendation.combinedYield[`${cat}(1성)`] || 0) + 
+                                   (staminaRecommendation.combinedYield[`${cat}(2성)`] || 0) + 
+                                   (staminaRecommendation.combinedYield[`${cat}(3성)`] || 0);
+                  return (
+                    <div key={cat} className="flex items-center justify-between bg-white dark:bg-[#111113] p-2 rounded-lg border border-gray-100 dark:border-white/5">
+                      <div className="flex items-center gap-2">
+                        <img src={getImagePath(`${cat}(1성)`)||undefined} className="w-4 h-4 object-contain" />
+                        <span className="text-[11px] font-black text-gray-900 dark:text-white">{cat} 채집</span>
+                        <span className="text-[9px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded">{(stam as number).toLocaleString()} 스태미나 소모</span>
+                      </div>
+                      <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">총 {yieldSum.toLocaleString()}개 획득 예상</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <button onClick={() => setIsStaminaModalOpen(false)} className="w-full mt-6 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-black py-3 rounded-xl transition-all active:scale-95 shadow-md">확인</button>
+
+            <div className="bg-purple-50 dark:bg-purple-950/20 p-3.5 rounded-xl border border-purple-100 dark:border-transparent shadow-sm">
+              <p className="text-[10px] font-black text-purple-700 dark:text-purple-400 mb-2 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> STEP 2. 기존 재고 연쇄 소모 및 제작 결과
+              </p>
+              <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300 mb-2.5 leading-relaxed">
+                새로 채집한 재료와 기존 창고 재고를 결합하여 최종적으로 다음 연금품들을 생산합니다.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {Object.entries(staminaRecommendation.crafted).map(([item, qty]) => (
+                  <div key={item} className="flex items-center gap-2 bg-white dark:bg-[#111113] p-2 rounded-lg border border-gray-100 dark:border-white/5">
+                    <img src={getImagePath(item)||undefined} className="w-4 h-4 object-contain" />
+                    <span className="text-[11px] font-black text-gray-900 dark:text-white">{item}</span>
+                    <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 ml-auto">{formatQty(qty as number, globalSetMode)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-[#111113] p-4 rounded-xl border border-gray-200 dark:border-transparent shadow-inner flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black text-gray-500 mb-1 tracking-widest uppercase">STEP 3. 예상 최종 수익</p>
+                <p className="text-[10px] font-bold text-gray-500">매출액 - 바닐라 재료 매입 비용 = 최종 순수익</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-rose-500 mb-1">바닐라 매입 비용: -{Math.round(staminaRecommendation.totalVanillaCost).toLocaleString()} G</p>
+                <p className="text-2xl font-black text-cyan-600 dark:text-cyan-400">{Math.round(staminaRecommendation.profit).toLocaleString()} <span className="text-sm">G</span></p>
+              </div>
+            </div>
           </div>
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 }

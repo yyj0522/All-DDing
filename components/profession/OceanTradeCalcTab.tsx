@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { 
   getImagePath, INVENTORY_GROUPS, VANILLA, TIER1, TIER2, TIER3, FISH, 
-  getItemBaseReqsPerUnit, formatQty, simulateCraftPure 
+  getItemBaseReqsPerUnit, simulateCraftPure, formatQty 
 } from '@/lib/oceanTradeUtils';
 import OceanAlchemyOptimal from './OceanAlchemyOptimal';
 import OceanStaminaRecommend from './OceanStaminaRecommend';
@@ -21,7 +21,7 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
   const [blacklist, setBlacklist] = useState<string[]>([]);
   const [tradeQty, setTradeQty] = useState<Record<string, number>>({});
   
-  const [craftInputs, setCraftInputs] = useState<Record<string, { sets: string, units: string }>>({});
+  const [craftInputs, setCraftInputs] = useState<Record<string, { boxes: string, sets: string, units: string }>>({});
   const [pendingCrafts, setPendingCrafts] = useState<Record<string, number>>({});
   
   const [globalSetMode, setGlobalSetMode] = useState<boolean>(false);
@@ -102,13 +102,14 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
   const itemBaseReqsPerUnit = useMemo(() => getItemBaseReqsPerUnit(allowTierUpgrade), [allowTierUpgrade]);
 
   const handleQueueCraft = (itemName: string, maxQty: number) => {
-    const input = craftInputs[itemName] || { sets: '', units: '' };
+    const input = craftInputs[itemName] || { boxes: '', sets: '', units: '' };
     let totalQtyToCraft = 0;
     
-    if (input.sets || input.units) {
-        const setsVal = parseInt(input.sets) || 0;
-        const unitsVal = parseInt(input.units) || 0;
-        totalQtyToCraft = (setsVal * 64) + unitsVal;
+    if (input.boxes || input.sets || input.units) {
+        const b = parseInt(input.boxes) || 0;
+        const s = parseInt(input.sets) || 0;
+        const u = parseInt(input.units) || 0;
+        totalQtyToCraft = (b * 3456) + (s * 64) + u;
     } else {
         totalQtyToCraft = maxQty; 
     }
@@ -137,11 +138,11 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
     });
   };
 
-  const handleCraftInputChange = (itemName: string, field: 'sets' | 'units', value: string) => {
+  const handleCraftInputChange = (itemName: string, field: 'boxes' | 'sets' | 'units', value: string) => {
       setCraftInputs(prev => ({
           ...prev,
           [itemName]: {
-              ...(prev[itemName] || { sets: '', units: '' }),
+              ...(prev[itemName] || { boxes: '', sets: '', units: '' }),
               [field]: value
           }
       }));
@@ -165,33 +166,39 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
     const displayCost = c === 0 ? '' : (globalSetMode ? Number((c * 64).toFixed(4)) : Number(c.toFixed(4)));
     
     return (
-      <div key={item} className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-[1rem] p-3 flex flex-col gap-2.5 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 flex items-center justify-center bg-gray-50 dark:bg-black rounded-lg border border-gray-100 dark:border-transparent shrink-0">
-              <img src={getImagePath(item) || undefined} alt="" className="w-4 h-4 object-contain drop-shadow-sm"/>
-            </div>
+      <div key={item} className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-xl p-2.5 flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex justify-between items-center px-0.5">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <img src={getImagePath(item) || undefined} alt="" className="w-4 h-4 object-contain shrink-0"/>
             <span className="text-[11px] font-black text-gray-800 dark:text-gray-200 truncate tracking-tight">{item}</span>
           </div>
-          <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 tracking-tight shrink-0">{lineTotal > 0 ? lineTotal.toLocaleString() : '0'} G</span>
+          <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 tracking-tight shrink-0">{lineTotal > 0 ? `${lineTotal.toLocaleString()} G` : '0 G'}</span>
         </div>
-        <div className="flex gap-2">
-          <input type="number" step="any" value={displayCost} onChange={(e) => handleCostChange(item, e.target.value)} placeholder={globalSetMode ? "단가(1셋)" : "단가"} className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold focus:ring-1 focus:ring-cyan-500 outline-none transition-colors" />
+        <div className="flex flex-col gap-1.5">
+          <input type="number" step="any" value={displayCost} onChange={(e) => handleCostChange(item, e.target.value)} placeholder={globalSetMode ? "단가(1셋)" : "단가"} className="w-full h-7 bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 text-gray-900 dark:text-white text-[11px] font-bold focus:ring-1 focus:ring-cyan-500 outline-none transition-colors" />
           {globalSetMode ? (
-            <div className="w-full flex items-center gap-1">
-              <input type="number" min="0" placeholder="세트" value={q >= 64 ? Math.floor(q / 64) : ''} onChange={(e) => {
-                 const s = parseInt(e.target.value) || 0;
+            <div className="grid grid-cols-3 gap-1 w-full">
+              <input type="number" min="0" placeholder="상자" value={q >= 3456 ? Math.floor(q / 3456) : ''} onChange={(e) => {
+                 const val = parseInt(e.target.value) || 0;
+                 const s = Math.floor((q % 3456) / 64);
                  const u = q % 64;
-                 setTradeQty(prev => ({...prev, [item]: s * 64 + u}));
-              }} className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold text-center focus:ring-1 focus:ring-emerald-500 outline-none transition-colors placeholder:font-normal" />
+                 setTradeQty(prev => ({...prev, [item]: (val * 3456) + (s * 64) + u}));
+              }} className="w-full h-7 bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 text-gray-900 dark:text-white text-[10px] font-bold text-center focus:ring-1 focus:ring-emerald-500 outline-none transition-colors placeholder:font-normal" />
+              <input type="number" min="0" placeholder="세트" value={(q % 3456) >= 64 ? Math.floor((q % 3456) / 64) : ''} onChange={(e) => {
+                 const val = parseInt(e.target.value) || 0;
+                 const b = Math.floor(q / 3456);
+                 const u = q % 64;
+                 setTradeQty(prev => ({...prev, [item]: (b * 3456) + (val * 64) + u}));
+              }} className="w-full h-7 bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 text-gray-900 dark:text-white text-[10px] font-bold text-center focus:ring-1 focus:ring-emerald-500 outline-none transition-colors placeholder:font-normal" />
               <input type="number" min="0" placeholder="개" value={q % 64 !== 0 ? q % 64 : ''} onChange={(e) => {
-                 const u = parseInt(e.target.value) || 0;
-                 const s = Math.floor(q / 64);
-                 setTradeQty(prev => ({...prev, [item]: s * 64 + u}));
-              }} className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold text-center focus:ring-1 focus:ring-emerald-500 outline-none transition-colors placeholder:font-normal" />
+                 const val = parseInt(e.target.value) || 0;
+                 const b = Math.floor(q / 3456);
+                 const s = Math.floor((q % 3456) / 64);
+                 setTradeQty(prev => ({...prev, [item]: (b * 3456) + (s * 64) + val}));
+              }} className="w-full h-7 bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 text-gray-900 dark:text-white text-[10px] font-bold text-center focus:ring-1 focus:ring-emerald-500 outline-none transition-colors placeholder:font-normal" />
             </div>
           ) : (
-            <input type="number" min="0" value={q || ''} onChange={(e) => setTradeQty(prev => ({...prev, [item]: parseInt(e.target.value)||0}))} placeholder="수량" className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 py-1.5 text-gray-900 dark:text-white text-[11px] font-bold focus:ring-1 focus:ring-emerald-500 outline-none transition-colors" />
+            <input type="number" min="0" value={q || ''} onChange={(e) => setTradeQty(prev => ({...prev, [item]: parseInt(e.target.value)||0}))} placeholder="수량" className="w-full h-7 bg-gray-50 dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-2 text-gray-900 dark:text-white text-[11px] font-bold focus:ring-1 focus:ring-emerald-500 outline-none transition-colors" />
           )}
         </div>
       </div>
@@ -239,45 +246,53 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
 
       {(activeSubTab === 'alchemy_optimal' || activeSubTab === 'stamina_recommend') && (
         <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[1.5rem] p-5 md:p-6 shadow-sm transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2.5 cursor-pointer" onClick={() => setIsInventoryVisible(!isInventoryVisible)}>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
               <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>간편 재고 관리 (어패류 및 연금품)
             </h3>
             <div className="flex items-center gap-2">
-              <button onClick={(e) => { e.stopPropagation(); clearInventory(); }} className="text-xs text-rose-500 font-bold bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-3 py-1.5 rounded-lg transition-colors">전체 초기화</button>
-              <button onClick={() => setIsInventoryVisible(!isInventoryVisible)} className="text-xs text-indigo-500 font-bold bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded-lg transition-colors">{isInventoryVisible ? '접기' : '펼치기'}</button>
+              <button onClick={(e) => { e.stopPropagation(); clearInventory(); }} className="text-[10px] md:text-xs text-rose-500 font-bold bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-2.5 py-1.5 rounded-lg transition-colors">전체 초기화</button>
+              <button onClick={() => setIsInventoryVisible(!isInventoryVisible)} className="text-[10px] md:text-xs text-indigo-500 font-bold bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-2.5 py-1.5 rounded-lg transition-colors">{isInventoryVisible ? '접기' : '펼치기'}</button>
             </div>
           </div>
+          
           {isInventoryVisible && (
-            <div className="space-y-6 pt-4 mt-2 border-t border-gray-100 dark:border-white/5">
+            <div className="space-y-5 pt-5 mt-4 border-t border-gray-100 dark:border-white/5">
               {INVENTORY_GROUPS.map((group) => (
                 <div key={group.title}>
-                  <h4 className="text-[10px] font-black text-indigo-400/80 mb-2.5 tracking-widest uppercase">{group.title}</h4>
+                  <h4 className="text-[9px] font-black text-indigo-400/80 mb-2 tracking-widest uppercase pl-1">{group.title}</h4>
                   <div className="flex flex-col gap-2">
                     {group.subGroups.map((subGroup, sgIdx) => (
-                      <div key={sgIdx} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                      <div key={sgIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
                         {subGroup.map(item => (
-                          <div key={item} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-xl p-2 flex items-center justify-between hover:bg-white dark:hover:bg-black hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all shadow-sm">
-                            <div className="flex items-center gap-1.5 min-w-0">
+                          <div key={item} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-xl p-2 flex items-center justify-between gap-2 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors shadow-sm">
+                            <div className="flex items-center gap-1.5 min-w-0 pr-1">
                               <img src={getImagePath(item) || undefined} alt="" className="w-4 h-4 object-contain shrink-0"/>
-                              <span className="text-[10px] text-gray-700 dark:text-gray-200 font-bold truncate tracking-tight">{item}</span>
+                              <span className="text-[11px] text-gray-800 dark:text-gray-200 font-bold truncate tracking-tight">{item}</span>
                             </div>
                             {globalSetMode ? (
-                              <div className="flex items-center gap-1 w-[80px] shrink-0">
-                                <input type="number" min="0" placeholder="세트" value={stock[item] >= 64 ? Math.floor(stock[item]/64) : ''} onChange={(e) => {
-                                  const s = parseInt(e.target.value) || 0;
-                                  const u = stock[item] ? stock[item] % 64 : 0;
-                                  setStock(prev => ({...prev, [item]: s * 64 + u}));
-                                }} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 py-1 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300 placeholder:font-normal" />
-                                <span className="text-[10px] text-gray-400 font-black">/</span>
+                              <div className="grid grid-cols-3 gap-1 w-[105px] md:w-[120px] shrink-0">
+                                <input type="number" min="0" placeholder="상자" value={stock[item] >= 3456 ? Math.floor(stock[item]/3456) : ''} onChange={(e) => {
+                                  const val = parseInt(e.target.value) || 0;
+                                  const currentSets = stock[item] ? Math.floor((stock[item] % 3456) / 64) : 0;
+                                  const currentUnits = stock[item] ? stock[item] % 64 : 0;
+                                  setStock(prev => ({...prev, [item]: (val * 3456) + (currentSets * 64) + currentUnits}));
+                                }} className="w-full h-6 bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded px-0 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-400 placeholder:font-normal" />
+                                <input type="number" min="0" placeholder="세트" value={(stock[item] % 3456) >= 64 ? Math.floor((stock[item]%3456)/64) : ''} onChange={(e) => {
+                                  const val = parseInt(e.target.value) || 0;
+                                  const currentBoxes = stock[item] ? Math.floor(stock[item]/3456) : 0;
+                                  const currentUnits = stock[item] ? stock[item] % 64 : 0;
+                                  setStock(prev => ({...prev, [item]: (currentBoxes * 3456) + (val * 64) + currentUnits}));
+                                }} className="w-full h-6 bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded px-0 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-400 placeholder:font-normal" />
                                 <input type="number" min="0" placeholder="개" value={(stock[item] || 0) % 64 !== 0 ? stock[item] % 64 : ''} onChange={(e) => {
-                                  const u = parseInt(e.target.value) || 0;
-                                  const s = stock[item] ? Math.floor(stock[item]/64) : 0;
-                                  setStock(prev => ({...prev, [item]: s * 64 + u}));
-                                }} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1 py-1 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300 placeholder:font-normal" />
+                                  const val = parseInt(e.target.value) || 0;
+                                  const currentBoxes = stock[item] ? Math.floor(stock[item]/3456) : 0;
+                                  const currentSets = stock[item] ? Math.floor((stock[item] % 3456) / 64) : 0;
+                                  setStock(prev => ({...prev, [item]: (currentBoxes * 3456) + (currentSets * 64) + val}));
+                                }} className="w-full h-6 bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded px-0 text-gray-900 dark:text-white text-[10px] font-black text-center outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-400 placeholder:font-normal" />
                               </div>
                             ) : (
-                              <input type="number" min="0" value={stock[item] || ''} onChange={(e) => setStock(prev => ({...prev, [item]: parseInt(e.target.value) || 0}))} placeholder="0" className="w-12 shrink-0 bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded-lg px-1.5 py-1 text-gray-900 dark:text-white text-[10px] font-black text-right outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-300" />
+                              <input type="number" min="0" value={stock[item] || ''} onChange={(e) => setStock(prev => ({...prev, [item]: parseInt(e.target.value) || 0}))} placeholder="0" className="w-[60px] h-6 shrink-0 bg-white dark:bg-black border border-gray-200 dark:border-transparent rounded px-1.5 text-gray-900 dark:text-white text-[11px] font-black text-right outline-none focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-gray-400" />
                             )}
                           </div>
                         ))}
@@ -325,29 +340,29 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
 
       {activeSubTab === 'trade' && (
         <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] overflow-hidden shadow-md transition-colors">
-          <div className="p-6 md:p-8">
-            <div className="space-y-8">
+          <div className="p-4 md:p-6">
+            <div className="space-y-6">
               {[{ title: '1성 어패류', list: TIER1 },
                 { title: '2성 어패류', list: TIER2 },
                 { title: '3성 어패류', list: TIER3 },
                 { title: '물고기', list: FISH }].map((group) => (
                 <div key={group.title}>
-                  <div className="flex items-center gap-3 mb-4 px-1">
-                    <h4 className="text-[11px] font-black text-gray-500 tracking-widest">{group.title}</h4>
+                  <div className="flex items-center gap-2 mb-3">
+                    <h4 className="text-[10px] font-black text-gray-500 tracking-widest pl-1">{group.title}</h4>
                     <div className="flex-1 h-[1px] bg-gray-200 dark:bg-white/5"></div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">{group.list.map(renderTradeItem)}</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">{group.list.map(renderTradeItem)}</div>
                 </div>
               ))}
             </div>
           </div>
           <div className="bg-gray-50 dark:bg-[#111113] border-t border-gray-200 dark:border-white/10 p-5 md:p-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-center sm:text-left">
                 <p className="text-[10px] text-gray-500 font-black mb-1">총 거래 금액</p>
                 <p className="text-2xl md:text-3xl font-black text-cyan-600 dark:text-cyan-400">{totalTradeAmount.toLocaleString()} G</p>
               </div>
-              <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full sm:w-auto">
+              <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
                 <button onClick={clearTradeQty} className="flex-1 sm:flex-none bg-gray-200 dark:bg-white/10 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-[11px] font-black px-5 py-3 rounded-xl transition-all shadow-sm">수량 초기화</button>
                 <button onClick={addTradeToStock} className="flex-[2] sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black px-6 py-3 rounded-xl transition-all shadow-md">재고에 합산</button>
               </div>
