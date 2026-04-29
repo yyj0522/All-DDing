@@ -457,7 +457,7 @@ export default function Home() {
         return {
           title: '해양 종합 거래 계산기',
           content: isMain ? (
-            <div className="-mx-2 px-2"><OceanTradeCalcTab userStats={userStats} /></div>
+            <div className="-mx-2 px-2"><OceanTradeCalcTab userStats={userStats} toolImprints={{}} /></div>
           ) : (
             <div className="flex flex-col h-full items-center justify-center text-center">
               <div className="w-12 h-12 rounded-full bg-cyan-100 dark:bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 flex items-center justify-center mb-3"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg></div>
