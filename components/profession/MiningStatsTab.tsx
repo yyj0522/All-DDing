@@ -90,7 +90,11 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
     const rouletteImprintLv = pickImprints['pick_roulette'] || 0;
     const rouletteOres = totalMiningAttempts * IMPRINT_PICK_ROULETTE_CHANCE[rouletteImprintLv] * 23.1;
 
-    const finalExpectedIngots = Math.floor((results.expectedIngots || 0) + extraOresFromImprint + rouletteOres);
+    // 핵심 버그 수정: 추가로 획득한 '광석'을 '주괴'로 변환하기 위해 16으로 나눕니다.
+    const totalExtraOres = extraOresFromImprint + rouletteOres;
+    const extraIngots = totalExtraOres / 16;
+    
+    const finalExpectedIngots = Math.floor((results.expectedIngots || 0) + extraIngots);
     
     const baseCobyChance = [0, 0.01, 0.01, 0.02, 0.02, 0.03, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.10, 0.13, 0.15][userStats.pickaxeLv > 0 ? userStats.pickaxeLv - 1 : 0] || 0;
     const gemCobyImprintLv = pickImprints['pick_gem_coby'] || 0;

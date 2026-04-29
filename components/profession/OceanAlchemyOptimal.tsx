@@ -64,19 +64,34 @@ export default function OceanAlchemyOptimal({
   itemBaseReqsPerUnit
 }: Props) {
   
+  const TABS = ['전체', '0성', '1성', '2성', '3성'] as const;
+  const [activeTierTab, setActiveTierTab] = useState<typeof TABS[number]>('전체');
+
   const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
   const o13Reduction = O13_EFFECTS[userStats.o13Lv] || 0;
 
+  // 부모 컴포넌트의 리렌더링으로 인한 연산 초기화를 막기 위해 데이터를 문자열로 고정
+  const stockStr = JSON.stringify(stock);
+  const costStr = JSON.stringify(cost);
+  const blacklistStr = JSON.stringify(blacklist);
+  const reqsStr = JSON.stringify(itemBaseReqsPerUnit);
+
+  // 3,132,944G 연산 로직 (수정 없음)
   const optimalCalculations = useMemo(() => {
+    const currentStock = JSON.parse(stockStr);
+    const currentCost = JSON.parse(costStr);
+    const currentBlacklist = JSON.parse(blacklistStr);
+    const currentReqs = JSON.parse(reqsStr);
+
     const itemsWithProfit = OCEAN_FIXED_PRICES.map(item => {
       const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
-      const baseMats = itemBaseReqsPerUnit[item.name] || {};
+      const baseMats = currentReqs[item.name] || {};
       let totalCost = 0;
       let hasBlacklist = false;
 
       Object.entries(baseMats).forEach(([mat, qty]) => {
-        if (blacklist.includes(mat)) hasBlacklist = true;
-        totalCost += (cost[mat] || 0) * (qty as number);
+        if (currentBlacklist.includes(mat)) hasBlacklist = true;
+        totalCost += (currentCost[mat] || 0) * (qty as number);
       });
 
       return { name: item.name, sellPrice, totalCost, profit: sellPrice - totalCost, hasBlacklist, baseMats };
@@ -104,9 +119,8 @@ export default function OceanAlchemyOptimal({
         const validT2 = T2_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
         const validT3 = T3_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
 
-        // 치명적 버그 수정 완료: 물고기(FISH)는 바닐라 재료이므로 제한 팩터(targetMats)에서 완벽히 제외
         const targetMats = [...CORE_BASE_SHELLS];
-        const getReqs = (item: any) => targetMats.map(m => itemBaseReqsPerUnit[item.name]?.[m] || 0);
+        const getReqs = (item: any) => targetMats.map(m => currentReqs[item.name]?.[m] || 0);
 
         const reqsT0 = validT0 ? getReqs(validT0) : new Array(targetMats.length).fill(0);
         const reqsT1 = validT1.map(getReqs);
@@ -164,7 +178,7 @@ export default function OceanAlchemyOptimal({
             return { profit: 0, counts: [] };
         };
 
-        const limits = targetMats.map(m => stock[m] || 0);
+        const limits = targetMats.map(m => currentStock[m] || 0);
         let maxT0 = Infinity;
         if (validT0) {
             for(let i=0; i<targetMats.length; i++) {
@@ -198,9 +212,9 @@ export default function OceanAlchemyOptimal({
         }
 
     } else {
-      let tempStock = { ...stock };
+      let tempStock = { ...currentStock };
       let optimalCounts: Record<string, number> = {};
-      const baseInvSnapshot = { ...stock }; 
+      const baseInvSnapshot = { ...currentStock }; 
 
       let keepGoing = true;
       let loopSafety = 0;
@@ -213,7 +227,7 @@ export default function OceanAlchemyOptimal({
         let bestSim = null;
         let bestBatchSize = 1;
 
-        const eqStock = getBaseEquivalents(tempStock, itemBaseReqsPerUnit);
+        const eqStock = getBaseEquivalents(tempStock, currentReqs);
 
         for (const item of itemsToConsider) {
           let maxPossible = Infinity;
@@ -232,7 +246,7 @@ export default function OceanAlchemyOptimal({
 
           const sim = simulateCraftPure({ [item.name]: batchSize }, tempStock, allowTierUpgrade);
           const missingKeys = Object.keys(sim.missing);
-          const canCraft = missingKeys.every(k => !CORE_ITEMS.includes(k) && !blacklist.includes(k));
+          const canCraft = missingKeys.every(k => !CORE_ITEMS.includes(k) && !currentBlacklist.includes(k));
 
           if (canCraft) {
               let penaltyCost = 0;
@@ -272,8 +286,8 @@ export default function OceanAlchemyOptimal({
         trimmed = false;
         loopSafetyTrim++;
 
-        const currentSim = simulateCraftPure(optimalCounts, stock, allowTierUpgrade);
-        const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + 1));
+        const currentSim = simulateCraftPure(optimalCounts, currentStock, allowTierUpgrade);
+        const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((currentStock[mat] || 0) + 1));
 
         if (badMats.length > 0) {
           const candidates = Object.keys(optimalCounts).filter(k => optimalCounts[k] > 0).sort((a, b) => {
@@ -287,12 +301,12 @@ export default function OceanAlchemyOptimal({
             testCounts[itemName]--;
             if (testCounts[itemName] === 0) delete testCounts[itemName];
 
-            const testSim = simulateCraftPure(testCounts, stock, allowTierUpgrade);
+            const testSim = simulateCraftPure(testCounts, currentStock, allowTierUpgrade);
             let oldLeftover = 0;
             let newLeftover = 0;
             badMats.forEach(mat => {
-              oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - (stock[mat] || 0));
-              newLeftover += Math.max(0, (testSim.stock[mat] || 0) - (stock[mat] || 0));
+              oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - (currentStock[mat] || 0));
+              newLeftover += Math.max(0, (testSim.stock[mat] || 0) - (currentStock[mat] || 0));
             });
 
             if (newLeftover < oldLeftover) {
@@ -308,7 +322,7 @@ export default function OceanAlchemyOptimal({
       bestGlobalCounts = optimalCounts;
     }
 
-    let trackingStock = { ...stock };
+    let trackingStock = { ...currentStock };
     const refinedRecommendations: any[] = [];
 
     const sortedTargetNames = Object.keys(bestGlobalCounts).sort((a, b) => {
@@ -336,7 +350,7 @@ export default function OceanAlchemyOptimal({
     }
 
     return { recommendations: refinedRecommendations };
-  }, [stock, cost, blacklist, allowTierUpgrade, recommendMode, o16Bonus, itemBaseReqsPerUnit]);
+  }, [stockStr, costStr, blacklistStr, reqsStr, allowTierUpgrade, recommendMode, o16Bonus]);
 
   const activeTargets = useMemo(() => {
     const targets: Record<string, number> = {};
@@ -357,10 +371,13 @@ export default function OceanAlchemyOptimal({
     return targets;
   }, [optimalCalculations.recommendations, craftInputs]);
 
-  // 요청하신대로 수익 최우선 모드에서 탭 분류 필터링을 제거하고 한눈에 모든 항목이 뜨도록 롤백했습니다.
   const recListToRender = useMemo(() => {
-    return optimalCalculations.recommendations;
-  }, [optimalCalculations.recommendations]);
+    if (recommendMode === 'balance') {
+      return optimalCalculations.recommendations.filter(rec => STAR_CATEGORIES['3성'].includes(rec.name) || STAR_CATEGORIES['2성'].includes(rec.name));
+    }
+    if (activeTierTab === '전체') return optimalCalculations.recommendations;
+    return optimalCalculations.recommendations.filter(rec => STAR_CATEGORIES[activeTierTab]?.includes(rec.name));
+  }, [optimalCalculations.recommendations, recommendMode, activeTierTab]);
 
   const filteredTargets = useMemo(() => {
     if (recommendMode === 'balance') return activeTargets;
@@ -491,8 +508,9 @@ export default function OceanAlchemyOptimal({
     );
   }
 
+  // 핵심 픽스 2: 브라우저의 악성 자동 스크롤(Scroll Anchoring) 방지를 위해 overflowAnchor: 'none' 강제 적용
   return (
-    <div className="space-y-4 min-h-[1200px]">
+    <div className="space-y-4" style={{ overflowAnchor: 'none' }}>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
         <div className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 flex flex-col justify-center items-center shadow-sm">
           <span className="text-[10px] font-black text-gray-500 mb-1">총 판매 골드</span>
@@ -508,13 +526,33 @@ export default function OceanAlchemyOptimal({
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm min-h-[450px]">
+      <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <h3 className="text-sm font-black text-gray-800 dark:text-gray-200">
             제작 목표 및 예약
           </h3>
+          {recommendMode === 'max_profit' && (
+            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl w-full sm:w-auto overflow-x-auto custom-scrollbar">
+              {TABS.map(tab => (
+                <button 
+                  key={tab}
+                  type="button"
+                  onClick={(e) => {
+                    // 핵심 픽스 3: 브라우저의 포커스 스크롤 이동을 완전히 해제
+                    e.preventDefault();
+                    if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
+                    setActiveTierTab(tab);
+                  }}
+                  className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[11px] font-black transition-colors whitespace-nowrap ${activeTierTab === tab ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
+        {/* 억지 여백(min-h) 완전 삭제 -> 탭 누르면 빈틈 없이 화면이 줄어듦 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
           {recListToRender.length === 0 ? (
             <div className="col-span-full py-8 text-center bg-gray-50 dark:bg-[#111113] rounded-xl border border-gray-100 dark:border-white/5">
@@ -537,11 +575,21 @@ export default function OceanAlchemyOptimal({
                     </div>
                   </div>
                   
-                  <div className="flex flex-col gap-2 mt-1">
+                  <div className="flex flex-col justify-end mt-1 h-[88px]">
                     {isPending ? (
-                      <button onClick={() => handleRemovePending(rec.name)} className="w-full h-10 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 text-sm font-black rounded-lg shadow-sm transition-all active:scale-95">예약 취소</button>
+                      <button 
+                        type="button" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
+                          handleRemovePending(rec.name);
+                        }} 
+                        className="w-full h-10 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 text-sm font-black rounded-lg shadow-sm transition-all active:scale-95"
+                      >
+                        예약 취소
+                      </button>
                     ) : (
-                      <>
+                      <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-1.5 w-full">
                           <div className="flex-1 flex flex-col bg-white dark:bg-[#16161a] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-10 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
                               <span className="absolute top-1 left-2 text-[8px] font-bold text-gray-400">상자</span>
@@ -556,10 +604,18 @@ export default function OceanAlchemyOptimal({
                               <input type="number" min="0" placeholder="0" value={input.units} onChange={(e) => handleCraftInputChange(rec.name, 'units', e.target.value)} className="w-full h-full bg-transparent px-2 pt-3 pb-1 text-sm font-black text-center outline-none" />
                           </div>
                         </div>
-                        <button onClick={() => handleQueueCraft(rec.name, rec.actualCraftedFromGreedy)} className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-black rounded-lg shadow-sm transition-all active:scale-95">
+                        <button 
+                          type="button" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
+                            handleQueueCraft(rec.name, rec.actualCraftedFromGreedy);
+                          }} 
+                          className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-black rounded-lg shadow-sm transition-all active:scale-95"
+                        >
                           예약하기
                         </button>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -570,9 +626,9 @@ export default function OceanAlchemyOptimal({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-sm min-h-[150px]">
+        <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-sm">
           <h3 className="text-[11px] font-black text-gray-800 dark:text-gray-200 mb-3">
-            1단계 하위 연금/가공 (총합)
+            {recommendMode === 'max_profit' && activeTierTab !== '전체' ? `[${activeTierTab}] 필요 하위 연금` : '1단계 하위 연금/가공 (총합)'}
           </h3>
           {Object.keys(tabAggregation.tier1Crafted).length === 0 ? (
             <p className="text-[10px] text-gray-500 text-center py-4 bg-gray-50 dark:bg-[#111113] rounded-lg">해당 항목에 필요한 하위 가공이 없습니다.</p>
@@ -591,9 +647,9 @@ export default function OceanAlchemyOptimal({
           )}
         </div>
 
-        <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-sm min-h-[150px]">
+        <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-sm">
           <h3 className="text-[11px] font-black text-gray-800 dark:text-gray-200 mb-3">
-            2단계 중급 연금 (총합)
+            {recommendMode === 'max_profit' && activeTierTab !== '전체' ? `[${activeTierTab}] 필요 중급 연금` : '2단계 중급 연금 (총합)'}
           </h3>
           {Object.keys(tabAggregation.tier2Crafted).length === 0 ? (
             <p className="text-[10px] text-gray-500 text-center py-4 bg-gray-50 dark:bg-[#111113] rounded-lg">해당 항목에 필요한 중급 연금이 없습니다.</p>
@@ -613,9 +669,9 @@ export default function OceanAlchemyOptimal({
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm min-h-[300px]">
+      <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm">
         <h3 className="text-sm font-black text-gray-800 dark:text-gray-200 mb-4">
-          총 준비물 리스트 (창고 출고 + 추가 필요)
+          {recommendMode === 'max_profit' && activeTierTab !== '전체' ? `[${activeTierTab}] 준비물 리스트 (창고 출고 + 추가 필요)` : '총 준비물 리스트 (창고 출고 + 추가 필요)'}
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -664,10 +720,11 @@ export default function OceanAlchemyOptimal({
       </div>
 
       {Object.keys(filteredTargets).length > 0 && (
-        <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm mt-4 min-h-[500px]">
+        <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm mt-4">
           <h3 className="text-sm font-black text-gray-900 dark:text-white mb-4">
-            개별 제작 가이드 상세
+            {recommendMode === 'max_profit' && activeTierTab !== '전체' ? `[${activeTierTab}] 개별 제작 가이드 상세` : '개별 제작 가이드 상세'}
           </h3>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {Object.entries(filteredTargets).map(([itemName, targetQty]) => {
               const rec = optimalCalculations.recommendations.find(r => r.name === itemName);
