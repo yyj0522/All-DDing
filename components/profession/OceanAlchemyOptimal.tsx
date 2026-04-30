@@ -57,6 +57,25 @@ const STAR_CATEGORIES: Record<string, string[]> = {
   '3성': ['아쿠아 펄스 파편', '나우틸러스의 손', '무저의 척추']
 };
 
+const SORT_WEIGHTS: Record<string, number> = {};
+const orderedItems = [
+  "추출된 희석액",
+  "굴(1성)", "소라(1성)", "문어(1성)", "미역(1성)", "성게(1성)",
+  "굴(2성)", "소라(2성)", "문어(2성)", "미역(2성)", "성게(2성)",
+  "굴(3성)", "소라(3성)", "문어(3성)", "미역(3성)", "성게(3성)",
+  "수호의 정수(1성)", "파동의 정수(1성)", "혼란의 정수(1성)", "생명의 정수(1성)", "부식의 정수(1성)",
+  "수호 에센스", "파동 에센스", "혼란 에센스", "생명 에센스", "부식 에센스",
+  "수호의 엘릭서", "파동의 엘릭서", "혼란의 엘릭서", "생명의 엘릭서", "부식의 엘릭서",
+  "물결 수호의 핵", "파동 오염의 핵", "질서 파괴의 핵", "활력 붕괴의 핵", "침식 방어의 핵",
+  "활기 보존의 결정", "파도 침식의 결정", "방어 오염의 결정", "격류 재생의 결정", "맹독 혼란의 결정",
+  "불멸 재생의 영약", "파동 장벽의 영약", "타락 침식의 영약", "생명 광란의 영약", "맹독 파동의 영약",
+  "영생의 아쿠티스", "크라켄의 광란체", "리바이던의 깃털",
+  "해구의 파동 코어", "침묵의 심해 비약", "청해룡의 날개",
+  "아쿠아 펄스 파편", "나우틸러스의 손", "무저의 척추"
+];
+
+orderedItems.forEach((item, idx) => { SORT_WEIGHTS[item] = idx; });
+
 export default function OceanAlchemyOptimal({
   stock, cost, blacklist, allowTierUpgrade, userStats, globalSetMode,
   craftInputs, pendingCrafts, handleCraftInputChange, handleQueueCraft, handleRemovePending,
@@ -208,13 +227,7 @@ export default function OceanAlchemyOptimal({
     let trackingStock = { ...currentStock };
     const refinedRecommendations: any[] = [];
 
-    const sortedTargetNames = Object.keys(bestGlobalCounts).sort((a, b) => {
-        const itemA = itemsWithProfit.find(i=>i.name===a);
-        const itemB = itemsWithProfit.find(i=>i.name===b);
-        return (itemB?.profit||0) - (itemA?.profit||0);
-    });
-
-    for (const itemName of sortedTargetNames) {
+    for (const itemName of Object.keys(bestGlobalCounts)) {
         const qty = bestGlobalCounts[itemName];
         const itemDef = itemsWithProfit.find(i => i.name === itemName);
         if (!itemDef) continue;
@@ -289,6 +302,17 @@ export default function OceanAlchemyOptimal({
     };
   }, [activeTargets, stock, allowTierUpgrade, optimalCalculations.recommendations, cost]);
 
+  const sortObj = (obj: Record<string, number>) => {
+    return Object.fromEntries(
+      Object.entries(obj).sort(([a], [b]) => {
+        const weightA = SORT_WEIGHTS[a] ?? 999;
+        const weightB = SORT_WEIGHTS[b] ?? 999;
+        if (weightA !== weightB) return weightA - weightB;
+        return a.localeCompare(b);
+      })
+    );
+  };
+
   const tabAggregation = useMemo(() => {
     const sim = simulateCraftPure(filteredTargets, stock, allowTierUpgrade);
     
@@ -327,13 +351,9 @@ export default function OceanAlchemyOptimal({
       }
     });
 
-    const sortObj = (obj: Record<string, number>) => {
-      return Object.fromEntries(Object.entries(obj).sort(([,a], [,b]) => b - a));
-    };
-
     return { 
-      tier1Crafted,
-      tier2Crafted,
+      tier1Crafted: sortObj(tier1Crafted),
+      tier2Crafted: sortObj(tier2Crafted),
       prepSeafood: sortObj(prepSeafood),
       prepAlchemy: sortObj(prepAlchemy),
       prepVanilla: sortObj(prepVanilla)
@@ -387,6 +407,10 @@ export default function OceanAlchemyOptimal({
     );
   }
 
+  const sortedFilteredTargets = Object.entries(filteredTargets).sort(([a], [b]) => {
+    return (SORT_WEIGHTS[a] ?? 999) - (SORT_WEIGHTS[b] ?? 999);
+  });
+
   return (
     <div className="space-y-4" style={{ overflowAnchor: 'none' }}>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
@@ -425,7 +449,10 @@ export default function OceanAlchemyOptimal({
         {isCraftSectionOpen && (
           <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {['0성', '1성', '2성', '3성'].map(tier => {
-              const itemsInTier = optimalCalculations.recommendations.filter(rec => STAR_CATEGORIES[tier]?.includes(rec.name));
+              const itemsInTier = optimalCalculations.recommendations
+                .filter(rec => STAR_CATEGORIES[tier]?.includes(rec.name))
+                .sort((a, b) => (SORT_WEIGHTS[a.name] ?? 999) - (SORT_WEIGHTS[b.name] ?? 999));
+                
               const isActive = activeTierTab === tier;
 
               return (
@@ -629,7 +656,7 @@ export default function OceanAlchemyOptimal({
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {Object.entries(filteredTargets).map(([itemName, targetQty]) => {
+            {sortedFilteredTargets.map(([itemName, targetQty]) => {
               const rec = optimalCalculations.recommendations.find(r => r.name === itemName);
               if (!rec) return null;
               const dynamicSim = simulateCraftPure({ [itemName]: targetQty }, rec.stockBeforeCraft, allowTierUpgrade);
