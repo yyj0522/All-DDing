@@ -76,6 +76,47 @@ const orderedItems = [
 
 orderedItems.forEach((item, idx) => { SORT_WEIGHTS[item] = idx; });
 
+const groupAlchemy = (obj: Record<string, number>) => {
+  const groups: Record<string, [string, number][]> = {
+    '정수류': [], '에센스류': [], '엘릭서류': [], '핵류': [], '결정류': [], '영약류': [], '기타 가공품': []
+  };
+  Object.entries(obj).forEach(([k, v]) => {
+    if (k.includes('정수')) groups['정수류'].push([k, v]);
+    else if (k.includes('에센스')) groups['에센스류'].push([k, v]);
+    else if (k.includes('엘릭서')) groups['엘릭서류'].push([k, v]);
+    else if (k.includes('핵')) groups['핵류'].push([k, v]);
+    else if (k.includes('결정')) groups['결정류'].push([k, v]);
+    else if (k.includes('영약')) groups['영약류'].push([k, v]);
+    else groups['기타 가공품'].push([k, v]);
+  });
+  return groups;
+};
+
+const groupSeafood = (obj: Record<string, number>) => {
+  const groups: Record<string, [string, number][]> = {
+    '1성 어패류': [], '2성 어패류': [], '3성 어패류': [], '기타 생선류': []
+  };
+  Object.entries(obj).forEach(([k, v]) => {
+    if (k.includes('1성')) groups['1성 어패류'].push([k, v]);
+    else if (k.includes('2성')) groups['2성 어패류'].push([k, v]);
+    else if (k.includes('3성')) groups['3성 어패류'].push([k, v]);
+    else groups['기타 생선류'].push([k, v]);
+  });
+  return groups;
+};
+
+const groupVanilla = (obj: Record<string, number>) => {
+  const groups: Record<string, [string, number][]> = {
+    '블록류': [], '자루류': [], '기타 재료': []
+  };
+  Object.entries(obj).forEach(([k, v]) => {
+    if (k.includes('블록')) groups['블록류'].push([k, v]);
+    else if (k.includes('자루')) groups['자루류'].push([k, v]);
+    else groups['기타 재료'].push([k, v]);
+  });
+  return groups;
+};
+
 export default function OceanAlchemyOptimal({
   stock, cost, blacklist, allowTierUpgrade, userStats, globalSetMode,
   craftInputs, pendingCrafts, handleCraftInputChange, handleQueueCraft, handleRemovePending,
@@ -555,7 +596,7 @@ export default function OceanAlchemyOptimal({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-sm">
           <h3 className="text-[11px] font-black text-gray-800 dark:text-gray-200 mb-3">
             {activeTierTab !== '전체' ? `[${activeTierTab}] 필요 하위 연금` : '1단계 하위 연금/가공 (총합)'}
@@ -563,15 +604,22 @@ export default function OceanAlchemyOptimal({
           {Object.keys(tabAggregation.tier1Crafted).length === 0 ? (
             <p className="text-[10px] text-gray-500 text-center py-4 bg-gray-50 dark:bg-[#111113] rounded-lg">해당 항목에 필요한 하위 가공이 없습니다.</p>
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
-              {Object.entries(tabAggregation.tier1Crafted).map(([item, qty]) => (
-                <div key={item} className="bg-gray-50 dark:bg-[#111113] border border-gray-100 dark:border-white/5 rounded px-2 py-1.5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <img src={getImagePath(item)||undefined} className="w-3.5 h-3.5 object-contain" />
-                    <span className="text-[10px] font-bold text-gray-800 dark:text-gray-200">{item}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+              {Object.entries(groupAlchemy(tabAggregation.tier1Crafted))
+                .filter(([_, items]) => items.length > 0)
+                .map(([label, items]) => (
+                  <div key={label} className="flex flex-col gap-1.5 bg-gray-100/50 dark:bg-white/[0.03] p-2 rounded-xl border border-gray-200/50 dark:border-white/5">
+                    <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 px-1 mb-0.5">{label}</span>
+                    {items.map(([item, qty]) => (
+                      <div key={item} className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-lg px-2 py-1.5 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <img src={getImagePath(item)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" />
+                          <span className="text-[10px] font-bold text-gray-800 dark:text-gray-200 truncate">{item}</span>
+                        </div>
+                        <span className="text-[10px] font-black text-indigo-500 shrink-0 ml-1">{formatQty(qty, globalSetMode)}</span>
+                      </div>
+                    ))}
                   </div>
-                  <span className="text-[10px] font-black text-indigo-500">{formatQty(qty, globalSetMode)}</span>
-                </div>
               ))}
             </div>
           )}
@@ -584,15 +632,22 @@ export default function OceanAlchemyOptimal({
           {Object.keys(tabAggregation.tier2Crafted).length === 0 ? (
             <p className="text-[10px] text-gray-500 text-center py-4 bg-gray-50 dark:bg-[#111113] rounded-lg">해당 항목에 필요한 중급 연금이 없습니다.</p>
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
-              {Object.entries(tabAggregation.tier2Crafted).map(([item, qty]) => (
-                <div key={item} className="bg-gray-50 dark:bg-[#111113] border border-gray-100 dark:border-white/5 rounded px-2 py-1.5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <img src={getImagePath(item)||undefined} className="w-3.5 h-3.5 object-contain" />
-                    <span className="text-[10px] font-bold text-gray-800 dark:text-gray-200">{item}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+              {Object.entries(groupAlchemy(tabAggregation.tier2Crafted))
+                .filter(([_, items]) => items.length > 0)
+                .map(([label, items]) => (
+                  <div key={label} className="flex flex-col gap-1.5 bg-gray-100/50 dark:bg-white/[0.03] p-2 rounded-xl border border-gray-200/50 dark:border-white/5">
+                    <span className="text-[10px] font-black text-purple-500 dark:text-purple-400 px-1 mb-0.5">{label}</span>
+                    {items.map(([item, qty]) => (
+                      <div key={item} className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-lg px-2 py-1.5 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <img src={getImagePath(item)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" />
+                          <span className="text-[10px] font-bold text-gray-800 dark:text-gray-200 truncate">{item}</span>
+                        </div>
+                        <span className="text-[10px] font-black text-purple-500 shrink-0 ml-1">{formatQty(qty, globalSetMode)}</span>
+                      </div>
+                    ))}
                   </div>
-                  <span className="text-[10px] font-black text-purple-500">{formatQty(qty, globalSetMode)}</span>
-                </div>
               ))}
             </div>
           )}
@@ -604,47 +659,74 @@ export default function OceanAlchemyOptimal({
           {activeTierTab !== '전체' ? `[${activeTierTab}] 준비물 리스트 (창고 출고 + 추가 필요)` : '총 준비물 리스트 (창고 출고 + 추가 필요)'}
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <div className="bg-blue-50 dark:bg-blue-950/10 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4">
             <h4 className="text-xs font-black text-blue-600 dark:text-blue-400 mb-3 border-b border-blue-200 dark:border-blue-800/30 pb-2">어패류 및 생선류</h4>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-1.5">
-              {Object.keys(tabAggregation.prepSeafood).length === 0 ? <p className="text-[10px] text-gray-500">필요 없음</p> : 
-                Object.entries(tabAggregation.prepSeafood).map(([m, q]) => (
-                  <div key={m} className="flex items-center justify-between text-[11px] bg-white dark:bg-black/20 px-2 py-1.5 rounded border border-blue-100 dark:border-transparent">
-                    <div className="flex items-center gap-1.5"><img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain" /><span className="font-bold text-gray-800 dark:text-gray-300">{m}</span></div>
-                    <span className="font-black text-blue-700 dark:text-blue-400">{formatQty(q, globalSetMode)}</span>
-                  </div>
-                ))
-              }
-            </div>
+            {Object.keys(tabAggregation.prepSeafood).length === 0 ? <p className="text-[10px] text-gray-500">필요 없음</p> : 
+              <div className="flex flex-col gap-3">
+                {Object.entries(groupSeafood(tabAggregation.prepSeafood))
+                  .filter(([_, items]) => items.length > 0)
+                  .map(([label, items]) => (
+                    <div key={label} className="flex flex-col gap-1.5 bg-white/50 dark:bg-black/20 p-2 rounded-xl border border-blue-100 dark:border-blue-900/20">
+                      <span className="text-[9px] font-black text-blue-500 dark:text-blue-400 px-1">{label}</span>
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
+                        {items.map(([m, q]) => (
+                          <div key={m} className="flex items-center justify-between text-[11px] bg-white dark:bg-[#111113] px-2 py-1.5 rounded shadow-sm border border-transparent dark:border-white/5">
+                            <div className="flex items-center gap-1.5 min-w-0"><img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" /><span className="font-bold text-gray-800 dark:text-gray-300 truncate">{m}</span></div>
+                            <span className="font-black text-blue-600 dark:text-blue-400 shrink-0 ml-1">{formatQty(q, globalSetMode)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                ))}
+              </div>
+            }
           </div>
 
           <div className="bg-purple-50 dark:bg-purple-950/10 border border-purple-100 dark:border-purple-900/30 rounded-xl p-4">
             <h4 className="text-xs font-black text-purple-600 dark:text-purple-400 mb-3 border-b border-purple-200 dark:border-purple-800/30 pb-2">연금품 및 가공품</h4>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-1.5">
-              {Object.keys(tabAggregation.prepAlchemy).length === 0 ? <p className="text-[10px] text-gray-500">필요 없음</p> : 
-                Object.entries(tabAggregation.prepAlchemy).map(([m, q]) => (
-                  <div key={m} className="flex items-center justify-between text-[11px] bg-white dark:bg-black/20 px-2 py-1.5 rounded border border-purple-100 dark:border-transparent">
-                    <div className="flex items-center gap-1.5"><img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain" /><span className="font-bold text-gray-800 dark:text-gray-300">{m}</span></div>
-                    <span className="font-black text-purple-700 dark:text-purple-400">{formatQty(q, globalSetMode)}</span>
-                  </div>
-                ))
-              }
-            </div>
+            {Object.keys(tabAggregation.prepAlchemy).length === 0 ? <p className="text-[10px] text-gray-500">필요 없음</p> : 
+              <div className="flex flex-col gap-3">
+                {Object.entries(groupAlchemy(tabAggregation.prepAlchemy))
+                  .filter(([_, items]) => items.length > 0)
+                  .map(([label, items]) => (
+                    <div key={label} className="flex flex-col gap-1.5 bg-white/50 dark:bg-black/20 p-2 rounded-xl border border-purple-100 dark:border-purple-900/20">
+                      <span className="text-[9px] font-black text-purple-500 dark:text-purple-400 px-1">{label}</span>
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
+                        {items.map(([m, q]) => (
+                          <div key={m} className="flex items-center justify-between text-[11px] bg-white dark:bg-[#111113] px-2 py-1.5 rounded shadow-sm border border-transparent dark:border-white/5">
+                            <div className="flex items-center gap-1.5 min-w-0"><img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" /><span className="font-bold text-gray-800 dark:text-gray-300 truncate">{m}</span></div>
+                            <span className="font-black text-purple-600 dark:text-purple-400 shrink-0 ml-1">{formatQty(q, globalSetMode)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                ))}
+              </div>
+            }
           </div>
 
           <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4">
             <h4 className="text-xs font-black text-amber-600 dark:text-amber-400 mb-3 border-b border-amber-200 dark:border-amber-800/30 pb-2">바닐라 재료 및 블록</h4>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-1.5">
-              {Object.keys(tabAggregation.prepVanilla).length === 0 ? <p className="text-[10px] text-gray-500">필요 없음</p> : 
-                Object.entries(tabAggregation.prepVanilla).map(([m, q]) => (
-                  <div key={m} className="flex items-center justify-between text-[11px] bg-white dark:bg-black/20 px-2 py-1.5 rounded border border-amber-100 dark:border-transparent">
-                    <div className="flex items-center gap-1.5"><img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain" /><span className="font-bold text-gray-800 dark:text-gray-300">{m}</span></div>
-                    <span className="font-black text-amber-700 dark:text-amber-400">{formatQty(q, globalSetMode)}</span>
-                  </div>
-                ))
-              }
-            </div>
+            {Object.keys(tabAggregation.prepVanilla).length === 0 ? <p className="text-[10px] text-gray-500">필요 없음</p> : 
+              <div className="flex flex-col gap-3">
+                {Object.entries(groupVanilla(tabAggregation.prepVanilla))
+                  .filter(([_, items]) => items.length > 0)
+                  .map(([label, items]) => (
+                    <div key={label} className="flex flex-col gap-1.5 bg-white/50 dark:bg-black/20 p-2 rounded-xl border border-amber-100 dark:border-amber-900/20">
+                      <span className="text-[9px] font-black text-amber-500 dark:text-amber-400 px-1">{label}</span>
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
+                        {items.map(([m, q]) => (
+                          <div key={m} className="flex items-center justify-between text-[11px] bg-white dark:bg-[#111113] px-2 py-1.5 rounded shadow-sm border border-transparent dark:border-white/5">
+                            <div className="flex items-center gap-1.5 min-w-0"><img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" /><span className="font-bold text-gray-800 dark:text-gray-300 truncate">{m}</span></div>
+                            <span className="font-black text-amber-600 dark:text-amber-400 shrink-0 ml-1">{formatQty(q, globalSetMode)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                ))}
+              </div>
+            }
           </div>
         </div>
       </div>

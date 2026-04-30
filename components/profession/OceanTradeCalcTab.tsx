@@ -250,10 +250,9 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
             <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
               <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>간편 재고 관리 (어패류 및 연금품)
             </h3>
-            <div className="flex items-center gap-2">
-              <button onClick={(e) => { e.stopPropagation(); clearInventory(); }} className="text-[10px] md:text-xs text-rose-500 font-bold bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-2.5 py-1.5 rounded-lg transition-colors">전체 초기화</button>
-              <button onClick={() => setIsInventoryVisible(!isInventoryVisible)} className="text-[10px] md:text-xs text-indigo-500 font-bold bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-2.5 py-1.5 rounded-lg transition-colors">{isInventoryVisible ? '접기' : '펼치기'}</button>
-            </div>
+            <button onClick={() => setIsInventoryVisible(!isInventoryVisible)} className="text-[10px] md:text-xs text-indigo-500 font-bold bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-4 py-1.5 rounded-lg transition-colors">
+              {isInventoryVisible ? '접기' : '펼치기'}
+            </button>
           </div>
           
           {isInventoryVisible && (
@@ -301,6 +300,16 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
                   </div>
                 </div>
               ))}
+              
+              <div className="flex justify-end pt-4 mt-2 border-t border-gray-100 dark:border-white/5">
+                <button
+                onClick={clearInventory}
+                className="text-[10px] md:text-xs font-bold px-4 py-2 rounded-lg transition-all bg-rose-500 text-white hover:bg-rose-600 shadow-md"
+                >
+                  전체 재고 초기화
+                </button>
+              </div>
+
             </div>
           )}
         </div>
