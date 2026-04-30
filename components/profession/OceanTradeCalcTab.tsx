@@ -315,20 +315,6 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
               </h2>
               <p className="text-xs text-gray-500 mt-1">창고 재고를 기반으로 제작할 연금품을 추천합니다.</p>
             </div>
-            <div className="flex bg-gray-200/50 dark:bg-white/5 p-1 rounded-xl shrink-0">
-              <button 
-                onClick={() => setRecommendMode('balance')}
-                className={`px-4 py-2 rounded-lg text-[11px] font-black transition-all ${recommendMode === 'balance' ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-              >
-                실전 압축 모드
-              </button>
-              <button 
-                onClick={() => setRecommendMode('max_profit')}
-                className={`px-4 py-2 rounded-lg text-[11px] font-black transition-all ${recommendMode === 'max_profit' ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-              >
-                수익 최우선 모드
-              </button>
-            </div>
           </div>
 
           <OceanAlchemyOptimal
@@ -336,7 +322,6 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
             cost={cost}
             blacklist={blacklist}
             allowTierUpgrade={allowTierUpgrade}
-            recommendMode={recommendMode}
             userStats={userStats}
             globalSetMode={globalSetMode}
             craftInputs={craftInputs}

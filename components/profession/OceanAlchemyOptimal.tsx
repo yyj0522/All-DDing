@@ -14,7 +14,6 @@ interface Props {
   cost: Record<string, number>;
   blacklist: string[];
   allowTierUpgrade: boolean;
-  recommendMode: 'balance' | 'max_profit';
   userStats: any;
   globalSetMode: boolean;
   craftInputs: Record<string, { boxes: string; sets: string; units: string }>;
@@ -59,29 +58,30 @@ const STAR_CATEGORIES: Record<string, string[]> = {
 };
 
 export default function OceanAlchemyOptimal({
-  stock, cost, blacklist, allowTierUpgrade, recommendMode, userStats, globalSetMode,
+  stock, cost, blacklist, allowTierUpgrade, userStats, globalSetMode,
   craftInputs, pendingCrafts, handleCraftInputChange, handleQueueCraft, handleRemovePending,
   itemBaseReqsPerUnit
 }: Props) {
   
   const TABS = ['전체', '0성', '1성', '2성', '3성'] as const;
   const [activeTierTab, setActiveTierTab] = useState<typeof TABS[number]>('전체');
+  const [isCraftSectionOpen, setIsCraftSectionOpen] = useState(true);
 
   const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
   const o13Reduction = O13_EFFECTS[userStats.o13Lv] || 0;
 
-  // 부모 컴포넌트의 리렌더링으로 인한 연산 초기화를 막기 위해 데이터를 문자열로 고정
   const stockStr = JSON.stringify(stock);
   const costStr = JSON.stringify(cost);
   const blacklistStr = JSON.stringify(blacklist);
   const reqsStr = JSON.stringify(itemBaseReqsPerUnit);
 
-  // 3,132,944G 연산 로직 (수정 없음)
   const optimalCalculations = useMemo(() => {
     const currentStock = JSON.parse(stockStr);
     const currentCost = JSON.parse(costStr);
     const currentBlacklist = JSON.parse(blacklistStr);
     const currentReqs = JSON.parse(reqsStr);
+
+    const eqStock = getBaseEquivalents(currentStock, currentReqs);
 
     const itemsWithProfit = OCEAN_FIXED_PRICES.map(item => {
       const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
@@ -98,228 +98,111 @@ export default function OceanAlchemyOptimal({
     }).filter(r => !r.hasBlacklist && r.profit > 0);
 
     let itemsToConsider = [...itemsWithProfit];
-    
-    if (recommendMode === 'balance') {
-      itemsToConsider = itemsToConsider.filter(item => STAR_CATEGORIES['3성'].includes(item.name) || STAR_CATEGORIES['2성'].includes(item.name));
-    }
-    
     itemsToConsider.sort((a, b) => b.profit - a.profit);
 
     let bestGlobalProfit = -Infinity;
     let bestGlobalCounts: Record<string, number> = {};
 
-    if (recommendMode === 'max_profit') {
-        const T0_NAME = '추출된 희석액';
-        const T1_NAMES = ['영생의 아쿠티스', '크라켄의 광란체', '리바이던의 깃털'];
-        const T2_NAMES = ['해구의 파동 코어', '침묵의 심해 비약', '청해룡의 날개'];
-        const T3_NAMES = ['아쿠아 펄스 파편', '나우틸러스의 손', '무저의 척추'];
+    const T0_NAME = '추출된 희석액';
+    const T1_NAMES = ['영생의 아쿠티스', '크라켄의 광란체', '리바이던의 깃털'];
+    const T2_NAMES = ['해구의 파동 코어', '침묵의 심해 비약', '청해룡의 날개'];
+    const T3_NAMES = ['아쿠아 펄스 파편', '나우틸러스의 손', '무저의 척추'];
 
-        const validT0 = itemsWithProfit.find(i => i.name === T0_NAME);
-        const validT1 = T1_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
-        const validT2 = T2_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
-        const validT3 = T3_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
+    const validT0 = itemsWithProfit.find(i => i.name === T0_NAME);
+    const validT1 = T1_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
+    const validT2 = T2_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
+    const validT3 = T3_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
 
-        const targetMats = [...CORE_BASE_SHELLS];
-        const getReqs = (item: any) => targetMats.map(m => currentReqs[item.name]?.[m] || 0);
+    const targetMats = [...CORE_BASE_SHELLS];
+    const getReqs = (item: any) => targetMats.map(m => currentReqs[item.name]?.[m] || 0);
 
-        const reqsT0 = validT0 ? getReqs(validT0) : new Array(targetMats.length).fill(0);
-        const reqsT1 = validT1.map(getReqs);
-        const reqsT2 = validT2.map(getReqs);
-        const reqsT3 = validT3.map(getReqs);
+    const reqsT0 = validT0 ? getReqs(validT0) : new Array(targetMats.length).fill(0);
+    const reqsT1 = validT1.map(getReqs);
+    const reqsT2 = validT2.map(getReqs);
+    const reqsT3 = validT3.map(getReqs);
 
-        const solveGroup = (validItems: any[], reqsArr: number[][], currentLimits: number[]) => {
-            const usedMats: number[] = [];
-            for(let m=0; m<targetMats.length; m++) {
-                if (reqsArr.some(r => r[m] > 0)) usedMats.push(m);
-            }
-
-            if (validItems.length === 0) return { profit: 0, counts: [] };
-            if (validItems.length === 1) {
-                let max = Infinity;
-                for(let m of usedMats) max = Math.min(max, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
-                if (max === Infinity) max = 0;
-                return { profit: max * validItems[0].profit, counts: [max] };
-            }
-            if (validItems.length === 2) {
-                let bestP = -1;
-                let bestC = [0, 0];
-                let max0 = Infinity;
-                for(let m of usedMats) max0 = Math.min(max0, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
-                if (max0 === Infinity) max0 = 0;
-                for (let i = 0; i <= max0; i++) {
-                    let max1 = Infinity;
-                    for(let m of usedMats) max1 = Math.min(max1, Math.floor((currentLimits[m] - reqsArr[0][m]*i) / reqsArr[1][m] + 1e-9));
-                    if (max1 === Infinity) max1 = 0;
-                    let p = i * validItems[0].profit + max1 * validItems[1].profit;
-                    if (p > bestP) { bestP = p; bestC = [i, max1]; }
-                }
-                return { profit: bestP, counts: bestC };
-            }
-            if (validItems.length === 3) {
-                let bestP = -1;
-                let bestC = [0, 0, 0];
-                let max0 = Infinity;
-                for(let m of usedMats) max0 = Math.min(max0, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
-                if (max0 === Infinity) max0 = 0;
-                for (let i = 0; i <= max0; i++) {
-                    let max1 = Infinity;
-                    for(let m of usedMats) max1 = Math.min(max1, Math.floor((currentLimits[m] - reqsArr[0][m]*i) / reqsArr[1][m] + 1e-9));
-                    if (max1 === Infinity) max1 = 0;
-                    for (let j = 0; j <= max1; j++) {
-                        let max2 = Infinity;
-                        for(let m of usedMats) max2 = Math.min(max2, Math.floor((currentLimits[m] - reqsArr[0][m]*i - reqsArr[1][m]*j) / reqsArr[2][m] + 1e-9));
-                        if (max2 === Infinity) max2 = 0;
-                        let p = i * validItems[0].profit + j * validItems[1].profit + max2 * validItems[2].profit;
-                        if (p > bestP) { bestP = p; bestC = [i, j, max2]; }
-                    }
-                }
-                return { profit: bestP, counts: bestC };
-            }
-            return { profit: 0, counts: [] };
-        };
-
-        const limits = targetMats.map(m => currentStock[m] || 0);
-        let maxT0 = Infinity;
-        if (validT0) {
-            for(let i=0; i<targetMats.length; i++) {
-                if (reqsT0[i] > 0) maxT0 = Math.min(maxT0, Math.floor(limits[i] / reqsT0[i] + 1e-9));
-            }
-            if (maxT0 === Infinity) maxT0 = 0;
-        } else {
-            maxT0 = 0;
+    const solveGroup = (validItems: any[], reqsArr: number[][], currentLimits: number[]) => {
+        const usedMats: number[] = [];
+        for(let m=0; m<targetMats.length; m++) {
+            if (reqsArr.some(r => r[m] > 0)) usedMats.push(m);
         }
 
-        for (let t0 = 0; t0 <= maxT0; t0++) {
-            let curLimits = [...limits];
-            if (validT0 && t0 > 0) {
-                for(let i=0; i<targetMats.length; i++) curLimits[i] -= reqsT0[i] * t0;
-            }
-
-            let resT1 = solveGroup(validT1, reqsT1, curLimits);
-            let resT2 = solveGroup(validT2, reqsT2, curLimits);
-            let resT3 = solveGroup(validT3, reqsT3, curLimits);
-
-            let totalP = (validT0 ? t0 * validT0.profit : 0) + resT1.profit + resT2.profit + resT3.profit;
-
-            if (totalP > bestGlobalProfit) {
-                bestGlobalProfit = totalP;
-                bestGlobalCounts = {};
-                if (validT0 && t0 > 0) bestGlobalCounts[T0_NAME] = t0;
-                resT1.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT1[idx].name] = c; });
-                resT2.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT2[idx].name] = c; });
-                resT3.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT3[idx].name] = c; });
-            }
+        if (validItems.length === 0) return { profit: 0, counts: [] };
+        if (validItems.length === 1) {
+            let max = Infinity;
+            for(let m of usedMats) max = Math.min(max, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
+            if (max === Infinity) max = 0;
+            return { profit: max * validItems[0].profit, counts: [max] };
         }
+        if (validItems.length === 2) {
+            let bestP = -1;
+            let bestC = [0, 0];
+            let max0 = Infinity;
+            for(let m of usedMats) max0 = Math.min(max0, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
+            if (max0 === Infinity) max0 = 0;
+            for (let i = 0; i <= max0; i++) {
+                let max1 = Infinity;
+                for(let m of usedMats) max1 = Math.min(max1, Math.floor((currentLimits[m] - reqsArr[0][m]*i) / reqsArr[1][m] + 1e-9));
+                if (max1 === Infinity) max1 = 0;
+                let p = i * validItems[0].profit + max1 * validItems[1].profit;
+                if (p > bestP) { bestP = p; bestC = [i, max1]; }
+            }
+            return { profit: bestP, counts: bestC };
+        }
+        if (validItems.length === 3) {
+            let bestP = -1;
+            let bestC = [0, 0, 0];
+            let max0 = Infinity;
+            for(let m of usedMats) max0 = Math.min(max0, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
+            if (max0 === Infinity) max0 = 0;
+            for (let i = 0; i <= max0; i++) {
+                let max1 = Infinity;
+                for(let m of usedMats) max1 = Math.min(max1, Math.floor((currentLimits[m] - reqsArr[0][m]*i) / reqsArr[1][m] + 1e-9));
+                if (max1 === Infinity) max1 = 0;
+                for (let j = 0; j <= max1; j++) {
+                    let max2 = Infinity;
+                    for(let m of usedMats) max2 = Math.min(max2, Math.floor((currentLimits[m] - reqsArr[0][m]*i - reqsArr[1][m]*j) / reqsArr[2][m] + 1e-9));
+                    if (max2 === Infinity) max2 = 0;
+                    let p = i * validItems[0].profit + j * validItems[1].profit + max2 * validItems[2].profit;
+                    if (p > bestP) { bestP = p; bestC = [i, j, max2]; }
+                }
+            }
+            return { profit: bestP, counts: bestC };
+        }
+        return { profit: 0, counts: [] };
+    };
 
+    const limits = targetMats.map(m => eqStock[m] || 0);
+    let maxT0 = Infinity;
+    if (validT0) {
+        for(let i=0; i<targetMats.length; i++) {
+            if (reqsT0[i] > 0) maxT0 = Math.min(maxT0, Math.floor(limits[i] / reqsT0[i] + 1e-9));
+        }
+        if (maxT0 === Infinity) maxT0 = 0;
     } else {
-      let tempStock = { ...currentStock };
-      let optimalCounts: Record<string, number> = {};
-      const baseInvSnapshot = { ...currentStock }; 
+        maxT0 = 0;
+    }
 
-      let keepGoing = true;
-      let loopSafety = 0;
-      
-      while(keepGoing && loopSafety < 1000) {
-        keepGoing = false;
-        loopSafety++;
-        let bestItem = null;
-        let bestScore = -Infinity;
-        let bestSim = null;
-        let bestBatchSize = 1;
-
-        const eqStock = getBaseEquivalents(tempStock, currentReqs);
-
-        for (const item of itemsToConsider) {
-          let maxPossible = Infinity;
-          let possible = true;
-          for (const [mat, count] of Object.entries(item.baseMats)) {
-              const countNum = count as number;
-              if (CORE_BASE_SHELLS.includes(mat) || FISH.includes(mat)) {
-                  const avail = eqStock[mat] || 0;
-                  if (avail < countNum) { possible = false; break; }
-                  maxPossible = Math.min(maxPossible, Math.floor(avail / countNum));
-              }
-          }
-          if (!possible) continue;
-
-          const batchSize = Math.max(1, Math.floor(maxPossible / 10));
-
-          const sim = simulateCraftPure({ [item.name]: batchSize }, tempStock, allowTierUpgrade);
-          const missingKeys = Object.keys(sim.missing);
-          const canCraft = missingKeys.every(k => !CORE_ITEMS.includes(k) && !currentBlacklist.includes(k));
-
-          if (canCraft) {
-              let penaltyCost = 0;
-              for (const mat of CORE_ITEMS) {
-                  const before = tempStock[mat] || 0;
-                  const after = sim.stock[mat] || 0;
-                  const consumed = before - after;
-                  if (consumed > 0) {
-                      const initial = Math.max(1, baseInvSnapshot[mat] || 1);
-                      const ratio = initial / (after + 1); 
-                      penaltyCost += consumed * Math.pow(ratio, 10);
-                  }
-              }
-
-              if (penaltyCost === 0) penaltyCost = 0.001; 
-              const score = (item.profit * batchSize) / penaltyCost;
-
-              if (score > bestScore) {
-                  bestScore = score;
-                  bestItem = item;
-                  bestSim = sim;
-                  bestBatchSize = batchSize;
-              }
-          }
+    for (let t0 = 0; t0 <= maxT0; t0++) {
+        let curLimits = [...limits];
+        if (validT0 && t0 > 0) {
+            for(let i=0; i<targetMats.length; i++) curLimits[i] -= reqsT0[i] * t0;
         }
 
-        if (bestItem && bestSim) {
-            tempStock = bestSim.stock;
-            optimalCounts[bestItem.name] = (optimalCounts[bestItem.name] || 0) + bestBatchSize;
-            keepGoing = true;
+        let resT1 = solveGroup(validT1, reqsT1, curLimits);
+        let resT2 = solveGroup(validT2, reqsT2, curLimits);
+        let resT3 = solveGroup(validT3, reqsT3, curLimits);
+
+        let totalP = (validT0 ? t0 * validT0.profit : 0) + resT1.profit + resT2.profit + resT3.profit;
+
+        if (totalP > bestGlobalProfit) {
+            bestGlobalProfit = totalP;
+            bestGlobalCounts = {};
+            if (validT0 && t0 > 0) bestGlobalCounts[T0_NAME] = t0;
+            resT1.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT1[idx].name] = c; });
+            resT2.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT2[idx].name] = c; });
+            resT3.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT3[idx].name] = c; });
         }
-      }
-
-      let trimmed = true;
-      let loopSafetyTrim = 0;
-      while (trimmed && loopSafetyTrim < 1000) {
-        trimmed = false;
-        loopSafetyTrim++;
-
-        const currentSim = simulateCraftPure(optimalCounts, currentStock, allowTierUpgrade);
-        const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((currentStock[mat] || 0) + 1));
-
-        if (badMats.length > 0) {
-          const candidates = Object.keys(optimalCounts).filter(k => optimalCounts[k] > 0).sort((a, b) => {
-            const pA = itemsWithProfit.find(i=>i.name===a)?.profit || 0;
-            const pB = itemsWithProfit.find(i=>i.name===b)?.profit || 0;
-            return pA - pB; 
-          });
-
-          for (const itemName of candidates) {
-            const testCounts = { ...optimalCounts };
-            testCounts[itemName]--;
-            if (testCounts[itemName] === 0) delete testCounts[itemName];
-
-            const testSim = simulateCraftPure(testCounts, currentStock, allowTierUpgrade);
-            let oldLeftover = 0;
-            let newLeftover = 0;
-            badMats.forEach(mat => {
-              oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - (currentStock[mat] || 0));
-              newLeftover += Math.max(0, (testSim.stock[mat] || 0) - (currentStock[mat] || 0));
-            });
-
-            if (newLeftover < oldLeftover) {
-              optimalCounts[itemName]--;
-              if (optimalCounts[itemName] === 0) delete optimalCounts[itemName];
-              trimmed = true;
-              break; 
-            }
-          }
-          if (!trimmed) break;
-        }
-      }
-      bestGlobalCounts = optimalCounts;
     }
 
     let trackingStock = { ...currentStock };
@@ -350,7 +233,7 @@ export default function OceanAlchemyOptimal({
     }
 
     return { recommendations: refinedRecommendations };
-  }, [stockStr, costStr, blacklistStr, reqsStr, allowTierUpgrade, recommendMode, o16Bonus]);
+  }, [stockStr, costStr, blacklistStr, reqsStr, allowTierUpgrade, o16Bonus]);
 
   const activeTargets = useMemo(() => {
     const targets: Record<string, number> = {};
@@ -371,22 +254,18 @@ export default function OceanAlchemyOptimal({
     return targets;
   }, [optimalCalculations.recommendations, craftInputs]);
 
-  const recListToRender = useMemo(() => {
-    if (recommendMode === 'balance') {
-      return optimalCalculations.recommendations.filter(rec => STAR_CATEGORIES['3성'].includes(rec.name) || STAR_CATEGORIES['2성'].includes(rec.name));
-    }
+  const activeBottomRecs = useMemo(() => {
     if (activeTierTab === '전체') return optimalCalculations.recommendations;
     return optimalCalculations.recommendations.filter(rec => STAR_CATEGORIES[activeTierTab]?.includes(rec.name));
-  }, [optimalCalculations.recommendations, recommendMode, activeTierTab]);
+  }, [optimalCalculations.recommendations, activeTierTab]);
 
   const filteredTargets = useMemo(() => {
-    if (recommendMode === 'balance') return activeTargets;
     const targets: Record<string, number> = {};
-    recListToRender.forEach(rec => {
+    activeBottomRecs.forEach(rec => {
       if (activeTargets[rec.name]) targets[rec.name] = activeTargets[rec.name];
     });
     return targets;
-  }, [activeTargets, recListToRender, recommendMode]);
+  }, [activeTargets, activeBottomRecs]);
 
   const globalAggregation = useMemo(() => {
     const globalSim = simulateCraftPure(activeTargets, stock, allowTierUpgrade);
@@ -508,7 +387,6 @@ export default function OceanAlchemyOptimal({
     );
   }
 
-  // 핵심 픽스 2: 브라우저의 악성 자동 스크롤(Scroll Anchoring) 방지를 위해 overflowAnchor: 'none' 강제 적용
   return (
     <div className="space-y-4" style={{ overflowAnchor: 'none' }}>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
@@ -527,108 +405,133 @@ export default function OceanAlchemyOptimal({
       </div>
 
       <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <h3 className="text-sm font-black text-gray-800 dark:text-gray-200">
-            제작 목표 및 예약
-          </h3>
-          {recommendMode === 'max_profit' && (
-            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl w-full sm:w-auto overflow-x-auto custom-scrollbar">
-              {TABS.map(tab => (
-                <button 
-                  key={tab}
-                  type="button"
-                  onClick={(e) => {
-                    // 핵심 픽스 3: 브라우저의 포커스 스크롤 이동을 완전히 해제
-                    e.preventDefault();
-                    if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
-                    setActiveTierTab(tab);
-                  }}
-                  className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[11px] font-black transition-colors whitespace-nowrap ${activeTierTab === tab ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          )}
+        <div 
+          className="flex justify-between items-center cursor-pointer select-none group"
+          onClick={() => setIsCraftSectionOpen(!isCraftSectionOpen)}
+        >
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-black text-gray-800 dark:text-gray-200 group-hover:text-indigo-500 transition-colors">
+              제작 목표 및 예약
+            </h3>
+            <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded">
+              {activeTierTab === '전체' ? '전체 보기' : `${activeTierTab} 필터 적용됨`}
+            </span>
+          </div>
+          <button type="button" className="text-[10px] font-black text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            {isCraftSectionOpen ? '접기 ▲' : '펼치기 ▼'}
+          </button>
         </div>
 
-        {/* 억지 여백(min-h) 완전 삭제 -> 탭 누르면 빈틈 없이 화면이 줄어듦 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-          {recListToRender.length === 0 ? (
-            <div className="col-span-full py-8 text-center bg-gray-50 dark:bg-[#111113] rounded-xl border border-gray-100 dark:border-white/5">
-              <p className="text-[11px] text-gray-500 font-bold">해당 등급에서 추천된 연금품이 없습니다.</p>
-            </div>
-          ) : (
-            recListToRender.map((rec) => {
-              const input = craftInputs[rec.name] || { boxes: '', sets: '', units: '' };
-              const isPending = pendingCrafts[rec.name] !== undefined;
+        {isCraftSectionOpen && (
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {['0성', '1성', '2성', '3성'].map(tier => {
+              const itemsInTier = optimalCalculations.recommendations.filter(rec => STAR_CATEGORIES[tier]?.includes(rec.name));
+              const isActive = activeTierTab === tier;
 
               return (
-                <div key={rec.name} className={`rounded-xl p-4 flex flex-col gap-3 border transition-all shadow-sm ${isPending ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-500/30' : 'bg-gray-50 dark:bg-[#111113] border-gray-200 dark:border-transparent'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <img src={getImagePath(rec.name) || undefined} className="w-7 h-7 object-contain drop-shadow-sm" alt=""/>
-                      <div>
-                        <h4 className="text-xs font-black text-gray-900 dark:text-white">{rec.name}</h4>
-                        <p className="text-[10px] font-bold text-gray-500 mt-0.5">최대 {formatQty(rec.actualCraftedFromGreedy, globalSetMode)}</p>
-                      </div>
-                    </div>
+                <div 
+                  key={tier}
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON') return;
+                    setActiveTierTab(isActive ? '전체' : tier as any);
+                  }}
+                  className={`flex flex-col gap-3 p-3.5 rounded-[1.25rem] border transition-all cursor-pointer ${
+                    isActive 
+                    ? 'bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-400 dark:border-indigo-500/50 shadow-md ring-1 ring-indigo-400 dark:ring-indigo-500/50' 
+                    : 'bg-gray-50/50 dark:bg-[#111113]/50 border-gray-200 dark:border-white/5 hover:bg-gray-100 dark:hover:bg-white/10'
+                  }`}
+                >
+                  <div className="flex items-center justify-between px-1 mb-1">
+                    <span className={`text-xs font-black ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`}>{tier} 라인업</span>
+                    {isActive && <span className="text-[9px] font-bold text-indigo-500 animate-pulse">선택됨</span>}
                   </div>
-                  
-                  <div className="flex flex-col justify-end mt-1 h-[88px]">
-                    {isPending ? (
-                      <button 
-                        type="button" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
-                          handleRemovePending(rec.name);
-                        }} 
-                        className="w-full h-10 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 text-sm font-black rounded-lg shadow-sm transition-all active:scale-95"
-                      >
-                        예약 취소
-                      </button>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-1.5 w-full">
-                          <div className="flex-1 flex flex-col bg-white dark:bg-[#16161a] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-10 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
-                              <span className="absolute top-1 left-2 text-[8px] font-bold text-gray-400">상자</span>
-                              <input type="number" min="0" placeholder="0" value={input.boxes} onChange={(e) => handleCraftInputChange(rec.name, 'boxes', e.target.value)} className="w-full h-full bg-transparent px-2 pt-3 pb-1 text-sm font-black text-center outline-none" />
+
+                  {itemsInTier.length === 0 ? (
+                    <div className="py-8 flex items-center justify-center bg-white/50 dark:bg-black/20 rounded-xl border border-dashed border-gray-200 dark:border-white/5">
+                      <p className="text-[10px] text-gray-400 font-bold">항목 없음</p>
+                    </div>
+                  ) : (
+                    itemsInTier.map((rec) => {
+                      const input = craftInputs[rec.name] || { boxes: '', sets: '', units: '' };
+                      const isPending = pendingCrafts[rec.name] !== undefined;
+
+                      return (
+                        <div 
+                          key={rec.name} 
+                          onClick={(e) => e.stopPropagation()} 
+                          className={`rounded-xl p-3 flex flex-col gap-3 border transition-all shadow-sm cursor-default ${isPending ? 'bg-indigo-50 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-500/30' : 'bg-white dark:bg-[#16161a] border-gray-200 dark:border-white/5'}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <img src={getImagePath(rec.name) || undefined} className="w-6 h-6 object-contain drop-shadow-sm" alt=""/>
+                              <div>
+                                <h4 className="text-[11px] font-black text-gray-900 dark:text-white leading-tight">{rec.name}</h4>
+                                <p className="text-[9px] font-bold text-gray-500 mt-0.5">최대 {formatQty(rec.actualCraftedFromGreedy, globalSetMode)}</p>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex-1 flex flex-col bg-white dark:bg-[#16161a] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-10 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
-                              <span className="absolute top-1 left-2 text-[8px] font-bold text-gray-400">세트</span>
-                              <input type="number" min="0" placeholder="0" value={input.sets} onChange={(e) => handleCraftInputChange(rec.name, 'sets', e.target.value)} className="w-full h-full bg-transparent px-2 pt-3 pb-1 text-sm font-black text-center outline-none" />
-                          </div>
-                          <div className="flex-1 flex flex-col bg-white dark:bg-[#16161a] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-10 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
-                              <span className="absolute top-1 left-2 text-[8px] font-bold text-gray-400">개</span>
-                              <input type="number" min="0" placeholder="0" value={input.units} onChange={(e) => handleCraftInputChange(rec.name, 'units', e.target.value)} className="w-full h-full bg-transparent px-2 pt-3 pb-1 text-sm font-black text-center outline-none" />
+                          
+                          <div className="flex flex-col justify-end mt-1 h-[70px]">
+                            {isPending ? (
+                              <button 
+                                type="button" 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
+                                  handleRemovePending(rec.name);
+                                }} 
+                                className="w-full h-8 bg-white dark:bg-[#1a1a1e] border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 text-[11px] font-black rounded-lg shadow-sm transition-all active:scale-95"
+                              >
+                                예약 취소
+                              </button>
+                            ) : (
+                              <div className="flex flex-col gap-1.5">
+                                <div className="flex items-center gap-1.5 w-full">
+                                  <div className="flex-1 flex flex-col bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-8 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
+                                      <span className="absolute top-0.5 left-1.5 text-[7px] font-bold text-gray-400">상자</span>
+                                      <input type="number" min="0" placeholder="0" value={input.boxes} onChange={(e) => handleCraftInputChange(rec.name, 'boxes', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-full h-full bg-transparent px-1.5 pt-3 pb-0.5 text-[11px] font-black text-center outline-none" />
+                                  </div>
+                                  <div className="flex-1 flex flex-col bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-8 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
+                                      <span className="absolute top-0.5 left-1.5 text-[7px] font-bold text-gray-400">세트</span>
+                                      <input type="number" min="0" placeholder="0" value={input.sets} onChange={(e) => handleCraftInputChange(rec.name, 'sets', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-full h-full bg-transparent px-1.5 pt-3 pb-0.5 text-[11px] font-black text-center outline-none" />
+                                  </div>
+                                  <div className="flex-1 flex flex-col bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-8 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
+                                      <span className="absolute top-0.5 left-1.5 text-[7px] font-bold text-gray-400">개</span>
+                                      <input type="number" min="0" placeholder="0" value={input.units} onChange={(e) => handleCraftInputChange(rec.name, 'units', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-full h-full bg-transparent px-1.5 pt-3 pb-0.5 text-[11px] font-black text-center outline-none" />
+                                  </div>
+                                </div>
+                                <button 
+                                  type="button" 
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
+                                    handleQueueCraft(rec.name, rec.actualCraftedFromGreedy);
+                                  }} 
+                                  className="w-full h-8 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black rounded-lg shadow-sm transition-all active:scale-95"
+                                >
+                                  예약하기
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
-                        <button 
-                          type="button" 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
-                            handleQueueCraft(rec.name, rec.actualCraftedFromGreedy);
-                          }} 
-                          className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-black rounded-lg shadow-sm transition-all active:scale-95"
-                        >
-                          예약하기
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                      );
+                    })
+                  )}
                 </div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-sm">
           <h3 className="text-[11px] font-black text-gray-800 dark:text-gray-200 mb-3">
-            {recommendMode === 'max_profit' && activeTierTab !== '전체' ? `[${activeTierTab}] 필요 하위 연금` : '1단계 하위 연금/가공 (총합)'}
+            {activeTierTab !== '전체' ? `[${activeTierTab}] 필요 하위 연금` : '1단계 하위 연금/가공 (총합)'}
           </h3>
           {Object.keys(tabAggregation.tier1Crafted).length === 0 ? (
             <p className="text-[10px] text-gray-500 text-center py-4 bg-gray-50 dark:bg-[#111113] rounded-lg">해당 항목에 필요한 하위 가공이 없습니다.</p>
@@ -649,7 +552,7 @@ export default function OceanAlchemyOptimal({
 
         <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-sm">
           <h3 className="text-[11px] font-black text-gray-800 dark:text-gray-200 mb-3">
-            {recommendMode === 'max_profit' && activeTierTab !== '전체' ? `[${activeTierTab}] 필요 중급 연금` : '2단계 중급 연금 (총합)'}
+            {activeTierTab !== '전체' ? `[${activeTierTab}] 필요 중급 연금` : '2단계 중급 연금 (총합)'}
           </h3>
           {Object.keys(tabAggregation.tier2Crafted).length === 0 ? (
             <p className="text-[10px] text-gray-500 text-center py-4 bg-gray-50 dark:bg-[#111113] rounded-lg">해당 항목에 필요한 중급 연금이 없습니다.</p>
@@ -671,7 +574,7 @@ export default function OceanAlchemyOptimal({
 
       <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm">
         <h3 className="text-sm font-black text-gray-800 dark:text-gray-200 mb-4">
-          {recommendMode === 'max_profit' && activeTierTab !== '전체' ? `[${activeTierTab}] 준비물 리스트 (창고 출고 + 추가 필요)` : '총 준비물 리스트 (창고 출고 + 추가 필요)'}
+          {activeTierTab !== '전체' ? `[${activeTierTab}] 준비물 리스트 (창고 출고 + 추가 필요)` : '총 준비물 리스트 (창고 출고 + 추가 필요)'}
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -722,7 +625,7 @@ export default function OceanAlchemyOptimal({
       {Object.keys(filteredTargets).length > 0 && (
         <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm mt-4">
           <h3 className="text-sm font-black text-gray-900 dark:text-white mb-4">
-            {recommendMode === 'max_profit' && activeTierTab !== '전체' ? `[${activeTierTab}] 개별 제작 가이드 상세` : '개별 제작 가이드 상세'}
+            {activeTierTab !== '전체' ? `[${activeTierTab}] 개별 제작 가이드 상세` : '개별 제작 가이드 상세'}
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
