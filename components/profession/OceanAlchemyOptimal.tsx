@@ -3,17 +3,16 @@
 import { useMemo, useState } from 'react';
 import {
   simulateCraftPure, CORE_ITEMS, CORE_BASE_SHELLS,
-  VANILLA, BATCH_MATS, formatQty, FISH,
+  VANILLA, BATCH_MATS, formatQty, FISH, MATCHED_BLOCKS,
   ALCHEMY_T1, TIER2, RECIPE_FIXES, ALCHEMY_T2, ALCHEMY_T3,
-  PARSED_RECIPES, parseCraftTime, formatTime, O13_EFFECTS
+  PARSED_RECIPES, parseCraftTime, formatTime, O13_EFFECTS, getImagePath
 } from '@/lib/oceanTradeUtils';
-import { OCEAN_FIXED_PRICES, getImagePath } from '@/lib/professionData';
+import { OCEAN_FIXED_PRICES } from '@/lib/professionData';
 
 interface Props {
   stock: Record<string, number>;
   cost: Record<string, number>;
   blacklist: string[];
-  allowTierUpgrade: boolean;
   userStats: any;
   globalSetMode: boolean;
   craftInputs: Record<string, { boxes: string; sets: string; units: string }>;
@@ -39,16 +38,6 @@ const getBaseEquivalents = (currentStock: Record<string, number>, itemBaseReqsPe
   });
   return eq;
 };
-
-const SEAFOOD_LIST = [
-  "굴(1성)", "소라(1성)", "문어(1성)", "미역(1성)", "성게(1성)",
-  "굴(2성)", "소라(2성)", "문어(2성)", "미역(2성)", "성게(2성)",
-  "굴(3성)", "소라(3성)", "문어(3성)", "미역(3성)", "성게(3성)"
-];
-
-const FISH_SASHIMI_LIST = [
-  ...FISH, '깐 새우', '도미 회', '청어 회', '금붕어 회', '농어 회'
-];
 
 const STAR_CATEGORIES: Record<string, string[]> = {
   '0성': ['추출된 희석액'],
@@ -76,49 +65,21 @@ const orderedItems = [
 
 orderedItems.forEach((item, idx) => { SORT_WEIGHTS[item] = idx; });
 
-const groupAlchemy = (obj: Record<string, number>) => {
-  const groups: Record<string, [string, number][]> = {
-    '정수류': [], '에센스류': [], '엘릭서류': [], '핵류': [], '결정류': [], '영약류': [], '기타 가공품': []
-  };
-  Object.entries(obj).forEach(([k, v]) => {
-    if (k.includes('정수')) groups['정수류'].push([k, v]);
-    else if (k.includes('에센스')) groups['에센스류'].push([k, v]);
-    else if (k.includes('엘릭서')) groups['엘릭서류'].push([k, v]);
-    else if (k.includes('핵')) groups['핵류'].push([k, v]);
-    else if (k.includes('결정')) groups['결정류'].push([k, v]);
-    else if (k.includes('영약')) groups['영약류'].push([k, v]);
-    else groups['기타 가공품'].push([k, v]);
-  });
-  return groups;
-};
-
-const groupSeafood = (obj: Record<string, number>) => {
-  const groups: Record<string, [string, number][]> = {
-    '1성 어패류': [], '2성 어패류': [], '3성 어패류': [], '기타 생선류': []
-  };
-  Object.entries(obj).forEach(([k, v]) => {
-    if (k.includes('1성')) groups['1성 어패류'].push([k, v]);
-    else if (k.includes('2성')) groups['2성 어패류'].push([k, v]);
-    else if (k.includes('3성')) groups['3성 어패류'].push([k, v]);
-    else groups['기타 생선류'].push([k, v]);
-  });
-  return groups;
-};
-
-const groupVanilla = (obj: Record<string, number>) => {
-  const groups: Record<string, [string, number][]> = {
-    '블록류': [], '자루류': [], '기타 재료': []
-  };
-  Object.entries(obj).forEach(([k, v]) => {
-    if (k.includes('블록')) groups['블록류'].push([k, v]);
-    else if (k.includes('자루')) groups['자루류'].push([k, v]);
-    else groups['기타 재료'].push([k, v]);
-  });
-  return groups;
+const sortByIndex = (obj: Record<string, number>, orderArray: string[]) => {
+  return Object.fromEntries(
+    Object.entries(obj).sort(([a], [b]) => {
+      const idxA = orderArray.indexOf(a);
+      const idxB = orderArray.indexOf(b);
+      if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    })
+  );
 };
 
 export default function OceanAlchemyOptimal({
-  stock, cost, blacklist, allowTierUpgrade, userStats, globalSetMode,
+  stock, cost, blacklist, userStats, globalSetMode,
   craftInputs, pendingCrafts, handleCraftInputChange, handleQueueCraft, handleRemovePending,
   itemBaseReqsPerUnit
 }: Props) {
@@ -126,6 +87,8 @@ export default function OceanAlchemyOptimal({
   const TABS = ['전체', '0성', '1성', '2성', '3성'] as const;
   const [activeTierTab, setActiveTierTab] = useState<typeof TABS[number]>('전체');
   const [isCraftSectionOpen, setIsCraftSectionOpen] = useState(true);
+  
+  const [blueprintViewMode, setBlueprintViewMode] = useState<'flow' | 'compact'>('flow');
 
   const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
   const o13Reduction = O13_EFFECTS[userStats.o13Lv] || 0;
@@ -268,12 +231,25 @@ export default function OceanAlchemyOptimal({
     let trackingStock = { ...currentStock };
     const refinedRecommendations: any[] = [];
 
-    for (const itemName of Object.keys(bestGlobalCounts)) {
-        const qty = bestGlobalCounts[itemName];
+    const sortedNames = Object.keys(bestGlobalCounts).sort((a, b) => {
+      const aVal = itemsWithProfit.find(i=>i.name===a)?.profit || 0;
+      const bVal = itemsWithProfit.find(i=>i.name===b)?.profit || 0;
+      return bVal - aVal;
+    });
+
+    for (const itemName of sortedNames) {
+        let qty = bestGlobalCounts[itemName];
         const itemDef = itemsWithProfit.find(i => i.name === itemName);
         if (!itemDef) continue;
 
-        const sim = simulateCraftPure({ [itemName]: qty }, trackingStock, allowTierUpgrade);
+        let sim = simulateCraftPure({ [itemName]: qty }, trackingStock);
+
+        while (qty > 0 && Object.keys(sim.missing).some(m => CORE_BASE_SHELLS.includes(m))) {
+            qty--;
+            sim = simulateCraftPure({ [itemName]: qty }, trackingStock);
+        }
+
+        if (qty <= 0) continue;
 
         refinedRecommendations.push({
             ...itemDef,
@@ -287,7 +263,7 @@ export default function OceanAlchemyOptimal({
     }
 
     return { recommendations: refinedRecommendations };
-  }, [stockStr, costStr, blacklistStr, reqsStr, allowTierUpgrade, o16Bonus]);
+  }, [stockStr, costStr, blacklistStr, reqsStr, o16Bonus]);
 
   const activeTargets = useMemo(() => {
     const targets: Record<string, number> = {};
@@ -322,7 +298,7 @@ export default function OceanAlchemyOptimal({
   }, [activeTargets, activeBottomRecs]);
 
   const globalAggregation = useMemo(() => {
-    const globalSim = simulateCraftPure(activeTargets, stock, allowTierUpgrade);
+    const globalSim = simulateCraftPure(activeTargets, stock);
     
     let totalRevenue = 0;
     let totalCost = 0;
@@ -341,21 +317,10 @@ export default function OceanAlchemyOptimal({
       totalCost, 
       netProfit: totalRevenue - totalCost,
     };
-  }, [activeTargets, stock, allowTierUpgrade, optimalCalculations.recommendations, cost]);
-
-  const sortObj = (obj: Record<string, number>) => {
-    return Object.fromEntries(
-      Object.entries(obj).sort(([a], [b]) => {
-        const weightA = SORT_WEIGHTS[a] ?? 999;
-        const weightB = SORT_WEIGHTS[b] ?? 999;
-        if (weightA !== weightB) return weightA - weightB;
-        return a.localeCompare(b);
-      })
-    );
-  };
+  }, [activeTargets, stock, optimalCalculations.recommendations, cost]);
 
   const tabAggregation = useMemo(() => {
-    const sim = simulateCraftPure(filteredTargets, stock, allowTierUpgrade);
+    const sim = simulateCraftPure(filteredTargets, stock);
     
     const tier1Crafted: Record<string, number> = {};
     const tier2Crafted: Record<string, number> = {};
@@ -379,27 +344,81 @@ export default function OceanAlchemyOptimal({
     });
 
     const prepSeafood: Record<string, number> = {};
-    const prepAlchemy: Record<string, number> = {};
-    const prepVanilla: Record<string, number> = {};
+    const prepBlocks: Record<string, number> = {};
+    const prepFish: Record<string, number> = {};
+    const prepOther: Record<string, number> = {};
 
     Object.entries(prepList).forEach(([m, q]) => {
-      if (SEAFOOD_LIST.includes(m) || FISH_SASHIMI_LIST.includes(m)) {
+      if (CORE_BASE_SHELLS.includes(m)) {
         prepSeafood[m] = q;
-      } else if ([...ALCHEMY_T1, ...ALCHEMY_T2, ...ALCHEMY_T3].includes(m)) {
-        prepAlchemy[m] = q;
+      } else if (MATCHED_BLOCKS.includes(m)) {
+        prepBlocks[m] = q;
+      } else if (FISH.includes(m)) {
+        prepFish[m] = q;
       } else {
-        prepVanilla[m] = q;
+        prepOther[m] = q;
       }
     });
 
     return { 
-      tier1Crafted: sortObj(tier1Crafted),
-      tier2Crafted: sortObj(tier2Crafted),
-      prepSeafood: sortObj(prepSeafood),
-      prepAlchemy: sortObj(prepAlchemy),
-      prepVanilla: sortObj(prepVanilla)
+      tier1Crafted,
+      tier2Crafted,
+      prepSeafood: sortByIndex(prepSeafood, CORE_BASE_SHELLS),
+      prepBlocks: sortByIndex(prepBlocks, MATCHED_BLOCKS),
+      prepFish: sortByIndex(prepFish, FISH),
+      prepOther: sortByIndex(prepOther, orderedItems)
     };
-  }, [filteredTargets, stock, allowTierUpgrade]);
+  }, [filteredTargets, stock]);
+
+  const renderCraftItemCompact = (itemName: string, qty: number) => (
+    <div key={itemName} className="flex items-center justify-between bg-white dark:bg-[#1a1a1e] border border-gray-100 dark:border-white/5 rounded-lg px-2.5 py-1.5 shadow-sm">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <img src={getImagePath(itemName)||undefined} className="w-4 h-4 object-contain opacity-90 shrink-0" />
+        <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 truncate">{itemName}</span>
+      </div>
+      <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 shrink-0 ml-2">{formatQty(qty, globalSetMode)}</span>
+    </div>
+  );
+
+  const renderProcessNode = (itemName: string, qty: number, isFinal = false) => {
+    let recipe: any = PARSED_RECIPES.find(r => r.name === itemName);
+    if (!recipe && RECIPE_FIXES[itemName]) {
+      const fixIng = RECIPE_FIXES[itemName].ing;
+      const fixReq = RECIPE_FIXES[itemName].req;
+      recipe = { name: itemName, yieldAmount: RECIPE_FIXES[itemName].yield, time: '0초', ingredients: [{ name: fixIng, req: fixReq }] };
+    }
+    if (!recipe) return null;
+
+    const crafts = Math.ceil(qty / recipe.yieldAmount);
+    const baseSec = parseCraftTime(recipe.time || '0초') * crafts;
+    const finalSec = Math.floor(baseSec * (1 - o13Reduction));
+    const timeStr = formatTime(finalSec);
+
+    return (
+      <div key={itemName} className={`flex flex-col gap-2 p-3 rounded-xl border ${isFinal ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-500/30' : 'bg-gray-50 dark:bg-white/[0.02] border-gray-200/50 dark:border-white/5'}`}>
+        <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-white/5">
+          <div className="flex items-center gap-1.5">
+            <img src={getImagePath(itemName)||undefined} className="w-4 h-4 object-contain" />
+            <span className={`text-[11px] font-black ${isFinal ? 'text-blue-700 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`}>{itemName}</span>
+          </div>
+          <span className={`text-[10px] font-black ${isFinal ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>{formatQty(qty, globalSetMode)}</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {recipe.ingredients.map((ing: any) => (
+            <span key={ing.name} className="text-[9px] font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1 bg-white dark:bg-black/30 px-1.5 py-0.5 rounded shadow-sm border border-gray-100 dark:border-transparent">
+              <img src={getImagePath(ing.name)||undefined} className="w-3 h-3 object-contain opacity-80" />
+              {ing.name} <span className="font-bold">{formatQty(ing.req * crafts, globalSetMode)}</span>
+            </span>
+          ))}
+        </div>
+        {finalSec > 0 && (
+          <div className="text-right mt-1">
+            <span className="text-[8px] font-bold text-gray-400 bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded">소요시간: {timeStr}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderCraftStep = (itemName: string, qty: number) => {
     let recipe: any = PARSED_RECIPES.find(r => r.name === itemName);
@@ -421,7 +440,7 @@ export default function OceanAlchemyOptimal({
           <div className="flex items-center gap-1.5 shrink-0">
             <img src={getImagePath(itemName)||undefined} className="w-3.5 h-3.5 object-contain opacity-90" />
             <span className="text-[11px] font-bold text-gray-200">{itemName}</span>
-            <span className="text-[10px] font-black text-indigo-400">{formatQty(qty, globalSetMode)}</span>
+            <span className="text-[10px] font-black text-blue-400">{formatQty(qty, globalSetMode)}</span>
           </div>
           <div className="hidden xl:block w-[1px] h-3 bg-gray-600"></div>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -440,6 +459,56 @@ export default function OceanAlchemyOptimal({
     );
   };
 
+  const renderAlchemyPair = (title1: string, list1: string[], title2: string, list2: string[]) => {
+    const items1 = list1.filter(item => tabAggregation.tier1Crafted[item] || tabAggregation.tier2Crafted[item]);
+    const items2 = list2.filter(item => tabAggregation.tier1Crafted[item] || tabAggregation.tier2Crafted[item]);
+    
+    if (items1.length === 0 && items2.length === 0) return null;
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-xl overflow-hidden shadow-sm">
+           <div className="bg-gray-50 dark:bg-white/[0.02] p-3 border-b border-gray-100 dark:border-white/5">
+              <h4 className="text-[12px] font-black text-blue-800 dark:text-blue-400">{title1}</h4>
+           </div>
+           <div className="flex flex-col">
+              {items1.map((item, idx) => (
+                 <div key={item} className={`flex items-center justify-between p-3 ${idx !== items1.length - 1 ? 'border-b border-gray-100 dark:border-white/5' : ''}`}>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <img src={getImagePath(item)||undefined} className="w-4 h-4 object-contain shrink-0" />
+                      <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200 truncate">{item}</span>
+                    </div>
+                    <span className="text-[11px] font-black text-gray-900 dark:text-white shrink-0 ml-1">
+                      {formatQty(tabAggregation.tier1Crafted[item] || tabAggregation.tier2Crafted[item], globalSetMode)}
+                    </span>
+                 </div>
+              ))}
+              {items1.length === 0 && <div className="p-3 text-[10px] text-gray-400 text-center">항목 없음</div>}
+           </div>
+        </div>
+        <div className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-xl overflow-hidden shadow-sm">
+           <div className="bg-gray-50 dark:bg-white/[0.02] p-3 border-b border-gray-100 dark:border-white/5">
+              <h4 className="text-[12px] font-black text-blue-800 dark:text-blue-400">{title2}</h4>
+           </div>
+           <div className="flex flex-col">
+              {items2.map((item, idx) => (
+                 <div key={item} className={`flex items-center justify-between p-3 ${idx !== items2.length - 1 ? 'border-b border-gray-100 dark:border-white/5' : ''}`}>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <img src={getImagePath(item)||undefined} className="w-4 h-4 object-contain shrink-0" />
+                      <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200 truncate">{item}</span>
+                    </div>
+                    <span className="text-[11px] font-black text-gray-900 dark:text-white shrink-0 ml-1">
+                      {formatQty(tabAggregation.tier1Crafted[item] || tabAggregation.tier2Crafted[item], globalSetMode)}
+                    </span>
+                 </div>
+              ))}
+              {items2.length === 0 && <div className="p-3 text-[10px] text-gray-400 text-center">항목 없음</div>}
+           </div>
+        </div>
+      </div>
+    );
+  };
+
   if (optimalCalculations.recommendations.length === 0) {
     return (
       <div className="py-12 text-center bg-gray-50 dark:bg-[#111113] rounded-[1.5rem] border border-gray-200 dark:border-transparent">
@@ -453,8 +522,8 @@ export default function OceanAlchemyOptimal({
   });
 
   return (
-    <div className="space-y-4" style={{ overflowAnchor: 'none' }}>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+    <div className="space-y-6" style={{ overflowAnchor: 'none' }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 flex flex-col justify-center items-center shadow-sm">
           <span className="text-[10px] font-black text-gray-500 mb-1">총 판매 골드</span>
           <span className="text-base font-black text-gray-900 dark:text-white">{globalAggregation.totalRevenue.toLocaleString()} G</span>
@@ -463,9 +532,9 @@ export default function OceanAlchemyOptimal({
           <span className="text-[10px] font-black text-gray-500 mb-1">총 재료비</span>
           <span className="text-base font-black text-rose-500">{globalAggregation.totalCost.toLocaleString()} G</span>
         </div>
-        <div className="col-span-2 bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 border border-cyan-200 dark:border-cyan-500/20 rounded-2xl p-4 flex flex-col justify-center items-center shadow-sm">
-          <span className="text-[11px] font-black text-cyan-700 dark:text-cyan-400 mb-1">예상 순수익</span>
-          <span className="text-xl font-black text-cyan-600 dark:text-cyan-300">{globalAggregation.netProfit.toLocaleString()} G</span>
+        <div className="col-span-2 bg-gradient-to-r from-blue-500/10 to-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-2xl p-4 flex flex-col justify-center items-center shadow-sm">
+          <span className="text-[11px] font-black text-blue-700 dark:text-blue-400 mb-1">예상 순수익</span>
+          <span className="text-xl font-black text-blue-600 dark:text-blue-300">{globalAggregation.netProfit.toLocaleString()} G</span>
         </div>
       </div>
 
@@ -475,20 +544,23 @@ export default function OceanAlchemyOptimal({
           onClick={() => setIsCraftSectionOpen(!isCraftSectionOpen)}
         >
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-black text-gray-800 dark:text-gray-200 group-hover:text-indigo-500 transition-colors">
+            <h3 className="text-sm font-black text-gray-800 dark:text-gray-200 group-hover:text-blue-500 transition-colors">
               제작 목표 및 예약
             </h3>
-            <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded">
-              {activeTierTab === '전체' ? '전체 보기' : `${activeTierTab} 필터 적용됨`}
+            <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded">
+              {activeTierTab === '전체' ? '전체 보기' : `[${activeTierTab}] 필터 적용됨`}
+            </span>
+            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-transparent">
+              각 라인업을 클릭하면 하단 컨텐츠가 필터링되어 더 편하게 볼 수 있습니다.
             </span>
           </div>
           <button type="button" className="text-[10px] font-black text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-            {isCraftSectionOpen ? '접기 ▲' : '펼치기 ▼'}
+            {isCraftSectionOpen ? '닫기 ▲' : '펼치기 ▼'}
           </button>
         </div>
 
         {isCraftSectionOpen && (
-          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 animate-fade-in-up">
             {['0성', '1성', '2성', '3성'].map(tier => {
               const itemsInTier = optimalCalculations.recommendations
                 .filter(rec => STAR_CATEGORIES[tier]?.includes(rec.name))
@@ -506,13 +578,13 @@ export default function OceanAlchemyOptimal({
                   }}
                   className={`flex flex-col gap-3 p-3.5 rounded-[1.25rem] border transition-all cursor-pointer ${
                     isActive 
-                    ? 'bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-400 dark:border-indigo-500/50 shadow-md ring-1 ring-indigo-400 dark:ring-indigo-500/50' 
+                    ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-500/50 shadow-md ring-1 ring-blue-400 dark:ring-blue-500/50' 
                     : 'bg-gray-50/50 dark:bg-[#111113]/50 border-gray-200 dark:border-white/5 hover:bg-gray-100 dark:hover:bg-white/10'
                   }`}
                 >
                   <div className="flex items-center justify-between px-1 mb-1">
-                    <span className={`text-xs font-black ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`}>{tier} 라인업</span>
-                    {isActive && <span className="text-[9px] font-bold text-indigo-500 animate-pulse">선택됨</span>}
+                    <span className={`text-xs font-black ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>{tier} 라인업</span>
+                    {isActive && <span className="text-[9px] font-bold text-blue-500 animate-pulse">선택됨</span>}
                   </div>
 
                   {itemsInTier.length === 0 ? (
@@ -528,7 +600,7 @@ export default function OceanAlchemyOptimal({
                         <div 
                           key={rec.name} 
                           onClick={(e) => e.stopPropagation()} 
-                          className={`rounded-xl p-3 flex flex-col gap-3 border transition-all shadow-sm cursor-default ${isPending ? 'bg-indigo-50 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-500/30' : 'bg-white dark:bg-[#16161a] border-gray-200 dark:border-white/5'}`}
+                          className={`rounded-xl p-3 flex flex-col gap-3 border transition-all shadow-sm cursor-default ${isPending ? 'bg-blue-50 dark:bg-blue-900/40 border-blue-200 dark:border-blue-500/30' : 'bg-white dark:bg-[#16161a] border-gray-200 dark:border-white/5'}`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -557,15 +629,15 @@ export default function OceanAlchemyOptimal({
                             ) : (
                               <div className="flex flex-col gap-1.5">
                                 <div className="flex items-center gap-1.5 w-full">
-                                  <div className="flex-1 flex flex-col bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-8 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
+                                  <div className="flex-1 flex flex-col bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-8 transition-colors focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 shadow-sm relative">
                                       <span className="absolute top-0.5 left-1.5 text-[7px] font-bold text-gray-400">상자</span>
                                       <input type="number" min="0" placeholder="0" value={input.boxes} onChange={(e) => handleCraftInputChange(rec.name, 'boxes', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-full h-full bg-transparent px-1.5 pt-3 pb-0.5 text-[11px] font-black text-center outline-none" />
                                   </div>
-                                  <div className="flex-1 flex flex-col bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-8 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
+                                  <div className="flex-1 flex flex-col bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-8 transition-colors focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 shadow-sm relative">
                                       <span className="absolute top-0.5 left-1.5 text-[7px] font-bold text-gray-400">세트</span>
                                       <input type="number" min="0" placeholder="0" value={input.sets} onChange={(e) => handleCraftInputChange(rec.name, 'sets', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-full h-full bg-transparent px-1.5 pt-3 pb-0.5 text-[11px] font-black text-center outline-none" />
                                   </div>
-                                  <div className="flex-1 flex flex-col bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-8 transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 shadow-sm relative">
+                                  <div className="flex-1 flex flex-col bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden h-8 transition-colors focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 shadow-sm relative">
                                       <span className="absolute top-0.5 left-1.5 text-[7px] font-bold text-gray-400">개</span>
                                       <input type="number" min="0" placeholder="0" value={input.units} onChange={(e) => handleCraftInputChange(rec.name, 'units', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-full h-full bg-transparent px-1.5 pt-3 pb-0.5 text-[11px] font-black text-center outline-none" />
                                   </div>
@@ -578,7 +650,7 @@ export default function OceanAlchemyOptimal({
                                     if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
                                     handleQueueCraft(rec.name, rec.actualCraftedFromGreedy);
                                   }} 
-                                  className="w-full h-8 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black rounded-lg shadow-sm transition-all active:scale-95"
+                                  className="w-full h-8 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black rounded-lg shadow-sm transition-all active:scale-95"
                                 >
                                   예약하기
                                 </button>
@@ -596,213 +668,227 @@ export default function OceanAlchemyOptimal({
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-sm">
-          <h3 className="text-[11px] font-black text-gray-800 dark:text-gray-200 mb-3">
-            {activeTierTab !== '전체' ? `[${activeTierTab}] 필요 하위 연금` : '1단계 하위 연금/가공 (총합)'}
-          </h3>
-          {Object.keys(tabAggregation.tier1Crafted).length === 0 ? (
-            <p className="text-[10px] text-gray-500 text-center py-4 bg-gray-50 dark:bg-[#111113] rounded-lg">해당 항목에 필요한 하위 가공이 없습니다.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
-              {Object.entries(groupAlchemy(tabAggregation.tier1Crafted))
-                .filter(([_, items]) => items.length > 0)
-                .map(([label, items]) => (
-                  <div key={label} className="flex flex-col gap-1.5 bg-gray-100/50 dark:bg-white/[0.03] p-2 rounded-xl border border-gray-200/50 dark:border-white/5">
-                    <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 px-1 mb-0.5">{label}</span>
-                    {items.map(([item, qty]) => (
-                      <div key={item} className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-lg px-2 py-1.5 flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <img src={getImagePath(item)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" />
-                          <span className="text-[10px] font-bold text-gray-800 dark:text-gray-200 truncate">{item}</span>
-                        </div>
-                        <span className="text-[10px] font-black text-indigo-500 shrink-0 ml-1">{formatQty(qty, globalSetMode)}</span>
-                      </div>
-                    ))}
-                  </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-sm">
-          <h3 className="text-[11px] font-black text-gray-800 dark:text-gray-200 mb-3">
-            {activeTierTab !== '전체' ? `[${activeTierTab}] 필요 중급 연금` : '2단계 중급 연금 (총합)'}
-          </h3>
-          {Object.keys(tabAggregation.tier2Crafted).length === 0 ? (
-            <p className="text-[10px] text-gray-500 text-center py-4 bg-gray-50 dark:bg-[#111113] rounded-lg">해당 항목에 필요한 중급 연금이 없습니다.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
-              {Object.entries(groupAlchemy(tabAggregation.tier2Crafted))
-                .filter(([_, items]) => items.length > 0)
-                .map(([label, items]) => (
-                  <div key={label} className="flex flex-col gap-1.5 bg-gray-100/50 dark:bg-white/[0.03] p-2 rounded-xl border border-gray-200/50 dark:border-white/5">
-                    <span className="text-[10px] font-black text-purple-500 dark:text-purple-400 px-1 mb-0.5">{label}</span>
-                    {items.map(([item, qty]) => (
-                      <div key={item} className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-lg px-2 py-1.5 flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <img src={getImagePath(item)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" />
-                          <span className="text-[10px] font-bold text-gray-800 dark:text-gray-200 truncate">{item}</span>
-                        </div>
-                        <span className="text-[10px] font-black text-purple-500 shrink-0 ml-1">{formatQty(qty, globalSetMode)}</span>
-                      </div>
-                    ))}
-                  </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <div className="flex flex-col gap-4">
+        {(activeTierTab === '전체' || activeTierTab === '1성') && renderAlchemyPair(
+          "1티어: 정수", ["수호의 정수(1성)", "파동의 정수(1성)", "혼란의 정수(1성)", "생명의 정수(1성)", "부식의 정수(1성)"],
+          "2티어: 핵", ["물결 수호의 핵", "파동 오염의 핵", "질서 파괴의 핵", "활력 붕괴의 핵", "침식 방어의 핵"]
+        )}
+        {(activeTierTab === '전체' || activeTierTab === '2성') && renderAlchemyPair(
+          "1티어: 에센스", ["수호 에센스", "파동 에센스", "혼란 에센스", "생명 에센스", "부식 에센스"],
+          "2티어: 결정", ["활기 보존의 결정", "파도 침식의 결정", "방어 오염의 결정", "격류 재생의 결정", "맹독 혼란의 결정"]
+        )}
+        {(activeTierTab === '전체' || activeTierTab === '3성') && renderAlchemyPair(
+          "1티어: 엘릭서", ["수호의 엘릭서", "파동의 엘릭서", "혼란의 엘릭서", "생명의 엘릭서", "부식의 엘릭서"],
+          "2티어: 영약", ["불멸 재생의 영약", "파동 장벽의 영약", "타락 침식의 영약", "생명 광란의 영약", "맹독 파동의 영약"]
+        )}
       </div>
 
       <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm">
-        <h3 className="text-sm font-black text-gray-800 dark:text-gray-200 mb-4">
-          {activeTierTab !== '전체' ? `[${activeTierTab}] 준비물 리스트 (창고 출고 + 추가 필요)` : '총 준비물 리스트 (창고 출고 + 추가 필요)'}
+        <h3 className="text-sm font-black text-gray-800 dark:text-gray-200 mb-5">
+          {activeTierTab !== '전체' ? `[${activeTierTab}] 총 준비물(바닐라 재료는 있거나 구매한다고 가정)` : '총 준비물(바닐라 재료는 있거나 구매한다고 가정)'}
         </h3>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-          <div className="bg-blue-50 dark:bg-blue-950/10 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4">
-            <h4 className="text-xs font-black text-blue-600 dark:text-blue-400 mb-3 border-b border-blue-200 dark:border-blue-800/30 pb-2">어패류 및 생선류</h4>
-            {Object.keys(tabAggregation.prepSeafood).length === 0 ? <p className="text-[10px] text-gray-500">필요 없음</p> : 
-              <div className="flex flex-col gap-3">
-                {Object.entries(groupSeafood(tabAggregation.prepSeafood))
-                  .filter(([_, items]) => items.length > 0)
-                  .map(([label, items]) => (
-                    <div key={label} className="flex flex-col gap-1.5 bg-white/50 dark:bg-black/20 p-2 rounded-xl border border-blue-100 dark:border-blue-900/20">
-                      <span className="text-[9px] font-black text-blue-500 dark:text-blue-400 px-1">{label}</span>
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
-                        {items.map(([m, q]) => (
-                          <div key={m} className="flex items-center justify-between text-[11px] bg-white dark:bg-[#111113] px-2 py-1.5 rounded shadow-sm border border-transparent dark:border-white/5">
-                            <div className="flex items-center gap-1.5 min-w-0"><img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" /><span className="font-bold text-gray-800 dark:text-gray-300 truncate">{m}</span></div>
-                            <span className="font-black text-blue-600 dark:text-blue-400 shrink-0 ml-1">{formatQty(q, globalSetMode)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                ))}
-              </div>
-            }
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+            <h4 className="text-[12px] font-black text-blue-700 dark:text-blue-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2">
+              어패류
+            </h4>
+            <div className="flex flex-col gap-1.5 w-full">
+              {Object.keys(tabAggregation.prepSeafood).length === 0 ? (
+                 <p className="text-[10px] text-gray-500 font-medium py-2">필요한 항목이 없습니다.</p>
+              ) : (
+                Object.entries(tabAggregation.prepSeafood).map(([m, q]) => renderCraftItemCompact(m, q as number))
+              )}
+            </div>
           </div>
 
-          <div className="bg-purple-50 dark:bg-purple-950/10 border border-purple-100 dark:border-purple-900/30 rounded-xl p-4">
-            <h4 className="text-xs font-black text-purple-600 dark:text-purple-400 mb-3 border-b border-purple-200 dark:border-purple-800/30 pb-2">연금품 및 가공품</h4>
-            {Object.keys(tabAggregation.prepAlchemy).length === 0 ? <p className="text-[10px] text-gray-500">필요 없음</p> : 
-              <div className="flex flex-col gap-3">
-                {Object.entries(groupAlchemy(tabAggregation.prepAlchemy))
-                  .filter(([_, items]) => items.length > 0)
-                  .map(([label, items]) => (
-                    <div key={label} className="flex flex-col gap-1.5 bg-white/50 dark:bg-black/20 p-2 rounded-xl border border-purple-100 dark:border-purple-900/20">
-                      <span className="text-[9px] font-black text-purple-500 dark:text-purple-400 px-1">{label}</span>
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
-                        {items.map(([m, q]) => (
-                          <div key={m} className="flex items-center justify-between text-[11px] bg-white dark:bg-[#111113] px-2 py-1.5 rounded shadow-sm border border-transparent dark:border-white/5">
-                            <div className="flex items-center gap-1.5 min-w-0"><img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" /><span className="font-bold text-gray-800 dark:text-gray-300 truncate">{m}</span></div>
-                            <span className="font-black text-purple-600 dark:text-purple-400 shrink-0 ml-1">{formatQty(q, globalSetMode)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                ))}
-              </div>
-            }
+          <div className="flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+            <h4 className="text-[12px] font-black text-blue-700 dark:text-blue-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2">
+              블록
+            </h4>
+            <div className="flex flex-col gap-1.5 w-full">
+              {Object.keys(tabAggregation.prepBlocks).length === 0 ? (
+                 <p className="text-[10px] text-gray-500 font-medium py-2">필요한 항목이 없습니다.</p>
+              ) : (
+                Object.entries(tabAggregation.prepBlocks).map(([m, q]) => renderCraftItemCompact(m, q as number))
+              )}
+            </div>
           </div>
 
-          <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4">
-            <h4 className="text-xs font-black text-amber-600 dark:text-amber-400 mb-3 border-b border-amber-200 dark:border-amber-800/30 pb-2">바닐라 재료 및 블록</h4>
-            {Object.keys(tabAggregation.prepVanilla).length === 0 ? <p className="text-[10px] text-gray-500">필요 없음</p> : 
-              <div className="flex flex-col gap-3">
-                {Object.entries(groupVanilla(tabAggregation.prepVanilla))
-                  .filter(([_, items]) => items.length > 0)
-                  .map(([label, items]) => (
-                    <div key={label} className="flex flex-col gap-1.5 bg-white/50 dark:bg-black/20 p-2 rounded-xl border border-amber-100 dark:border-amber-900/20">
-                      <span className="text-[9px] font-black text-amber-500 dark:text-amber-400 px-1">{label}</span>
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-1.5">
-                        {items.map(([m, q]) => (
-                          <div key={m} className="flex items-center justify-between text-[11px] bg-white dark:bg-[#111113] px-2 py-1.5 rounded shadow-sm border border-transparent dark:border-white/5">
-                            <div className="flex items-center gap-1.5 min-w-0"><img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain shrink-0" /><span className="font-bold text-gray-800 dark:text-gray-300 truncate">{m}</span></div>
-                            <span className="font-black text-amber-600 dark:text-amber-400 shrink-0 ml-1">{formatQty(q, globalSetMode)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                ))}
-              </div>
-            }
+          <div className="flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+            <h4 className="text-[12px] font-black text-blue-700 dark:text-blue-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2">
+              회
+            </h4>
+            <div className="flex flex-col gap-1.5 w-full">
+              {Object.keys(tabAggregation.prepFish).length === 0 ? (
+                 <p className="text-[10px] text-gray-500 font-medium py-2">필요한 항목이 없습니다.</p>
+              ) : (
+                Object.entries(tabAggregation.prepFish).map(([m, q]) => renderCraftItemCompact(m, q as number))
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+            <h4 className="text-[12px] font-black text-gray-500 dark:text-gray-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2">
+              기타 재료 (연금품 포함)
+            </h4>
+            <div className="flex flex-col gap-1.5 w-full">
+              {Object.keys(tabAggregation.prepOther).length === 0 ? (
+                 <p className="text-[10px] text-gray-500 font-medium py-2">필요한 항목이 없습니다.</p>
+              ) : (
+                Object.entries(tabAggregation.prepOther).map(([m, q]) => renderCraftItemCompact(m, q as number))
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {Object.keys(filteredTargets).length > 0 && (
         <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-sm mt-4">
-          <h3 className="text-sm font-black text-gray-900 dark:text-white mb-4">
-            {activeTierTab !== '전체' ? `[${activeTierTab}] 개별 제작 가이드 상세` : '개별 제작 가이드 상세'}
-          </h3>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
+            <h3 className="text-sm font-black text-gray-900 dark:text-white">
+              {activeTierTab !== '전체' ? `[${activeTierTab}] 상세 제작 가이드` : '상세 제작 가이드'}
+            </h3>
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111113] p-1 rounded-lg border border-gray-200 dark:border-white/5 shadow-inner">
+              <button 
+                onClick={() => setBlueprintViewMode('compact')} 
+                className={`px-3 py-1.5 rounded-md text-[10px] font-black transition-all ${blueprintViewMode === 'compact' ? 'bg-white dark:bg-[#1a1a1e] text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              >
+                세로 그리드
+              </button>
+              <button 
+                onClick={() => setBlueprintViewMode('flow')} 
+                className={`px-3 py-1.5 rounded-md text-[10px] font-black transition-all ${blueprintViewMode === 'flow' ? 'bg-white dark:bg-[#1a1a1e] text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              >
+                가로 플로우
+              </button>
+            </div>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {sortedFilteredTargets.map(([itemName, targetQty]) => {
               const rec = optimalCalculations.recommendations.find(r => r.name === itemName);
               if (!rec) return null;
-              const dynamicSim = simulateCraftPure({ [itemName]: targetQty }, rec.stockBeforeCraft, allowTierUpgrade);
+              const dynamicSim = simulateCraftPure({ [itemName]: targetQty }, rec.stockBeforeCraft);
+
+              const missingKeys = Object.keys(dynamicSim.missing);
+              const s1 = Object.entries(dynamicSim.craftedLog || {}).filter(([k]) => !k.includes("핵") && !k.includes("결정") && !k.includes("영약") && !OCEAN_FIXED_PRICES.find(p=>p.name===k) && k !== itemName);
+              const s2 = Object.entries(dynamicSim.craftedLog || {}).filter(([k]) => (k.includes("핵") || k.includes("결정") || k.includes("영약")) && k !== itemName);
 
               return (
-                <div key={itemName} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-xl p-4 shadow-sm flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-white/10 pb-3">
+                <div key={itemName} className={`bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm flex flex-col ${blueprintViewMode === 'flow' ? 'col-span-full' : 'h-full'}`}>
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-white/5">
                     <div className="flex items-center gap-2">
-                      <img src={getImagePath(itemName)||undefined} className="w-5 h-5 object-contain drop-shadow-sm" />
-                      <span className="text-xs font-black text-gray-900 dark:text-white">{itemName}</span>
+                      <img src={getImagePath(itemName)||undefined} className="w-6 h-6 object-contain drop-shadow-md" />
+                      <div>
+                        <span className="text-sm font-black text-blue-700 dark:text-blue-400 leading-none">{itemName}</span>
+                        <p className="text-[10px] font-bold text-gray-500 mt-0.5">목표 수량: {formatQty(targetQty, globalSetMode)}</p>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded">{formatQty(targetQty, globalSetMode)} 기준</span>
                   </div>
                   
-                  <div className="flex flex-col gap-4 flex-1">
-                    <div>
-                      <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 mb-1.5">STEP 1. 부족한 바닐라 재료</p>
-                      {Object.keys(dynamicSim.missing).length === 0 ? (
-                        <span className="text-[10px] text-gray-500 font-bold">재고 충분</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1.5">
-                            {Object.entries(dynamicSim.missing).map(([m, q]) => (
-                              <span key={m} className="bg-white dark:bg-black border border-gray-200 dark:border-white/10 px-1.5 py-1 rounded text-[9px] font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1 shadow-sm">
-                                  <img src={getImagePath(m)||undefined} className="w-3 h-3 object-contain" />
-                                  {m} <span className="text-rose-500">{formatQty(q as number, globalSetMode)}</span>
-                              </span>
-                            ))}
+                  {blueprintViewMode === 'flow' ? (
+                    <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-3 w-full">
+                      
+                      <div className="flex-1 flex flex-col min-w-[200px]">
+                        <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 mb-1.5 uppercase tracking-widest px-1">Phase 1. 기초 준비</span>
+                        <div className="bg-gray-50 dark:bg-white/[0.02] border border-gray-200/50 dark:border-white/5 rounded-xl p-3 h-full flex flex-col justify-center gap-1.5">
+                          {missingKeys.length === 0 ? (
+                            <span className="text-[10px] text-gray-400 font-bold italic">재고 충분</span>
+                          ) : (
+                            missingKeys.map((m) => (
+                              <div key={m} className="flex items-center justify-between text-[10px]">
+                                <div className="flex items-center gap-1.5 truncate">
+                                  <img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain opacity-80 shrink-0" />
+                                  <span className="text-gray-700 dark:text-gray-300 font-bold truncate">{m}</span>
+                                </div>
+                                <span className="text-blue-500 font-black shrink-0 ml-1">{formatQty(dynamicSim.missing[m] as number, globalSetMode)}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {s1.length > 0 && (
+                        <>
+                          <div className="hidden xl:flex items-center justify-center text-gray-300 dark:text-gray-700 shrink-0 text-xl font-black">{'>'}</div>
+                          <div className="flex-1 flex flex-col min-w-[220px]">
+                            <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 mb-1.5 uppercase tracking-widest px-1">Phase 2. 1차 가공</span>
+                            <div className="flex flex-col gap-2 h-full justify-center">
+                              {s1.map(([m, q]) => renderProcessNode(m, q as number))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {s2.length > 0 && (
+                        <>
+                          <div className="hidden xl:flex items-center justify-center text-gray-300 dark:text-gray-700 shrink-0 text-xl font-black">{'>'}</div>
+                          <div className="flex-1 flex flex-col min-w-[220px]">
+                            <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 mb-1.5 uppercase tracking-widest px-1">Phase 3. 2차 가공</span>
+                            <div className="flex flex-col gap-2 h-full justify-center">
+                              {s2.map(([m, q]) => renderProcessNode(m, q as number))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="hidden xl:flex items-center justify-center text-blue-300 dark:text-blue-800 shrink-0 text-xl font-black">{'>'}</div>
+                      
+                      <div className="flex-1 flex flex-col min-w-[220px]">
+                        <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 mb-1.5 uppercase tracking-widest px-1">Phase 4. 최종 연성</span>
+                        <div className="flex flex-col h-full justify-center">
+                          {renderProcessNode(itemName, targetQty, true)}
+                        </div>
+                      </div>
+
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4 flex-1 mt-2">
+                      <div>
+                        <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 mb-1.5">STEP 1. 부족한 바닐라 재료</p>
+                        {Object.keys(dynamicSim.missing).length === 0 ? (
+                          <span className="text-[10px] text-gray-500 font-bold">재고 충분</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                              {Object.entries(dynamicSim.missing).map(([m, q]) => (
+                                <span key={m} className="bg-white dark:bg-black border border-gray-200 dark:border-white/10 px-1.5 py-1 rounded text-[9px] font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1 shadow-sm">
+                                    <img src={getImagePath(m)||undefined} className="w-3 h-3 object-contain" />
+                                    {m} <span className="text-blue-500">{formatQty(q as number, globalSetMode)}</span>
+                                </span>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {s1.length > 0 && (
+                        <div>
+                            <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 mb-1.5">STEP 2. 하위 연금/가공 (창고에서 꺼내기)</p>
+                            <div className="flex flex-col gap-1.5">
+                              {s1.map(([m, q]) => renderCraftStep(m, q as number))}
+                            </div>
                         </div>
                       )}
-                    </div>
 
-                    {(() => {
-                        const s1 = Object.entries(dynamicSim.craftedLog || {}).filter(([k]) => !k.includes("핵") && !k.includes("결정") && !k.includes("영약") && !OCEAN_FIXED_PRICES.find(p=>p.name===k) && k !== itemName);
-                        if(s1.length === 0) return null;
-                        return (
-                          <div>
-                              <p className="text-[10px] font-black text-purple-600 dark:text-purple-400 mb-1.5">STEP 2. 하위 연금/가공 (창고에서 꺼내기)</p>
-                              <div className="flex flex-col gap-1.5">
-                                {s1.map(([m, q]) => renderCraftStep(m, q as number))}
-                              </div>
-                          </div>
-                        )
-                    })()}
-
-                    {(() => {
-                        const s2 = Object.entries(dynamicSim.craftedLog || {}).filter(([k]) => (k.includes("핵") || k.includes("결정") || k.includes("영약")) && k !== itemName);
-                        if(s2.length === 0) return null;
-                        return (
-                          <div>
-                              <p className="text-[10px] font-black text-rose-600 dark:text-rose-400 mb-1.5">STEP 3. 중급 연금 가공</p>
-                              <div className="flex flex-col gap-1.5">
-                                {s2.map(([m, q]) => renderCraftStep(m, q as number))}
-                              </div>
-                          </div>
-                        )
-                    })()}
-
-                    <div className="mt-auto pt-2">
-                        <p className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 mb-1.5">STEP 4. 최종 연금 가공</p>
-                        <div className="flex flex-col gap-1.5">
-                          {renderCraftStep(itemName, targetQty)}
+                      {s2.length > 0 && (
+                        <div>
+                            <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 mb-1.5">STEP 3. 중급 연금 가공</p>
+                            <div className="flex flex-col gap-1.5">
+                              {s2.map(([m, q]) => renderCraftStep(m, q as number))}
+                            </div>
                         </div>
+                      )}
+
+                      <div className="mt-auto pt-2">
+                          <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 mb-1.5">STEP 4. 최종 연금 가공</p>
+                          <div className="flex flex-col gap-1.5">
+                            {renderCraftStep(itemName, targetQty)}
+                          </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
                 </div>
               );
             })}
