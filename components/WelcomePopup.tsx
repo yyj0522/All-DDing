@@ -126,7 +126,7 @@ export default function WelcomePopup() {
               <div className="space-y-4 flex-1 flex flex-col justify-center">
                 <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-300 dark:border-transparent rounded-2xl p-6 shadow-sm transition-colors text-center">
                   <h4 className="text-sm font-black text-indigo-700 dark:text-indigo-400 mb-2 transition-colors tracking-tight">
-                    04-27 업데이트가 적용되었습니다!<br/>자세한 내용은 패치노트에서 확인하세요
+                    05-04 업데이트가 적용되었습니다!<br/>자세한 내용은 패치노트에서 확인하세요
                   </h4>
                   <p className="text-[11px] font-bold text-indigo-600/80 dark:text-indigo-400/80 break-keep mb-5 transition-colors">
                     상단 메뉴의 '패치노트' 게시판을 통해 이번 업데이트의 모든 상세 내역을 확인하실 수 있습니다.
