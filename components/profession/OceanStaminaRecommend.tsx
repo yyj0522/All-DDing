@@ -314,7 +314,7 @@ export default function OceanStaminaRecommend({
       setStaminaRecommendation(bestScenario);
       setIsCalculating(false);
 
-    }, 50);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [stock, cost, blacklist, userStats, toolImprints, recommendMode, itemBaseReqsPerUnit]);
@@ -399,7 +399,7 @@ export default function OceanStaminaRecommend({
     );
   };
 
-  if (isCalculating) {
+  if (isCalculating && !staminaRecommendation) {
     return (
       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-6 shadow-md transition-colors">
         <div className="flex justify-between items-center mb-5 border-b border-gray-200 dark:border-white/5 pb-4">
@@ -420,7 +420,10 @@ export default function OceanStaminaRecommend({
     <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-6 shadow-md transition-colors">
       <div className="flex justify-between items-center mb-5 border-b border-gray-200 dark:border-white/5 pb-4">
         <div>
-          <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tighter">스태미나 추천</h3>
+          <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tighter flex items-center gap-2">
+            스태미나 추천
+            {isCalculating && <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>}
+          </h3>
           <p className="text-[10px] text-gray-500 mt-1">현재 창고에 보유 중인 재고를 가장 효율적으로 소모할 수 있는 채집 경로입니다.</p>
         </div>
       </div>

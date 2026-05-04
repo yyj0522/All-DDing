@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useDeferredValue } from 'react';
 import {
   simulateCraftPure, CORE_ITEMS, CORE_BASE_SHELLS,
   VANILLA, BATCH_MATS, formatQty, FISH, MATCHED_BLOCKS,
@@ -97,24 +97,37 @@ export default function OceanAlchemyOptimal({
   const costStr = JSON.stringify(cost);
   const blacklistStr = JSON.stringify(blacklist);
   const reqsStr = JSON.stringify(itemBaseReqsPerUnit);
+  const craftInputsStr = JSON.stringify(craftInputs);
+
+  const [debouncedParams, setDebouncedParams] = useState({ stockStr, costStr, blacklistStr, reqsStr, craftInputsStr });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedParams({ stockStr, costStr, blacklistStr, reqsStr, craftInputsStr });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [stockStr, costStr, blacklistStr, reqsStr, craftInputsStr]);
+
+  const deferredParams = useDeferredValue(debouncedParams);
+
+  const currentDeferredStock = useMemo(() => JSON.parse(deferredParams.stockStr), [deferredParams.stockStr]);
+  const currentDeferredCost = useMemo(() => JSON.parse(deferredParams.costStr), [deferredParams.costStr]);
+  const currentDeferredBlacklist = useMemo(() => JSON.parse(deferredParams.blacklistStr), [deferredParams.blacklistStr]);
+  const currentDeferredReqs = useMemo(() => JSON.parse(deferredParams.reqsStr), [deferredParams.reqsStr]);
+  const currentDeferredCraftInputs = useMemo(() => JSON.parse(deferredParams.craftInputsStr), [deferredParams.craftInputsStr]);
 
   const optimalCalculations = useMemo(() => {
-    const currentStock = JSON.parse(stockStr);
-    const currentCost = JSON.parse(costStr);
-    const currentBlacklist = JSON.parse(blacklistStr);
-    const currentReqs = JSON.parse(reqsStr);
-
-    const eqStock = getBaseEquivalents(currentStock, currentReqs);
+    const eqStock = getBaseEquivalents(currentDeferredStock, currentDeferredReqs);
 
     const itemsWithProfit = OCEAN_FIXED_PRICES.map(item => {
       const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
-      const baseMats = currentReqs[item.name] || {};
+      const baseMats = currentDeferredReqs[item.name] || {};
       let totalCost = 0;
       let hasBlacklist = false;
 
       Object.entries(baseMats).forEach(([mat, qty]) => {
-        if (currentBlacklist.includes(mat)) hasBlacklist = true;
-        totalCost += (currentCost[mat] || 0) * (qty as number);
+        if (currentDeferredBlacklist.includes(mat)) hasBlacklist = true;
+        totalCost += (currentDeferredCost[mat] || 0) * (qty as number);
       });
 
       return { name: item.name, sellPrice, totalCost, profit: sellPrice - totalCost, hasBlacklist, baseMats };
@@ -137,7 +150,7 @@ export default function OceanAlchemyOptimal({
     const validT3 = T3_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
 
     const targetMats = [...CORE_BASE_SHELLS];
-    const getReqs = (item: any) => targetMats.map(m => currentReqs[item.name]?.[m] || 0);
+    const getReqs = (item: any) => targetMats.map(m => currentDeferredReqs[item.name]?.[m] || 0);
 
     const reqsT0 = validT0 ? getReqs(validT0) : new Array(targetMats.length).fill(0);
     const reqsT1 = validT1.map(getReqs);
@@ -228,7 +241,7 @@ export default function OceanAlchemyOptimal({
         }
     }
 
-    let trackingStock = { ...currentStock };
+    let trackingStock = { ...currentDeferredStock };
     const refinedRecommendations: any[] = [];
 
     const sortedNames = Object.keys(bestGlobalCounts).sort((a, b) => {
@@ -263,12 +276,12 @@ export default function OceanAlchemyOptimal({
     }
 
     return { recommendations: refinedRecommendations };
-  }, [stockStr, costStr, blacklistStr, reqsStr, o16Bonus]);
+  }, [currentDeferredStock, currentDeferredCost, currentDeferredBlacklist, currentDeferredReqs, o16Bonus]);
 
   const activeTargets = useMemo(() => {
     const targets: Record<string, number> = {};
     optimalCalculations.recommendations.forEach(rec => {
-      const input = craftInputs[rec.name] || { boxes: '', sets: '', units: '' };
+      const input = currentDeferredCraftInputs[rec.name] || { boxes: '', sets: '', units: '' };
       let targetQty = rec.actualCraftedFromGreedy;
       if (input.boxes || input.sets || input.units) {
           const b = parseInt(input.boxes) || 0;
@@ -282,7 +295,7 @@ export default function OceanAlchemyOptimal({
       if (targetQty > 0) targets[rec.name] = targetQty;
     });
     return targets;
-  }, [optimalCalculations.recommendations, craftInputs]);
+  }, [optimalCalculations.recommendations, currentDeferredCraftInputs]);
 
   const activeBottomRecs = useMemo(() => {
     if (activeTierTab === '전체') return optimalCalculations.recommendations;
@@ -298,7 +311,7 @@ export default function OceanAlchemyOptimal({
   }, [activeTargets, activeBottomRecs]);
 
   const globalAggregation = useMemo(() => {
-    const globalSim = simulateCraftPure(activeTargets, stock);
+    const globalSim = simulateCraftPure(activeTargets, currentDeferredStock);
     
     let totalRevenue = 0;
     let totalCost = 0;
@@ -309,7 +322,7 @@ export default function OceanAlchemyOptimal({
     });
 
     Object.entries(globalSim.missing).forEach(([m, q]) => {
-      totalCost += (cost[m] || 0) * (q as number);
+      totalCost += (currentDeferredCost[m] || 0) * (q as number);
     });
 
     return { 
@@ -317,10 +330,10 @@ export default function OceanAlchemyOptimal({
       totalCost, 
       netProfit: totalRevenue - totalCost,
     };
-  }, [activeTargets, stock, optimalCalculations.recommendations, cost]);
+  }, [activeTargets, currentDeferredStock, optimalCalculations.recommendations, currentDeferredCost]);
 
   const tabAggregation = useMemo(() => {
-    const sim = simulateCraftPure(filteredTargets, stock);
+    const sim = simulateCraftPure(filteredTargets, currentDeferredStock);
     
     const tier1Crafted: Record<string, number> = {};
     const tier2Crafted: Record<string, number> = {};
@@ -332,8 +345,8 @@ export default function OceanAlchemyOptimal({
 
     const prepList: Record<string, number> = {};
     
-    Object.keys(stock).forEach(k => {
-      const consumed = (stock[k] || 0) - (sim.stock[k] || 0);
+    Object.keys(currentDeferredStock).forEach(k => {
+      const consumed = (currentDeferredStock[k] || 0) - (sim.stock[k] || 0);
       if (consumed > 0) {
         prepList[k] = (prepList[k] || 0) + consumed;
       }
@@ -368,7 +381,7 @@ export default function OceanAlchemyOptimal({
       prepFish: sortByIndex(prepFish, FISH),
       prepOther: sortByIndex(prepOther, orderedItems)
     };
-  }, [filteredTargets, stock]);
+  }, [filteredTargets, currentDeferredStock]);
 
   const renderCraftItemCompact = (itemName: string, qty: number) => (
     <div key={itemName} className="flex items-center justify-between bg-white dark:bg-[#1a1a1e] border border-gray-100 dark:border-white/5 rounded-lg px-2.5 py-1.5 shadow-sm">
@@ -609,7 +622,7 @@ export default function OceanAlchemyOptimal({
                     </div>
                   ) : (
                     itemsInTier.map((rec) => {
-                      const input = craftInputs[rec.name] || { boxes: '', sets: '', units: '' };
+                      const input = currentDeferredCraftInputs[rec.name] || { boxes: '', sets: '', units: '' };
                       const isPending = pendingCrafts[rec.name] !== undefined;
 
                       return (

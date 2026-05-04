@@ -271,6 +271,7 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
   return (
     <div className="w-full flex flex-col gap-5 md:gap-7 animate-fade-in-up transition-colors duration-300 relative pb-24">
       <style dangerouslySetInnerHTML={{__html: `
+        html, body { overflow-anchor: none; }
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
