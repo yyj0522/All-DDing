@@ -280,14 +280,11 @@ export default function OceanStaminaRecommend({
           }
       }
       
-      // 스태미나 추천 후 추가 정보 세팅 (가이드 및 재무 정보)
       if (bestScenario) {
-          // 기존 재고만으로 벌어들이는 베이스 수익 계산
           const baseRes = evalStockFast({}, sortedItems);
           bestScenario.baseProfit = baseRes.profit;
           bestScenario.addedProfit = bestScenario.profit - baseRes.profit;
 
-          // 개별 아이템 제작 프로세스 플로우 구성
           const addedStock = bestScenario.combinedYield;
           let trackingStock = { ...stock };
           for(const k in addedStock) trackingStock[k] = (trackingStock[k] || 0) + addedStock[k];
@@ -338,19 +335,19 @@ export default function OceanStaminaRecommend({
     const timeStr = formatTime(finalSec);
 
     return (
-      <div key={itemName} className="bg-[#16161a] border border-white/5 rounded px-2.5 py-2 flex flex-col xl:flex-row xl:items-center justify-between gap-1.5 shadow-sm">
+      <div key={itemName} className="bg-gray-50 dark:bg-[#16161a] border border-gray-200/50 dark:border-white/5 rounded px-2.5 py-2 flex flex-col xl:flex-row xl:items-center justify-between gap-1.5 shadow-sm">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <div className="flex items-center gap-1.5 shrink-0">
             <img src={getImagePath(itemName)||undefined} className="w-3.5 h-3.5 object-contain opacity-90" />
-            <span className="text-[11px] font-bold text-gray-200">{itemName}</span>
-            <span className="text-[10px] font-black text-blue-400">{formatQty(qty, globalSetMode)}</span>
+            <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200">{itemName}</span>
+            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400">{formatQty(qty, globalSetMode)}</span>
           </div>
-          <div className="hidden xl:block w-[1px] h-3 bg-gray-600"></div>
+          <div className="hidden xl:block w-[1px] h-3 bg-gray-300 dark:bg-gray-600"></div>
           <div className="flex flex-wrap items-center gap-1.5">
             {recipe.ingredients.map((ing: any) => (
-              <span key={ing.name} className="text-[10px] font-medium text-gray-400 flex items-center gap-1 bg-black/30 px-1.5 py-0.5 rounded border border-white/5">
+              <span key={ing.name} className="text-[10px] font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 bg-white dark:bg-black/30 px-1.5 py-0.5 rounded border border-gray-200 dark:border-white/5">
                 <img src={getImagePath(ing.name)||undefined} className="w-3 h-3 object-contain opacity-70" />
-                {ing.name} <span className="text-white font-bold">{formatQty(ing.req * crafts, globalSetMode)}</span>
+                {ing.name} <span className="text-gray-800 dark:text-white font-bold">{formatQty(ing.req * crafts, globalSetMode)}</span>
               </span>
             ))}
           </div>
@@ -563,10 +560,10 @@ export default function OceanStaminaRecommend({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
                 <div>
                   <p className="text-[11px] font-black text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5 mb-1.5">
-                    Phase 3. 연쇄 가공 청사진 (Process Flow)
+                    Phase 3. 예상 제작 가이드
                   </p>
                   <p className="text-[10px] font-bold text-gray-600 dark:text-gray-400 leading-relaxed">
-                    융합된 자산을 바탕으로 바닐라 블록을 조달하여 최종 수익품을 연성합니다.
+                    통합된 재고를 바탕으로 바닐라 블록을 조달하여 최종 수익품을 제작합니다.
                   </p>
                 </div>
                 <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111113] p-1 rounded-lg border border-gray-200 dark:border-white/5 shadow-inner">
@@ -670,7 +667,7 @@ export default function OceanStaminaRecommend({
                             ) : (
                               <div className="flex flex-wrap gap-1.5">
                                   {missingKeys.map((m) => (
-                                    <span key={m} className="bg-white dark:bg-black border border-gray-200 dark:border-white/10 px-1.5 py-1 rounded text-[9px] font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1 shadow-sm">
+                                    <span key={m} className="bg-gray-50 dark:bg-[#16161a] border border-gray-200/50 dark:border-white/5 px-1.5 py-1 rounded text-[9px] font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1 shadow-sm">
                                         <img src={getImagePath(m)||undefined} className="w-3 h-3 object-contain" />
                                         {m} <span className="text-indigo-500">{formatQty(flow.missing[m] as number, globalSetMode)}</span>
                                     </span>
@@ -681,7 +678,7 @@ export default function OceanStaminaRecommend({
 
                           {s1.length > 0 && (
                             <div>
-                                <p className="text-[10px] font-black text-purple-600 dark:text-purple-400 mb-1.5">Step 2. 1차 가공</p>
+                                <p className="text-[10px] font-black text-purple-600 dark:text-purple-400 mb-1.5">Step 2. 하위 연금/가공 (창고에서 꺼내기)</p>
                                 <div className="flex flex-col gap-1.5">
                                   {s1.map(([m, q]) => renderCraftStep(m, q as number))}
                                 </div>
@@ -690,7 +687,7 @@ export default function OceanStaminaRecommend({
 
                           {s2.length > 0 && (
                             <div>
-                                <p className="text-[10px] font-black text-rose-600 dark:text-rose-400 mb-1.5">Step 3. 2차 가공</p>
+                                <p className="text-[10px] font-black text-rose-600 dark:text-rose-400 mb-1.5">Step 3. 중급 연금 가공</p>
                                 <div className="flex flex-col gap-1.5">
                                   {s2.map(([m, q]) => renderCraftStep(m, q as number))}
                                 </div>
@@ -698,7 +695,7 @@ export default function OceanStaminaRecommend({
                           )}
 
                           <div className="mt-auto pt-2">
-                              <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 mb-1.5">Step 4. 최종 연성</p>
+                              <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 mb-1.5">Step 4. 최종 연금 가공</p>
                               <div className="flex flex-col gap-1.5">
                                 {renderCraftStep(itemName, targetQty)}
                               </div>

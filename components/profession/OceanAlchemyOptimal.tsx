@@ -435,19 +435,19 @@ export default function OceanAlchemyOptimal({
     const timeStr = formatTime(finalSec);
 
     return (
-      <div key={itemName} className="bg-[#16161a] border border-white/5 rounded px-2.5 py-2 flex flex-col xl:flex-row xl:items-center justify-between gap-1.5 shadow-sm">
+      <div key={itemName} className="bg-gray-50 dark:bg-[#16161a] border border-gray-200/50 dark:border-white/5 rounded px-2.5 py-2 flex flex-col xl:flex-row xl:items-center justify-between gap-1.5 shadow-sm">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <div className="flex items-center gap-1.5 shrink-0">
             <img src={getImagePath(itemName)||undefined} className="w-3.5 h-3.5 object-contain opacity-90" />
-            <span className="text-[11px] font-bold text-gray-200">{itemName}</span>
-            <span className="text-[10px] font-black text-blue-400">{formatQty(qty, globalSetMode)}</span>
+            <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200">{itemName}</span>
+            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400">{formatQty(qty, globalSetMode)}</span>
           </div>
-          <div className="hidden xl:block w-[1px] h-3 bg-gray-600"></div>
+          <div className="hidden xl:block w-[1px] h-3 bg-gray-300 dark:bg-gray-600"></div>
           <div className="flex flex-wrap items-center gap-1.5">
             {recipe.ingredients.map((ing: any) => (
-              <span key={ing.name} className="text-[10px] font-medium text-gray-400 flex items-center gap-1 bg-black/30 px-1.5 py-0.5 rounded border border-white/5">
+              <span key={ing.name} className="text-[10px] font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 bg-white dark:bg-black/30 px-1.5 py-0.5 rounded border border-gray-200 dark:border-white/5">
                 <img src={getImagePath(ing.name)||undefined} className="w-3 h-3 object-contain opacity-70" />
-                {ing.name} <span className="text-white font-bold">{formatQty(ing.req * crafts, globalSetMode)}</span>
+                {ing.name} <span className="text-gray-800 dark:text-white font-bold">{formatQty(ing.req * crafts, globalSetMode)}</span>
               </span>
             ))}
           </div>
@@ -507,6 +507,22 @@ export default function OceanAlchemyOptimal({
         </div>
       </div>
     );
+  };
+
+  const getReorderedOtherItems = () => {
+    let baseList = Object.entries(tabAggregation.prepOther);
+    let priorityItems: [string, number][] = [];
+    
+    if (activeTierTab === '2성') {
+        const pList = ["청금석 블록", "레드스톤 블록", "철 주괴", "금 주괴", "다이아몬드"];
+        priorityItems = pList.map(name => [name, tabAggregation.prepOther[name]]).filter(entry => entry[1] !== undefined) as [string, number][];
+        baseList = baseList.filter(([name]) => !pList.includes(name));
+    } else if (activeTierTab === '3성') {
+        const pList = ["죽은 관 산호 블록", "죽은 사방산호 블록", "죽은 거품 산호 블록", "죽은 불 산호 블록", "죽은 뇌 산호 블록"];
+        priorityItems = pList.map(name => [name, tabAggregation.prepOther[name]]).filter(entry => entry[1] !== undefined) as [string, number][];
+        baseList = baseList.filter(([name]) => !pList.includes(name));
+    }
+    return { priorityItems, baseList };
   };
 
   if (optimalCalculations.recommendations.length === 0) {
@@ -689,7 +705,7 @@ export default function OceanAlchemyOptimal({
         </h3>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+          <div className={`flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm ${activeTierTab === '2성' || activeTierTab === '3성' ? 'order-1' : ''}`}>
             <h4 className="text-[12px] font-black text-blue-700 dark:text-blue-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2">
               어패류
             </h4>
@@ -702,7 +718,7 @@ export default function OceanAlchemyOptimal({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+          <div className={`flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm ${activeTierTab === '2성' || activeTierTab === '3성' ? 'order-2' : ''}`}>
             <h4 className="text-[12px] font-black text-blue-700 dark:text-blue-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2">
               블록
             </h4>
@@ -715,7 +731,7 @@ export default function OceanAlchemyOptimal({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+          <div className={`flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm ${activeTierTab === '2성' || activeTierTab === '3성' ? 'order-4' : ''}`}>
             <h4 className="text-[12px] font-black text-blue-700 dark:text-blue-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2">
               회
             </h4>
@@ -728,7 +744,7 @@ export default function OceanAlchemyOptimal({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+          <div className={`flex flex-col gap-3 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm ${activeTierTab === '2성' || activeTierTab === '3성' ? 'order-3' : ''}`}>
             <h4 className="text-[12px] font-black text-gray-500 dark:text-gray-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2">
               기타 재료 (연금품 포함)
             </h4>
@@ -736,7 +752,16 @@ export default function OceanAlchemyOptimal({
               {Object.keys(tabAggregation.prepOther).length === 0 ? (
                  <p className="text-[10px] text-gray-500 font-medium py-2">필요한 항목이 없습니다.</p>
               ) : (
-                Object.entries(tabAggregation.prepOther).map(([m, q]) => renderCraftItemCompact(m, q as number))
+                (() => {
+                  const { priorityItems, baseList } = getReorderedOtherItems();
+                  return (
+                    <>
+                      {priorityItems.map(([m, q]) => renderCraftItemCompact(m, q))}
+                      {priorityItems.length > 0 && baseList.length > 0 && <div className="h-3 border-b border-dashed border-gray-200 dark:border-white/10 mb-1"></div>}
+                      {baseList.map(([m, q]) => renderCraftItemCompact(m, q))}
+                    </>
+                  );
+                })()
               )}
             </div>
           </div>
@@ -853,9 +878,9 @@ export default function OceanAlchemyOptimal({
                         ) : (
                           <div className="flex flex-wrap gap-1.5">
                               {Object.entries(dynamicSim.missing).map(([m, q]) => (
-                                <span key={m} className="bg-white dark:bg-black border border-gray-200 dark:border-white/10 px-1.5 py-1 rounded text-[9px] font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1 shadow-sm">
+                                <span key={m} className="bg-gray-50 dark:bg-[#16161a] border border-gray-200/50 dark:border-white/5 px-1.5 py-1 rounded text-[9px] font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1 shadow-sm">
                                     <img src={getImagePath(m)||undefined} className="w-3 h-3 object-contain" />
-                                    {m} <span className="text-blue-500">{formatQty(q as number, globalSetMode)}</span>
+                                    {m} <span className="text-blue-600 dark:text-blue-400">{formatQty(q as number, globalSetMode)}</span>
                                 </span>
                               ))}
                           </div>
