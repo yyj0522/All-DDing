@@ -34,55 +34,64 @@ export default function NoteDetailPage() {
   }, [params.id]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-200 dark:selection:bg-white/20 relative flex flex-col transition-colors duration-300">
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-400/20 dark:bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none transition-colors duration-300"></div>
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-200 dark:selection:bg-indigo-500/30 relative flex flex-col transition-colors duration-300">
+      <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-indigo-50/50 to-transparent dark:from-indigo-900/10 dark:to-transparent pointer-events-none transition-colors duration-300"></div>
       
       <Header />
 
-      <main className="relative z-10 flex-1 max-w-[900px] w-full mx-auto px-4 pt-28 md:pt-36 pb-24 md:pb-20">
+      <main className="relative z-10 flex-1 max-w-[860px] w-full mx-auto px-4 sm:px-6 pt-32 md:pt-40 pb-24 md:pb-32">
         <button 
           onClick={() => router.push('/note')}
-          className="group flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md dark:shadow-xl transition-all duration-300 mb-6 md:mb-8 text-xs md:text-sm font-bold w-fit"
+          className="group flex items-center gap-2.5 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 px-5 py-2.5 rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all duration-300 mb-10 text-xs font-black w-fit tracking-wide"
         >
-          <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
-          목록으로 돌아가기
+          <svg className="w-4 h-4 group-hover:-translate-x-1.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+          업데이트 목록
         </button>
 
-        <section className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-12 shadow-md dark:shadow-2xl transition-colors">
-          {isLoading ? (
-            <div className="text-center py-24 flex flex-col items-center gap-4 transition-colors">
-              <div className="w-10 h-10 border-4 border-indigo-200 dark:border-indigo-500/30 border-t-indigo-600 dark:border-t-indigo-500 rounded-full animate-spin"></div>
-              <span className="text-gray-500 font-bold">내용을 불러오는 중입니다...</span>
+        {isLoading ? (
+          <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/5 rounded-[2.5rem] p-10 md:p-16 shadow-lg flex flex-col items-center justify-center min-h-[50vh] transition-colors">
+            <div className="w-12 h-12 border-4 border-indigo-100 dark:border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
+            <span className="text-gray-500 dark:text-gray-400 font-bold tracking-tight">노트 데이터를 불러오는 중입니다</span>
+          </div>
+        ) : !note ? (
+          <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/5 rounded-[2.5rem] p-10 md:p-16 shadow-lg flex flex-col items-center justify-center min-h-[50vh] transition-colors text-center">
+            <div className="w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-6">
+              <svg className="w-10 h-10 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             </div>
-          ) : !note ? (
-            <div className="text-center py-24 text-gray-500 flex flex-col items-center transition-colors">
-              <svg className="w-14 h-14 mb-4 text-gray-300 dark:text-gray-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-              <span className="font-bold text-lg text-gray-600 dark:text-gray-400">존재하지 않거나 삭제된 패치노트입니다.</span>
-            </div>
-          ) : (
-            <>
-              <div className="border-b border-gray-200 dark:border-white/10 pb-6 md:pb-8 mb-6 md:mb-8 transition-colors">
-                <div className="flex items-center gap-3 mb-4 md:mb-5">
-                  <span className="inline-block text-indigo-700 dark:text-indigo-400 font-black text-[11px] md:text-xs border border-indigo-200 dark:border-transparent bg-indigo-100 dark:bg-indigo-500/20 px-3 py-1.5 rounded-lg shadow-sm dark:shadow-none tracking-widest transition-colors">
-                    {note.version}
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-500 text-xs md:text-sm font-bold font-mono transition-colors">
-                    {new Date(note.created_at).toLocaleString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white leading-tight tracking-tight transition-colors">
-                  {note.title}
-                </h1>
+            <span className="font-black text-2xl text-gray-900 dark:text-white mb-2">노트를 찾을 수 없습니다</span>
+            <span className="font-medium text-gray-500 dark:text-gray-400">존재하지 않거나 삭제된 패치노트입니다.</span>
+          </div>
+        ) : (
+          <article className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/5 rounded-[2.5rem] overflow-hidden shadow-lg dark:shadow-2xl transition-colors">
+            <div className="bg-gray-50 dark:bg-[#0c0c0e] px-8 md:px-12 py-10 md:py-14 border-b border-gray-200 dark:border-white/5">
+              <div className="flex flex-wrap items-center gap-4 mb-6">
+                <span className="inline-flex items-center text-white font-black text-xs md:text-sm bg-indigo-500 px-3.5 py-1.5 rounded-xl shadow-sm tracking-widest uppercase">
+                  {note.version}
+                </span>
+                <span className="text-gray-500 dark:text-gray-400 text-xs md:text-sm font-bold font-mono flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  {new Date(note.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+                </span>
               </div>
+              <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white leading-[1.3] tracking-tight break-keep">
+                {note.title}
+              </h1>
+            </div>
 
-              <div className="prose prose-gray dark:prose-invert max-w-none transition-colors">
-                <div className="text-gray-700 dark:text-gray-300 leading-loose text-sm md:text-base font-medium whitespace-pre-wrap break-words transition-colors">
-                  {note.content || "상세 내용이 없습니다."}
-                </div>
+            <div className="px-8 md:px-12 py-10 md:py-16 prose prose-lg prose-gray dark:prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-a:no-underline hover:prose-a:underline prose-strong:text-indigo-700 dark:prose-strong:text-indigo-300 prose-img:rounded-2xl prose-img:shadow-md">
+              <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium whitespace-pre-wrap break-words">
+                {note.content || "상세 내용이 없습니다."}
               </div>
-            </>
-          )}
-        </section>
+            </div>
+            
+            <div className="bg-gray-50 dark:bg-[#0c0c0e] px-8 md:px-12 py-6 border-t border-gray-200 dark:border-white/5 flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Alltting Release Notes</span>
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="w-10 h-10 flex items-center justify-center bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-full text-gray-500 hover:text-indigo-500 hover:border-indigo-200 transition-colors shadow-sm">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" /></svg>
+              </button>
+            </div>
+          </article>
+        )}
       </main>
 
       <Footer />

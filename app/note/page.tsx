@@ -27,54 +27,88 @@ export default function NotePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-200 dark:selection:bg-white/20 relative flex flex-col transition-colors duration-300">
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-400/20 dark:bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none transition-colors duration-300"></div>
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] text-gray-900 dark:text-gray-100 font-sans selection:bg-indigo-200 dark:selection:bg-indigo-500/30 relative flex flex-col transition-colors duration-300">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-indigo-100 to-transparent dark:from-indigo-900/20 dark:to-transparent rounded-full blur-[120px] pointer-events-none opacity-60 transition-colors duration-300"></div>
       
       <Header />
 
-      <main className="relative z-10 flex-1 max-w-[1000px] w-full mx-auto px-4 pt-28 md:pt-40 pb-24 md:pb-20">
-        <div className="mb-8 text-center w-full px-2 transition-colors">
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white mb-3 transition-colors">
-            업데이트 <span className="text-indigo-600 dark:text-indigo-500 transition-colors">노트</span>
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-xs md:text-base tracking-wide max-w-xl mx-auto break-keep opacity-80 transition-colors">
-            올띵의 새로운 기능 업데이트 및 버그 수정 내역을 확인하세요.
-          </p>
+      <main className="relative z-10 flex-1 max-w-[900px] w-full mx-auto px-4 sm:px-6 pt-32 md:pt-40 pb-24 md:pb-32">
+        <div className="mb-16 md:mb-24 text-center md:text-left flex flex-col md:flex-row md:items-end justify-between gap-6 transition-colors">
+          <div>
+            <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-gray-900 dark:text-white mb-4 transition-colors">
+              업데이트 <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500 dark:from-indigo-400 dark:to-blue-400">노트</span>
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm md:text-lg tracking-tight max-w-xl break-keep transition-colors font-medium">
+              올띵의 새로운 기능 추가, 개선 사항 및 버그 수정 내역을 가장 먼저 확인하세요.
+            </p>
+          </div>
         </div>
 
-        <section className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-10 shadow-md dark:shadow-2xl transition-colors">
+        <section className="relative">
           {isLoading ? (
-            <div className="text-center py-20 flex flex-col items-center gap-4 transition-colors">
-              <div className="w-8 h-8 border-4 border-indigo-200 dark:border-indigo-500/30 border-t-indigo-600 dark:border-t-indigo-500 rounded-full animate-spin"></div>
-              <span className="text-gray-500 font-bold text-sm">불러오는 중...</span>
+            <div className="flex flex-col gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-6 md:gap-10 animate-pulse">
+                  <div className="hidden md:flex flex-col items-center">
+                    <div className="w-3 h-3 bg-gray-200 dark:bg-gray-800 rounded-full mt-2"></div>
+                    <div className="w-[1px] h-full bg-gray-200 dark:bg-gray-800 my-2"></div>
+                  </div>
+                  <div className="flex-1 bg-white dark:bg-[#111111] border border-gray-100 dark:border-white/5 rounded-3xl p-6 md:p-8 h-32"></div>
+                </div>
+              ))}
+            </div>
+          ) : releaseNotes.length === 0 ? (
+            <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/5 rounded-[2rem] text-center py-24 flex flex-col items-center transition-colors shadow-sm">
+              <div className="w-20 h-20 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-10 h-10 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15" /></svg>
+              </div>
+              <span className="text-gray-900 dark:text-white font-black text-xl mb-2">등록된 내역이 없습니다</span>
+              <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">새로운 업데이트 노트가 곧 추가될 예정입니다.</span>
             </div>
           ) : (
-            <div className="flex flex-col">
-              {releaseNotes.map(note => (
-                <Link 
-                  href={`/note/${note.id}`} 
-                  key={note.id} 
-                  className="group flex flex-col md:flex-row md:items-center gap-3 md:gap-6 border-b border-gray-200 dark:border-white/5 py-5 md:py-6 first:pt-2 last:border-0 last:pb-2 hover:bg-gray-50 dark:hover:bg-[#111113] rounded-2xl -mx-4 px-4 transition-all duration-300"
-                >
-                  <div className="flex-shrink-0">
-                    <span className="inline-block text-indigo-700 dark:text-indigo-400 font-black text-[11px] md:text-xs border border-indigo-200 dark:border-transparent bg-indigo-100 dark:bg-indigo-500/20 px-3 py-1.5 rounded-lg shadow-sm dark:shadow-none tracking-widest transition-colors">
-                      {note.version}
-                    </span>
+            <div className="flex flex-col gap-6 md:gap-10 relative">
+              <div className="hidden md:block absolute left-[5.5px] top-4 bottom-4 w-[2px] bg-gradient-to-b from-indigo-500 via-gray-200 to-transparent dark:via-gray-800 rounded-full"></div>
+              
+              {releaseNotes.map((note, index) => {
+                const isLatest = index === 0;
+                const noteDate = new Date(note.created_at);
+                const dateStr = noteDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+                return (
+                  <div key={note.id} className="flex gap-4 md:gap-10 relative group">
+                    <div className="hidden md:flex flex-col items-center z-10 pt-6">
+                      <div className={`w-3.5 h-3.5 rounded-full border-4 transition-colors duration-300 ${isLatest ? 'bg-white border-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.6)]' : 'bg-gray-100 border-gray-300 dark:bg-black dark:border-gray-700 group-hover:border-indigo-400'}`}></div>
+                    </div>
+                    
+                    <Link 
+                      href={`/note/${note.id}`} 
+                      className="flex-1 bg-white dark:bg-[#0c0c0e] border border-gray-200 dark:border-white/5 rounded-[2rem] p-6 md:p-10 shadow-sm hover:shadow-xl dark:shadow-none hover:border-indigo-300 dark:hover:border-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 block"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-3">
+                          <span className={`font-black text-[11px] md:text-xs px-3 py-1.5 rounded-xl tracking-widest uppercase shadow-sm ${isLatest ? 'bg-indigo-500 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'}`}>
+                            {note.version}
+                          </span>
+                          {isLatest && (
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-200 dark:border-transparent">Latest</span>
+                          )}
+                        </div>
+                        <span className="text-gray-500 dark:text-gray-500 text-xs md:text-sm font-bold font-mono bg-gray-50 dark:bg-[#111111] px-3 py-1.5 rounded-lg border border-gray-100 dark:border-white/5 w-fit">
+                          {dateStr}
+                        </span>
+                      </div>
+                      
+                      <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight leading-snug mb-3">
+                        {note.title}
+                      </h2>
+                      
+                      <div className="text-gray-600 dark:text-gray-400 text-sm font-medium line-clamp-2 leading-relaxed opacity-90">
+                        {note.content?.replace(/[#*`_]/g, '') || "업데이트 상세 내용을 확인하려면 클릭하세요."}
+                      </div>
+                    </Link>
                   </div>
-                  <div className="flex-1 text-gray-900 dark:text-gray-100 text-base md:text-lg font-bold group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
-                    {note.title}
-                  </div>
-                  <div className="flex-shrink-0 text-gray-500 dark:text-gray-500 text-[11px] md:text-sm font-bold font-mono transition-colors">
-                    {new Date(note.created_at).toISOString().split('T')[0]}
-                  </div>
-                </Link>
-              ))}
-              {releaseNotes.length === 0 && (
-                <div className="text-center py-16 flex flex-col items-center transition-colors">
-                  <svg className="w-12 h-12 text-gray-300 dark:text-gray-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15" /></svg>
-                  <span className="text-gray-500 dark:text-gray-400 font-bold">등록된 패치노트가 없습니다.</span>
-                </div>
-              )}
+                );
+              })}
             </div>
           )}
         </section>
