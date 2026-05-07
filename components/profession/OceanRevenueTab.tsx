@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getCachedPrices } from '@/lib/supabase';
 import { SAGE_TOOL_EFFECTS } from '@/lib/sageData';
 import { getImagePath, OCEAN_FIXED_PRICES } from '@/lib/professionData';
+import { getItemBaseReqsPerUnit, CORE_BASE_SHELLS } from '@/lib/oceanTradeUtils';
 
 interface Props {
   userStats: any;
@@ -32,6 +33,7 @@ const ROD_IMPRINTS_MAP: Record<string, string> = {
 
 export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
   const [dbData, setDbData] = useState<any[]>([]);
+  const [cost, setCost] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,6 +42,14 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
       if (data && data.length > 0) setDbData(data);
     };
     fetchData();
+
+    const saved = localStorage.getItem('ocean_trade_v3');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setCost(parsed.cost || {});
+      } catch (e) {}
+    }
   }, []);
 
   const calcResults = useMemo(() => {
@@ -97,6 +107,26 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
 
     const totalAlchemyRev = rev1 + rev2 + rev3;
 
+    const itemBaseReqsPerUnit = getItemBaseReqsPerUnit();
+    
+    const getCost = (itemName: string, count: number) => {
+      let c = 0;
+      const reqs = itemBaseReqsPerUnit[itemName] || {};
+      for (const [mat, q] of Object.entries(reqs)) {
+        if (!CORE_BASE_SHELLS.includes(mat)) {
+          c += (cost[mat] || 0) * (q as number) * count;
+        }
+      }
+      return c;
+    };
+
+    const cost1 = getCost('리바이던의 깃털', crafts1);
+    const cost2 = getCost('청해룡의 날개', crafts2);
+    const cost3 = getCost('무저의 척추', crafts3);
+    
+    const totalVanillaCost = cost1 + cost2 + cost3;
+    const netProfit = totalAlchemyRev - totalVanillaCost;
+
     const o14Bonus = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10][userStats.o14Lv] || 0;
     const totalShellChance = baseShellChance + o14Bonus + IMPRINT_ROD_SHELL_FIND_CHANCE[shellFindImprintLv];
     const mysteryShells = actions * totalShellChance * 0.5;
@@ -118,9 +148,10 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
       qtyBlack, qtyPurple, qtyPink, qtyTurq, qtyBlue, qtyYellow, qtyBroken,
       rem1, rem2, rem3,
       extraShellsFromImprint, rouletteShells, expectedWhales, expectedRays, expectedExtraFish,
-      shellFindImprintBonus: IMPRINT_ROD_SHELL_FIND_CHANCE[shellFindImprintLv]
+      shellFindImprintBonus: IMPRINT_ROD_SHELL_FIND_CHANCE[shellFindImprintLv],
+      totalVanillaCost, netProfit
     };
-  }, [userStats, toolImprints]);
+  }, [userStats, toolImprints, cost]);
 
   const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
 
@@ -358,14 +389,17 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
 
           <div className="bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-transparent rounded-[1.5rem] p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors shadow-inner dark:shadow-none mb-6">
             <div>
-              <p className="text-sm md:text-base font-black text-gray-900 dark:text-white mb-1 tracking-tight transition-colors">추천 경로: 일일 예상 총수익</p>
+              <p className="text-sm md:text-base font-black text-gray-900 dark:text-white mb-1 tracking-tight transition-colors">추천 경로: 일일 예상 순수익</p>
               <p className="text-[10px] md:text-[11px] font-bold text-gray-500 break-keep">
-                ※ 바닐라 재료는 무한하다고 가정했으며, 미끼 등 부대비용은 제외된 순수 연금품 판매수익입니다.<br/>
+                ※ 개인설정에 입력된 단가를 바탕으로 바닐라 재료 매입 비용이 차감된 최종 순수익입니다.<br/>
               </p>
             </div>
-            <span className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 drop-shadow-sm tracking-tighter whitespace-nowrap">
-              {calcResults.totalRevenue.toLocaleString()} <span className="text-2xl text-indigo-500 font-black">G</span>
-            </span>
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-[11px] font-bold text-rose-500">바닐라 재료비: -{Math.round(calcResults.totalVanillaCost).toLocaleString()} G</span>
+              <span className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 drop-shadow-sm tracking-tighter whitespace-nowrap">
+                {Math.round(calcResults.netProfit).toLocaleString()} <span className="text-2xl text-indigo-500 font-black">G</span>
+              </span>
+            </div>
           </div>
 
           <div className="bg-gray-50 dark:bg-black/30 rounded-xl p-4 border border-gray-200 dark:border-white/5 flex flex-wrap items-center gap-3 transition-colors">
@@ -418,7 +452,7 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
             <div>
               <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div> 1단계: 수중 어획 횟수 및 어패류 획득</h4>
               <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed break-keep">
-                총 스태미나를 15 단위로 나눈 값을 기준으로 기본 낚시 횟수를 산출합니다. 낚싯대 고유 드롭 수 × (1 + [심해 채집꾼] 보너스)를 기본으로 합니다.<br/>
+                총 스태미나를 15 단위로 나눈 값을 기준으로 기본 낚시 횟움을 산출합니다. 낚싯대 고유 드롭 수 × (1 + [심해 채집꾼] 보너스)를 기본으로 합니다.<br/>
                 <strong className="text-blue-500 dark:text-blue-400 mt-1 block">각인석 보너스: 어패 행운, 어부 룰렛 효과가 기댓값에 추가 합산되어 최종 획득량을 증가시킵니다.</strong>
               </p>
             </div>
