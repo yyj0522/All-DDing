@@ -58,22 +58,3 @@
 * **문제 상황:** 배포 2주 차에 공식 커뮤니티 베스트 공략글로 선정되어 트래픽이 급증함에 따라, 기존에 호스팅 중이던 Vercel의 무료 대역폭 한도를 초과하여 사이트가 12시간 동안 다운되는 장애가 발생했습니다. 또한, 이미지 에셋을 처리하던 Supabase 스토리지 버킷의 월간 무료 한도마저 초과되어 화면에 최신 데이터와 이미지가 정상적으로 불러와지지 않는 문제가 연쇄적으로 발생했습니다.
 * **해결 방안:** 1. **호스팅 이전:** 트래픽 초과로 인한 다운타임 방지 및 Edge 네트워크 기반의 안정적인 서빙을 위해 Vercel에서 Cloudflare Pages로 전체 배포 환경을 즉시 마이그레이션했습니다.
   2. **글로벌 CDN 연동:** Supabase 버킷에 집중되던 트래픽과 부하를 분산시키기 위해, 정적 이미지와 모드 다운로드 파일 등을 GitHub 리포지토리로 옮긴 뒤 **jsDelivr CDN**(`https://cdn.jsdelivr.net/gh/...`)을 연동하여 서빙하도록 아키텍처를 개편했습니다. 이를 통해 DB 비용 절감과 무제한 트래픽 대응이라는 두 가지 최적화를 동시에 달성했습니다.
-
-## 🚀 설치 및 로컬 실행 방법 (Getting Started)
-
-```powershell
-# 1. 저장소 클론
-git clone [https://github.com/yyj0522/alldding.git](https://github.com/yyj0522/alldding.git)
-
-# 2. 프로젝트 폴더로 이동
-cd alldding
-
-# 3. 의존성 패키지 설치
-npm install
-
-# 4. 환경변수 설정
-# 프로젝트 루트 경로에 .env.local 파일을 생성하고 아래 데이터를 입력합니다.
-New-Item -Path . -Name ".env.local" -ItemType "file" -Value "NEXT_PUBLIC_SUPABASE_URL=`"your_supabase_url`"`nNEXT_PUBLIC_SUPABASE_ANON_KEY=`"your_supabase_key`""
-
-# 5. 개발 서버 실행
-npm run dev
