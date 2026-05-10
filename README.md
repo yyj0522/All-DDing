@@ -9,7 +9,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare_Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://pages.cloudflare.com/)
 
-[🌐 웹사이트 바로가기](https://all-dding.pages.dev/) | [📝 개발일지 바로가기](https://www.notion.so/317040d11fab801dbb7ec64a2de1fa7d?v=317040d11fab80c78913000c9ea11dd9&source=copy_link)
+[웹사이트 바로가기](https://all-dding.pages.dev/) | [개발일지 바로가기](https://www.notion.so/317040d11fab801dbb7ec64a2de1fa7d?v=317040d11fab80c78913000c9ea11dd9&source=copy_link)
 
 </div>
 
