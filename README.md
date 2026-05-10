@@ -1,6 +1,6 @@
 <div align="center">
 
-# 올띵 (Alldding)
+# Alldding
 **마인크래프트 띵타이쿤 유저를 위한 종합 수익 최적화 및 편의성 웹 서비스**
 
 [![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
