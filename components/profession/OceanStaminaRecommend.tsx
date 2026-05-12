@@ -46,7 +46,7 @@ export default function OceanStaminaRecommend({
   const [isCalculating, setIsCalculating] = useState(false);
   const [staminaRecommendation, setStaminaRecommendation] = useState<any>(null);
   const [blueprintViewMode, setBlueprintViewMode] = useState<'flow' | 'compact'>('flow');
-  const [isPhase3Open, setIsPhase3Open] = useState(true);
+  const [isPhase3Open, setIsPhase3Open] = useState(false); // 기본 상태 접힘으로 변경
   const [actualYields, setActualYields] = useState<Record<string, number>>({});
 
   const o13Reduction = O13_EFFECTS[userStats.o13Lv || 0] || 0;
@@ -557,20 +557,20 @@ export default function OceanStaminaRecommend({
                           </div>
                           <span className="text-[9px] font-bold text-gray-600 dark:text-gray-500">{(stam as number).toLocaleString()} 스태미나 소모</span>
                         </div>
-                        <span className="text-[12px] font-black text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1.5 rounded-lg border border-blue-200 dark:border-transparent shadow-sm">총 {total.toLocaleString()}개 획득</span>
+                        <span className="text-[12px] font-black text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1.5 rounded-lg border border-blue-200 dark:border-transparent shadow-sm">총 {formatQty(total, globalSetMode)} 획득</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         <div className="text-center bg-gray-100 dark:bg-white/[0.02] p-1.5 rounded-lg border border-gray-200 dark:border-transparent">
                           <p className="text-[9px] text-gray-500 dark:text-gray-400 font-bold mb-0.5">1성 등급</p>
-                          <p className="text-[10px] font-black text-gray-800 dark:text-gray-300">{y1.toLocaleString()}</p>
+                          <p className="text-[10px] font-black text-gray-800 dark:text-gray-300">{formatQty(y1, globalSetMode)}</p>
                         </div>
                         <div className="text-center bg-gray-100 dark:bg-white/[0.02] p-1.5 rounded-lg border border-gray-200 dark:border-transparent">
                           <p className="text-[9px] text-gray-500 dark:text-gray-400 font-bold mb-0.5">2성 등급</p>
-                          <p className="text-[10px] font-black text-gray-800 dark:text-gray-300">{y2.toLocaleString()}</p>
+                          <p className="text-[10px] font-black text-gray-800 dark:text-gray-300">{formatQty(y2, globalSetMode)}</p>
                         </div>
                         <div className="text-center bg-gray-100 dark:bg-white/[0.02] p-1.5 rounded-lg border border-gray-200 dark:border-transparent">
                           <p className="text-[9px] text-gray-500 dark:text-gray-400 font-bold mb-0.5">3성 등급</p>
-                          <p className="text-[10px] font-black text-gray-800 dark:text-gray-300">{y3.toLocaleString()}</p>
+                          <p className="text-[10px] font-black text-gray-800 dark:text-gray-300">{formatQty(y3, globalSetMode)}</p>
                         </div>
                       </div>
                     </div>
@@ -611,30 +611,77 @@ export default function OceanStaminaRecommend({
                       </div>
                       
                       <div className="flex items-center justify-between text-[10px] bg-gray-50 dark:bg-black/30 p-1.5 rounded-lg border border-gray-200 dark:border-transparent">
-                         <span className="font-bold text-gray-600 dark:text-gray-400">예상 획득량</span>
-                         <span className="font-bold text-gray-500">{expected.toLocaleString()}개</span>
+                         <span className="font-bold text-gray-600 dark:text-gray-400 truncate pr-1">기존 재고: {formatQty(currentStock, globalSetMode)}</span>
+                         <span className="font-black text-purple-700 dark:text-purple-500 shrink-0">
+                           <span className="text-gray-500 font-bold mr-1">예상 획득량</span>
+                           +{formatQty(expected, globalSetMode)}
+                         </span>
                       </div>
                       
-                      <div className="flex items-center justify-between text-[10px] mt-0.5">
-                         <span className="font-bold text-gray-700 dark:text-gray-300">실제 획득 수량</span>
-                         <div className="flex items-center gap-1">
-                           <input 
-                             type="number" 
-                             min="0"
-                             value={actual === 0 && actualYields[item] === 0 ? '' : actual} 
-                             onChange={(e) => {
-                               const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-                               setActualYields(prev => ({...prev, [item]: isNaN(val) ? 0 : val}));
-                             }}
-                             className="w-16 bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1.5 py-1 text-right text-[11px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors"
-                           />
-                           <span className="text-gray-500 font-bold">개</span>
-                         </div>
+                      <div className="flex flex-col justify-between text-[10px] mt-0.5 gap-1.5">
+                         <span className="font-bold text-gray-700 dark:text-gray-300">실제 획득 수량 입력</span>
+                         {globalSetMode ? (
+                           <div className="grid grid-cols-3 gap-1 w-full">
+                             <input 
+                               type="number" 
+                               min="0" 
+                               placeholder="상자"
+                               value={actual >= 3456 ? Math.floor(actual / 3456) : ''} 
+                               onChange={(e) => {
+                                 const val = parseInt(e.target.value) || 0;
+                                 const s = Math.floor((actual % 3456) / 64);
+                                 const u = actual % 64;
+                                 setActualYields(prev => ({...prev, [item]: (val * 3456) + (s * 64) + u}));
+                               }}
+                               className="w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1 py-1 text-center text-[10px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors placeholder:font-normal placeholder:text-gray-400"
+                             />
+                             <input 
+                               type="number" 
+                               min="0" 
+                               placeholder="세트"
+                               value={(actual % 3456) >= 64 ? Math.floor((actual % 3456) / 64) : ''} 
+                               onChange={(e) => {
+                                 const val = parseInt(e.target.value) || 0;
+                                 const b = Math.floor(actual / 3456);
+                                 const u = actual % 64;
+                                 setActualYields(prev => ({...prev, [item]: (b * 3456) + (val * 64) + u}));
+                               }}
+                               className="w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1 py-1 text-center text-[10px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors placeholder:font-normal placeholder:text-gray-400"
+                             />
+                             <input 
+                               type="number" 
+                               min="0" 
+                               placeholder="개"
+                               value={actual % 64 !== 0 ? actual % 64 : ''} 
+                               onChange={(e) => {
+                                 const val = parseInt(e.target.value) || 0;
+                                 const b = Math.floor(actual / 3456);
+                                 const s = Math.floor((actual % 3456) / 64);
+                                 setActualYields(prev => ({...prev, [item]: (b * 3456) + (s * 64) + val}));
+                               }}
+                               className="w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1 py-1 text-center text-[10px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors placeholder:font-normal placeholder:text-gray-400"
+                             />
+                           </div>
+                         ) : (
+                           <div className="flex items-center gap-1 w-full justify-end">
+                             <input 
+                               type="number" 
+                               min="0"
+                               value={actual === 0 && actualYields[item] === 0 ? '' : actual} 
+                               onChange={(e) => {
+                                 const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                 setActualYields(prev => ({...prev, [item]: isNaN(val) ? 0 : val}));
+                               }}
+                               className="w-full sm:w-20 bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1.5 py-1 text-right text-[11px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors"
+                             />
+                             <span className="text-gray-500 font-bold shrink-0">개</span>
+                           </div>
+                         )}
                       </div>
                       
                       <div className="flex items-center justify-between pt-2 mt-1 border-t border-gray-200 dark:border-white/5">
                          <span className="text-[10px] font-bold text-gray-700 dark:text-gray-400">합산 후 총 재고</span>
-                         <span className="text-[11px] font-black text-gray-900 dark:text-white">{total.toLocaleString()}개</span>
+                         <span className="text-[11px] font-black text-gray-900 dark:text-white">{formatQty(total, globalSetMode)}</span>
                       </div>
                     </div>
                   );
