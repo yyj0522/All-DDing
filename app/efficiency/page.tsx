@@ -228,8 +228,14 @@ export default function EfficiencySimulatorPage() {
                       {index + 1}
                     </div>
                     
-                    <div className="w-10 h-10 shrink-0 bg-gray-100 dark:bg-black/40 rounded-xl flex items-center justify-center p-1">
-                      <Image src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[item.name]}.png`} alt={item.name} width={32} height={32} unoptimized={true} className="object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
+                    <div className="w-10 h-10 shrink-0 bg-gray-100 dark:bg-black/40 rounded-xl flex items-center justify-center p-1 relative overflow-hidden">
+                      <img 
+                        src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[item.name]}.png`} 
+                        alt={item.name} 
+                        className="w-full h-full object-contain drop-shadow-sm" 
+                        style={{ imageRendering: 'pixelated' }} 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
                     </div>
 
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -259,7 +265,7 @@ export default function EfficiencySimulatorPage() {
 
           <div className="flex-1 w-full flex flex-col gap-6">
             
-            <div className="bg-white/80 dark:bg-[#111113]/80 backdrop-blur-xl border border-gray-200 dark:border-white/5 rounded-3xl p-4 shadow-sm sticky top-[80px] md:top-[100px] z-40">
+            <div className="bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-3xl p-4 shadow-sm">
               <div className="grid grid-cols-5 md:grid-cols-8 gap-2">
                 {RECIPES.map((recipe) => (
                   <button 
@@ -267,8 +273,14 @@ export default function EfficiencySimulatorPage() {
                     onClick={() => setSelectedRecipeId(recipe.id)}
                     className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${selectedRecipeId === recipe.id ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-500 shadow-sm' : 'bg-gray-50 dark:bg-[#0a0a0c] border-transparent hover:bg-gray-100 dark:hover:bg-white/5'}`}
                   >
-                    <div className="w-8 h-8 relative mb-1.5">
-                      <Image src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[recipe.name]}.png`} alt={recipe.name} fill unoptimized={true} className="object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
+                    <div className="w-8 h-8 relative mb-1.5 flex items-center justify-center overflow-hidden">
+                      <img 
+                        src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[recipe.name]}.png`} 
+                        alt={recipe.name} 
+                        className="w-full h-full object-contain drop-shadow-sm" 
+                        style={{ imageRendering: 'pixelated' }} 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
                     </div>
                     <span className={`text-[9px] font-bold text-center w-full truncate px-0.5 ${selectedRecipeId === recipe.id ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-400'}`}>{recipe.name}</span>
                   </button>
@@ -319,8 +331,14 @@ export default function EfficiencySimulatorPage() {
                 
                 <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between border-b border-gray-200 dark:border-white/5 pb-6">
                   <div className="flex items-center gap-5">
-                    <div className="w-20 h-20 bg-gray-100 dark:bg-black/50 rounded-2xl flex items-center justify-center border border-gray-200 dark:border-transparent shadow-inner">
-                      <Image src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[selectedData.name]}.png`} alt={selectedData.name} width={56} height={56} unoptimized={true} className="object-contain drop-shadow-md" style={{ imageRendering: 'pixelated' }} />
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-black/50 rounded-2xl flex items-center justify-center border border-gray-200 dark:border-transparent shadow-inner overflow-hidden relative">
+                      <img 
+                        src={`${STORAGE_BASE_URL}/foods/${ITEM_IMAGES[selectedData.name]}.png`} 
+                        alt={selectedData.name} 
+                        className="w-14 h-14 object-contain drop-shadow-md" 
+                        style={{ imageRendering: 'pixelated' }} 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
                     </div>
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2 mb-1">
@@ -393,8 +411,14 @@ export default function EfficiencySimulatorPage() {
                       const imgName = ITEM_IMAGES[ing] || ITEM_IMAGES[ing.replace(' 베이스', ' 씨앗')];
                       return (
                         <div key={i} className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-colors ${finalIngCost === 0 ? 'bg-emerald-50/50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20' : 'bg-gray-50 dark:bg-[#16161a] border-gray-200 dark:border-white/5'}`}>
-                          <div className="relative w-10 h-10 mb-2">
-                            <Image src={`${STORAGE_BASE_URL}/ingredients/${imgName}.png`} alt={ing} fill unoptimized={true} className="object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
+                          <div className="relative w-10 h-10 mb-2 flex items-center justify-center overflow-hidden">
+                            <img 
+                              src={`${STORAGE_BASE_URL}/ingredients/${imgName}.png`} 
+                              alt={ing} 
+                              className="w-full h-full object-contain drop-shadow-sm" 
+                              style={{ imageRendering: 'pixelated' }} 
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
                           </div>
                           <span className={`text-[11px] font-black truncate w-full text-center mb-1 ${finalIngCost === 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-800 dark:text-gray-200'}`}>{ing}</span>
                           <div className="flex flex-col items-center gap-0.5 w-full bg-white dark:bg-black/30 rounded-lg py-1.5 mt-1">

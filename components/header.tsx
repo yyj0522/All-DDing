@@ -70,7 +70,7 @@ export default function Header() {
 
   return (
     <>
-      <div className="fixed top-4 md:top-6 left-0 right-0 z-[60] flex justify-center px-4">
+      <div className="absolute top-4 md:top-6 left-0 right-0 z-[60] flex justify-center px-4">
         <nav className={`flex items-center justify-between w-full max-w-6xl px-6 py-3 rounded-2xl transition-all duration-300 border-2 border-b-4 ${
           isMenuOpen 
             ? 'border-transparent bg-transparent shadow-none backdrop-blur-none dark:border-transparent dark:bg-transparent md:bg-slate-50/95 md:dark:bg-zinc-800/95 md:border-slate-200 md:dark:border-zinc-700 md:shadow-[4px_4px_0_rgba(0,0,0,0.05)] md:dark:shadow-[4px_4px_0_rgba(0,0,0,0.3)] md:backdrop-blur-xl' 

@@ -256,7 +256,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
                 { id: 'platinumBlock', label: '플래티넘 블록 (1개)', ph: '1개 단가', img: '플래티넘 블록' }
               ].map(item => (
                 <div key={item.id} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-xl p-3 flex flex-col gap-2.5 shadow-sm transition-colors">
-                  <div className="flex items-center gap-2 min-w-0"><img src={getImagePath(item.img)||''} className="w-4 h-4 object-contain drop-shadow-sm" alt=""/><span className="text-[11px] font-black text-gray-800 dark:text-gray-200 truncate">{item.label}</span></div>
+                  <div className="flex items-center gap-2 min-w-0"><img src={getImagePath(item.img) || undefined} className="w-4 h-4 object-contain drop-shadow-sm" alt=""/><span className="text-[11px] font-black text-gray-800 dark:text-gray-200 truncate">{item.label}</span></div>
                   <input type="number" step="any" value={marketPrices[item.id as keyof typeof marketPrices] === 0 ? '' : marketPrices[item.id as keyof typeof marketPrices]} onChange={(e) => handlePriceChange(item.id as keyof typeof marketPrices, e.target.value)} placeholder={item.ph} className="w-full bg-white dark:bg-black border border-gray-300 dark:border-transparent rounded-lg px-2.5 py-1.5 text-[11px] text-gray-900 dark:text-white font-bold outline-none focus:ring-1 focus:ring-amber-500 transition-colors placeholder-gray-400" />
                 </div>
               ))}
@@ -274,7 +274,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
                 { id: 'serentIngot', label: '세렌트 주괴 (1셋)', ph: '1셋(64개) 단가', img: '세렌트 주괴' }
               ].map(item => (
                 <div key={item.id} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-xl p-3 flex flex-col gap-2.5 shadow-sm transition-colors">
-                  <div className="flex items-center gap-2 min-w-0"><img src={getImagePath(item.img)||''} className="w-4 h-4 object-contain drop-shadow-sm" alt=""/><span className="text-[11px] font-black text-gray-800 dark:text-gray-200 truncate">{item.label}</span></div>
+                  <div className="flex items-center gap-2 min-w-0"><img src={getImagePath(item.img) || undefined} className="w-4 h-4 object-contain drop-shadow-sm" alt=""/><span className="text-[11px] font-black text-gray-800 dark:text-gray-200 truncate">{item.label}</span></div>
                   <input type="number" step="any" value={marketPrices[item.id as keyof typeof marketPrices] === 0 ? '' : marketPrices[item.id as keyof typeof marketPrices]} onChange={(e) => handlePriceChange(item.id as keyof typeof marketPrices, e.target.value)} placeholder={item.ph} className="w-full bg-white dark:bg-black border border-gray-300 dark:border-transparent rounded-lg px-2.5 py-1.5 text-[11px] text-gray-900 dark:text-white font-bold outline-none focus:ring-1 focus:ring-amber-500 transition-colors placeholder-gray-400" />
                 </div>
               ))}
@@ -299,7 +299,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
                 { id: 'amethystBlock', label: '자수정 블록 (1셋)', ph: '1셋 단가', img: '자수정블록' }
               ].map(item => (
                 <div key={item.id} className="bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-transparent rounded-xl p-3 flex flex-col gap-2.5 shadow-sm transition-colors">
-                  <div className="flex items-center gap-2 min-w-0"><img src={getImagePath(item.img)||''} className="w-4 h-4 object-contain drop-shadow-sm" alt=""/><span className="text-[11px] font-black text-gray-800 dark:text-gray-200 truncate">{item.label}</span></div>
+                  <div className="flex items-center gap-2 min-w-0"><img src={getImagePath(item.img) || undefined} className="w-4 h-4 object-contain drop-shadow-sm" alt=""/><span className="text-[11px] font-black text-gray-800 dark:text-gray-200 truncate">{item.label}</span></div>
                   <input type="number" step="any" value={marketPrices[item.id as keyof typeof marketPrices] === 0 ? '' : marketPrices[item.id as keyof typeof marketPrices]} onChange={(e) => handlePriceChange(item.id as keyof typeof marketPrices, e.target.value)} placeholder={item.ph} className="w-full bg-white dark:bg-black border border-gray-300 dark:border-transparent rounded-lg px-2.5 py-1.5 text-[11px] text-gray-900 dark:text-white font-bold outline-none focus:ring-1 focus:ring-amber-500 transition-colors placeholder-gray-400" />
                 </div>
               ))}
@@ -425,7 +425,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 flex items-center justify-center border border-gray-200 dark:border-white/10 shrink-0">
-                            <img src={getImagePath(imgName) || ''} alt={p.name} className="w-5 h-5 object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
+                            <img src={getImagePath(imgName) || undefined} alt={p.name} className="w-5 h-5 object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
                           </div>
                           <div className="flex flex-col min-w-0">
                             <p className={`text-[9px] font-black mb-0.5 tracking-widest uppercase ${i === 0 ? 'text-indigo-500' : i === 1 ? 'text-cyan-500' : 'text-emerald-500'}`}>{i + 1}순위 분배</p>
@@ -452,7 +452,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 flex items-center justify-center border border-gray-200 dark:border-white/10 shrink-0">
-                          <img src={getImagePath(`${targetZone} 주괴`) || ''} alt="잉여 주괴" className="w-5 h-5 object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
+                          <img src={getImagePath(`${targetZone} 주괴`) || undefined} alt="잉여 주괴" className="w-5 h-5 object-contain drop-shadow-sm" style={{ imageRendering: 'pixelated' }} />
                         </div>
                         <div className="flex flex-col min-w-0">
                           <p className="text-[9px] font-black mb-0.5 tracking-widest uppercase text-gray-500">잔여 물량</p>
