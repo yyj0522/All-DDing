@@ -7,6 +7,7 @@ import {
   PARSED_RECIPES, RECIPE_FIXES, parseCraftTime, formatTime, O13_EFFECTS
 } from '@/lib/oceanTradeUtils';
 import { OCEAN_FIXED_PRICES } from '@/lib/professionData';
+import { SAGE_TOOL_EFFECTS } from '@/lib/sageData';
 
 interface Props {
   stock: Record<string, number>;
@@ -18,6 +19,9 @@ interface Props {
   globalSetMode: boolean;
   itemBaseReqsPerUnit: Record<string, Record<string, number>>;
 }
+
+const IMPRINT_ROD_SHELL_CHANCE = [0, 0.25, 0.50, 0.75, 1.00];
+const IMPRINT_ROD_ROULETTE_CHANCE = [0, 0.01, 0.02, 0.03, 0.04, 0.05];
 
 const getBaseEquivalents = (currentStock: Record<string, number>, itemBaseReqsPerUnit: Record<string, Record<string, number>>) => {
   const eq: Record<string, number> = {};
@@ -42,8 +46,17 @@ export default function OceanStaminaRecommend({
   const [isCalculating, setIsCalculating] = useState(false);
   const [staminaRecommendation, setStaminaRecommendation] = useState<any>(null);
   const [blueprintViewMode, setBlueprintViewMode] = useState<'flow' | 'compact'>('flow');
+  const [isPhase3Open, setIsPhase3Open] = useState(true);
+  const [actualYields, setActualYields] = useState<Record<string, number>>({});
 
-  const o13Reduction = O13_EFFECTS[userStats.o13Lv] || 0;
+  const o13Reduction = O13_EFFECTS[userStats.o13Lv || 0] || 0;
+
+  useEffect(() => {
+    if (staminaRecommendation?.combinedYield) {
+      // 초기값으로 기댓값을 세팅해줍니다.
+      setActualYields(staminaRecommendation.combinedYield);
+    }
+  }, [staminaRecommendation]);
 
   useEffect(() => {
     setIsCalculating(true);
@@ -184,7 +197,7 @@ export default function OceanStaminaRecommend({
         return { profit: totalP, totalVanillaCost, stockConsumed, crafted, resultingStock: tempStock };
       };
 
-      const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
+      const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv || 0] || 0;
       const sortedItems = OCEAN_FIXED_PRICES.map(item => {
           const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
           const baseMats = itemBaseReqsPerUnit[item.name] || {};
@@ -199,22 +212,24 @@ export default function OceanStaminaRecommend({
         return;
       }
 
-      const o11Mult = 1 + ([0, 0.05, 0.07, 0.10, 0.15, 0.20][userStats.o11Lv] || 0);
-      const rodLevel = Math.min(15, Math.max(0, userStats.rodLv));
-      const rawDropCount = [1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 10][rodLevel] || 1;
+      const o11Bonus = [0, 0.05, 0.07, 0.10, 0.15, 0.20][userStats.o11Lv || 0] || 0;
+      const rodData = userStats.rodLv > 0 ? SAGE_TOOL_EFFECTS.rod[userStats.rodLv - 1] : { '어패류 드롭 수': '1' };
+      const baseDrop = parseInt(rodData['어패류 드롭 수']) || 1;
       
-      const rodShell = [0, 0.25, 0.5, 0.75, 1][toolImprints?.['rod']?.['rod_shell'] || 0] || 0;
-      const rodRoulette = [0, 0.01, 0.02, 0.03, 0.04, 0.05][toolImprints?.['rod']?.['rod_roulette'] || 0] || 0;
+      const shellImprintLv = toolImprints?.['rod']?.['rod_shell'] || 0;
+      const rouletteImprintLv = toolImprints?.['rod']?.['rod_roulette'] || 0;
 
-      const o17Prob = [0, 0.01, 0.03, 0.05, 0.07, 0.10, 0.15][userStats.o17Lv] || 0;
-      const p3 = 0.10 + o17Prob;
-      const p2 = 0.30;
-      const p1 = Math.max(0, 1.0 - p2 - p3);
+      const expectedDropPerAction = baseDrop + o11Bonus + IMPRINT_ROD_SHELL_CHANCE[shellImprintLv] + (IMPRINT_ROD_ROULETTE_CHANCE[rouletteImprintLv] * 19.25);
+
+      const o17Bonus = [0, 0.01, 0.03, 0.05, 0.07, 0.10, 0.15][userStats.o17Lv || 0] || 0;
+      const p3 = 0.10 + o17Bonus;
+      const p2 = 0.30 - (o17Bonus * (1 / 3));
+      const p1 = 0.60 - (o17Bonus * (2 / 3));
 
       const getYield = (stamina: number, category: string) => {
           const actions = Math.floor(stamina / 15);
           if (actions <= 0) return {};
-          const totalItems = (actions * rawDropCount * o11Mult) + (actions * rodShell) + (actions * rodRoulette * 19.25);
+          const totalItems = actions * expectedDropPerAction;
           
           return {
               [`${category}(1성)`]: Math.round(totalItems * p1),
@@ -319,6 +334,45 @@ export default function OceanStaminaRecommend({
     return () => clearTimeout(timer);
   }, [stock, cost, blacklist, userStats, toolImprints, recommendMode, itemBaseReqsPerUnit]);
 
+  // 창고에 실제 획득량 합산하는 로직
+  const handleMergeStock = () => {
+    if (confirm('입력하신 실제 획득량을 내 창고 재고에 합산하시겠습니까?')) {
+      const savedV3 = localStorage.getItem('ocean_trade_v3');
+      const parsedV3 = savedV3 ? JSON.parse(savedV3) : { stock: {} };
+      if (!parsedV3.stock) parsedV3.stock = { ...stock };
+      
+      let hasUpdates = false;
+      Object.entries(actualYields).forEach(([item, qty]) => {
+        if (qty > 0) {
+          parsedV3.stock[item] = (parsedV3.stock[item] || 0) + qty;
+          hasUpdates = true;
+        }
+      });
+      
+      if (hasUpdates) {
+        localStorage.setItem('ocean_trade_v3', JSON.stringify(parsedV3));
+        
+        // v2 하위호환 유지
+        const savedV2 = localStorage.getItem('ocean_trade_v2');
+        if (savedV2) {
+            const parsedV2 = JSON.parse(savedV2);
+            if (parsedV2.stock) {
+              Object.entries(actualYields).forEach(([item, qty]) => {
+                if (qty > 0) {
+                  parsedV2.stock[item] = (parsedV2.stock[item] || 0) + qty;
+                }
+              });
+              localStorage.setItem('ocean_trade_v2', JSON.stringify(parsedV2));
+            }
+        }
+
+        alert('성공적으로 재고에 합산되었습니다!\n변경사항을 적용하기 위해 페이지를 새로고침합니다.');
+        window.location.reload();
+      } else {
+        alert('합산할 재고가 없습니다.');
+      }
+    }
+  };
 
   const renderCraftStep = (itemName: string, qty: number) => {
     let recipe: any = PARSED_RECIPES.find(r => r.name === itemName);
@@ -526,32 +580,61 @@ export default function OceanStaminaRecommend({
             </div>
 
             <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl overflow-hidden shadow-md mt-4">
-              <div className="p-4 border-b border-gray-200 dark:border-white/5 bg-gray-100 dark:bg-white/[0.02]">
-                <p className="text-[11px] font-black text-purple-800 dark:text-purple-400 flex items-center gap-1.5 mb-1.5">
-                  Phase 2. 획득 재료와 기존 재고의 합산
-                </p>
-                <p className="text-[10px] font-bold text-gray-700 dark:text-gray-400 leading-relaxed">
-                  새로 채집한 재료를 기존 창고에 있던 재고들과 합산하여, 수익에 최적화 된 총 연금품 제작 루트를 계산합니다.
-                </p>
+              <div className="p-4 border-b border-gray-200 dark:border-white/5 bg-gray-100 dark:bg-white/[0.02] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                  <p className="text-[11px] font-black text-purple-800 dark:text-purple-400 flex items-center gap-1.5 mb-1.5">
+                    Phase 2. 획득 재료와 기존 재고의 합산
+                  </p>
+                  <p className="text-[10px] font-bold text-gray-700 dark:text-gray-400 leading-relaxed">
+                    예상 획득량 대신 <strong className="text-purple-600 dark:text-purple-400">실제 획득한 수량</strong>을 입력하고 창고 재고에 바로 합산할 수 있습니다.
+                  </p>
+                </div>
+                <button 
+                  onClick={handleMergeStock} 
+                  className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-black px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-95 whitespace-nowrap shrink-0"
+                >
+                  내 재고에 합산하기
+                </button>
               </div>
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {Object.keys(staminaRecommendation.combinedYield).filter(k => staminaRecommendation.combinedYield[k] > 0).map(item => {
-                  const newYield = staminaRecommendation.combinedYield[item] || 0;
+                {Object.keys(staminaRecommendation.combinedYield).filter(k => staminaRecommendation.combinedYield[k] > 0 || actualYields[k] > 0).map(item => {
+                  const expected = staminaRecommendation.combinedYield[item] || 0;
                   const currentStock = stock[item] || 0;
-                  const total = currentStock + newYield;
+                  const actual = actualYields[item] !== undefined ? actualYields[item] : expected;
+                  const total = currentStock + (Number(actual) || 0);
+                  
                   return (
-                    <div key={item} className="flex flex-col gap-1.5 bg-white dark:bg-[#111113] px-3 py-2.5 rounded-xl border border-gray-300 dark:border-white/5 shadow-sm">
+                    <div key={item} className="flex flex-col gap-2 bg-white dark:bg-[#111113] p-3 rounded-xl border border-gray-300 dark:border-white/5 shadow-sm transition-colors focus-within:border-purple-400 dark:focus-within:border-purple-500/50">
                       <div className="flex items-center gap-1.5 mb-1">
                         <img src={getImagePath(item)||undefined} className="w-4 h-4 object-contain" />
                         <span className="text-[11px] font-black text-gray-900 dark:text-white">{item}</span>
                       </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                         <span className="font-bold text-gray-600 dark:text-gray-400">기존 재고: {currentStock.toLocaleString()}</span>
-                         <span className="font-black text-purple-700 dark:text-purple-500">+ {newYield.toLocaleString()}</span>
+                      
+                      <div className="flex items-center justify-between text-[10px] bg-gray-50 dark:bg-black/30 p-1.5 rounded-lg border border-gray-200 dark:border-transparent">
+                         <span className="font-bold text-gray-600 dark:text-gray-400">예상 획득량</span>
+                         <span className="font-bold text-gray-500">{expected.toLocaleString()}개</span>
                       </div>
-                      <div className="flex items-center justify-between pt-1.5 border-t border-gray-200 dark:border-white/5">
-                         <span className="font-bold text-gray-700 dark:text-gray-400">스태미나 소모 후 재고</span>
-                         <span className="font-black text-gray-900 dark:text-white">{total.toLocaleString()}개</span>
+                      
+                      <div className="flex items-center justify-between text-[10px] mt-0.5">
+                         <span className="font-bold text-gray-700 dark:text-gray-300">실제 획득 수량</span>
+                         <div className="flex items-center gap-1">
+                           <input 
+                             type="number" 
+                             min="0"
+                             value={actual === 0 && actualYields[item] === 0 ? '' : actual} 
+                             onChange={(e) => {
+                               const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                               setActualYields(prev => ({...prev, [item]: isNaN(val) ? 0 : val}));
+                             }}
+                             className="w-16 bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1.5 py-1 text-right text-[11px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors"
+                           />
+                           <span className="text-gray-500 font-bold">개</span>
+                         </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-2 mt-1 border-t border-gray-200 dark:border-white/5">
+                         <span className="text-[10px] font-bold text-gray-700 dark:text-gray-400">합산 후 총 재고</span>
+                         <span className="text-[11px] font-black text-gray-900 dark:text-white">{total.toLocaleString()}개</span>
                       </div>
                     </div>
                   );
@@ -559,8 +642,11 @@ export default function OceanStaminaRecommend({
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-md mt-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
+            <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-md mt-4 transition-all">
+              <div 
+                className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-3 cursor-pointer group"
+                onClick={() => setIsPhase3Open(!isPhase3Open)}
+              >
                 <div>
                   <p className="text-[11px] font-black text-indigo-800 dark:text-indigo-400 flex items-center gap-1.5 mb-1.5">
                     Phase 3. 예상 제작 가이드
@@ -569,173 +655,180 @@ export default function OceanStaminaRecommend({
                     통합된 재고를 바탕으로 바닐라 블록을 조달하여 최종 수익품을 제작합니다.
                   </p>
                 </div>
-                <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111113] p-1 rounded-lg border border-gray-300 dark:border-white/5 shadow-inner">
-                  <button 
-                    onClick={() => setBlueprintViewMode('compact')} 
-                    className={`px-3 py-1.5 rounded-md text-[10px] font-black transition-all ${blueprintViewMode === 'compact' ? 'bg-white dark:bg-[#1a1a1e] text-indigo-700 dark:text-indigo-400 shadow-sm border border-gray-300 dark:border-transparent' : 'text-gray-600 hover:text-gray-900 dark:hover:text-gray-300'}`}
-                  >
-                    세로 그리드
-                  </button>
-                  <button 
-                    onClick={() => setBlueprintViewMode('flow')} 
-                    className={`px-3 py-1.5 rounded-md text-[10px] font-black transition-all ${blueprintViewMode === 'flow' ? 'bg-white dark:bg-[#1a1a1e] text-indigo-700 dark:text-indigo-400 shadow-sm border border-gray-300 dark:border-transparent' : 'text-gray-600 hover:text-gray-900 dark:hover:text-gray-300'}`}
-                  >
-                    가로 플로우
-                  </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111113] p-1 rounded-lg border border-gray-300 dark:border-white/5 shadow-inner" onClick={e => e.stopPropagation()}>
+                    <button 
+                      onClick={() => setBlueprintViewMode('compact')} 
+                      className={`px-3 py-1.5 rounded-md text-[10px] font-black transition-all ${blueprintViewMode === 'compact' ? 'bg-white dark:bg-[#1a1a1e] text-indigo-700 dark:text-indigo-400 shadow-sm border border-gray-300 dark:border-transparent' : 'text-gray-600 hover:text-gray-900 dark:hover:text-gray-300'}`}
+                    >
+                      세로 그리드
+                    </button>
+                    <button 
+                      onClick={() => setBlueprintViewMode('flow')} 
+                      className={`px-3 py-1.5 rounded-md text-[10px] font-black transition-all ${blueprintViewMode === 'flow' ? 'bg-white dark:bg-[#1a1a1e] text-indigo-700 dark:text-indigo-400 shadow-sm border border-gray-300 dark:border-transparent' : 'text-gray-600 hover:text-gray-900 dark:hover:text-gray-300'}`}
+                    >
+                      가로 플로우
+                    </button>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-500 group-hover:bg-gray-200 dark:group-hover:bg-white/10 transition-colors">
+                     <svg className={`w-4 h-4 transition-transform duration-300 ${isPhase3Open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {staminaRecommendation.flowDetails && staminaRecommendation.flowDetails.map((flow: any) => {
-                  const itemName = flow.name;
-                  const targetQty = flow.qty;
-                  const missingKeys = Object.keys(flow.missing);
-                  const s1 = Object.entries(flow.craftedLog || {}).filter(([k]) => !k.includes("핵") && !k.includes("결정") && !k.includes("영약") && !OCEAN_FIXED_PRICES.find(p=>p.name===k) && k !== itemName);
-                  const s2 = Object.entries(flow.craftedLog || {}).filter(([k]) => (k.includes("핵") || k.includes("결정") || k.includes("영약")) && k !== itemName);
+              <div className={`transition-all duration-300 overflow-hidden ${isPhase3Open ? 'max-h-[5000px] opacity-100 mt-5' : 'max-h-0 opacity-0 mt-0'}`}>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {staminaRecommendation.flowDetails && staminaRecommendation.flowDetails.map((flow: any) => {
+                    const itemName = flow.name;
+                    const targetQty = flow.qty;
+                    const missingKeys = Object.keys(flow.missing);
+                    const s1 = Object.entries(flow.craftedLog || {}).filter(([k]) => !k.includes("핵") && !k.includes("결정") && !k.includes("영약") && !OCEAN_FIXED_PRICES.find(p=>p.name===k) && k !== itemName);
+                    const s2 = Object.entries(flow.craftedLog || {}).filter(([k]) => (k.includes("핵") || k.includes("결정") || k.includes("영약")) && k !== itemName);
 
-                  let totalSec = 0;
-                  Object.entries(flow.craftedLog || {}).forEach(([m, q]) => {
-                      let recipe: any = PARSED_RECIPES.find(r => r.name === m);
-                      if (!recipe && RECIPE_FIXES[m]) {
-                          recipe = { yieldAmount: RECIPE_FIXES[m].yield, time: '0초' };
-                      }
-                      if (recipe) {
-                          const crafts = Math.ceil((q as number) / recipe.yieldAmount);
-                          const baseSec = parseCraftTime(recipe.time || '0초') * crafts;
-                          totalSec += Math.floor(baseSec * (1 - o13Reduction));
-                      }
-                  });
-                  const totalTimeStr = formatTime(totalSec);
+                    let totalSec = 0;
+                    Object.entries(flow.craftedLog || {}).forEach(([m, q]) => {
+                        let recipe: any = PARSED_RECIPES.find(r => r.name === m);
+                        if (!recipe && RECIPE_FIXES[m]) {
+                            recipe = { yieldAmount: RECIPE_FIXES[m].yield, time: '0초' };
+                        }
+                        if (recipe) {
+                            const crafts = Math.ceil((q as number) / recipe.yieldAmount);
+                            const baseSec = parseCraftTime(recipe.time || '0초') * crafts;
+                            totalSec += Math.floor(baseSec * (1 - o13Reduction));
+                        }
+                    });
+                    const totalTimeStr = formatTime(totalSec);
 
-                  const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
-                  const sellPrice = Math.ceil((OCEAN_FIXED_PRICES.find(p => p.name === itemName)?.base || 0) * (1 + o16Bonus));
-                  const revenue = sellPrice * targetQty;
-                  let missingCost = 0;
-                  Object.entries(flow.missing).forEach(([m, q]) => {
-                       missingCost += (cost[m] || 0) * (q as number);
-                  });
-                  const netProfit = revenue - missingCost;
+                    const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv || 0] || 0;
+                    const sellPrice = Math.ceil((OCEAN_FIXED_PRICES.find(p => p.name === itemName)?.base || 0) * (1 + o16Bonus));
+                    const revenue = sellPrice * targetQty;
+                    let missingCost = 0;
+                    Object.entries(flow.missing).forEach(([m, q]) => {
+                         missingCost += (cost[m] || 0) * (q as number);
+                    });
+                    const netProfit = revenue - missingCost;
 
-                  return (
-                    <div key={itemName} className={`bg-white dark:bg-[#111113] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-md flex flex-col ${blueprintViewMode === 'flow' ? 'col-span-full' : 'h-full'}`}>
-                      <div className="flex items-start justify-between mb-4 pb-3 border-b border-gray-300 dark:border-white/10">
-                        <div className="flex items-center gap-2 mt-1">
-                          <img src={getImagePath(itemName)||undefined} className="w-8 h-8 object-contain drop-shadow-md" />
-                          <div>
-                            <span className="text-[15px] font-black text-indigo-800 dark:text-indigo-400 leading-none">{itemName}</span>
-                            <p className="text-[11px] font-bold text-gray-600 dark:text-gray-400 mt-1">최종 연성 수량: {formatQty(targetQty, globalSetMode)}</p>
+                    return (
+                      <div key={itemName} className={`bg-white dark:bg-[#111113] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-md flex flex-col ${blueprintViewMode === 'flow' ? 'col-span-full' : 'h-full'}`}>
+                        <div className="flex items-start justify-between mb-4 pb-3 border-b border-gray-300 dark:border-white/10">
+                          <div className="flex items-center gap-2 mt-1">
+                            <img src={getImagePath(itemName)||undefined} className="w-8 h-8 object-contain drop-shadow-md" />
+                            <div>
+                              <span className="text-[15px] font-black text-indigo-800 dark:text-indigo-400 leading-none">{itemName}</span>
+                              <p className="text-[11px] font-bold text-gray-600 dark:text-gray-400 mt-1">최종 연성 수량: {formatQty(targetQty, globalSetMode)}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1.5">
+                            <span className="text-[10px] font-black text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2.5 py-1 rounded shadow-sm border border-gray-300 dark:border-transparent">총 소요시간: {totalTimeStr}</span>
+                            <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded shadow-sm border border-emerald-300 dark:border-transparent">예상 순수익: +{netProfit.toLocaleString()} G</span>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1.5">
-                          <span className="text-[10px] font-black text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2.5 py-1 rounded shadow-sm border border-gray-300 dark:border-transparent">총 소요시간: {totalTimeStr}</span>
-                          <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded shadow-sm border border-emerald-300 dark:border-transparent">예상 순수익: +{netProfit.toLocaleString()} G</span>
-                        </div>
-                      </div>
-                      
-                      {blueprintViewMode === 'flow' ? (
-                        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-3 w-full">
-                          
-                          <div className="flex-1 flex flex-col min-w-[200px]">
-                            <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5 uppercase tracking-widest px-1">Step 1. 바닐라 조달</span>
-                            <div className="bg-gray-50 dark:bg-white/[0.02] border border-gray-300 dark:border-white/5 rounded-xl p-3 h-full flex flex-col justify-center gap-1.5 shadow-sm">
-                              {missingKeys.length === 0 ? (
-                                <span className="text-[10px] text-gray-500 font-bold italic">조달 필요 없음</span>
-                              ) : (
-                                missingKeys.map((m) => (
-                                  <div key={m} className="flex items-center justify-between text-[10px]">
-                                    <div className="flex items-center gap-1.5 truncate">
-                                      <img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain opacity-80 shrink-0" />
-                                      <span className="text-gray-800 dark:text-gray-300 font-bold truncate">{m}</span>
+                        
+                        {blueprintViewMode === 'flow' ? (
+                          <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-3 w-full">
+                            
+                            <div className="flex-1 flex flex-col min-w-[200px]">
+                              <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5 uppercase tracking-widest px-1">Step 1. 바닐라 조달</span>
+                              <div className="bg-gray-50 dark:bg-white/[0.02] border border-gray-300 dark:border-white/5 rounded-xl p-3 h-full flex flex-col justify-center gap-1.5 shadow-sm">
+                                {missingKeys.length === 0 ? (
+                                  <span className="text-[10px] text-gray-500 font-bold italic">조달 필요 없음</span>
+                                ) : (
+                                  missingKeys.map((m) => (
+                                    <div key={m} className="flex items-center justify-between text-[10px]">
+                                      <div className="flex items-center gap-1.5 truncate">
+                                        <img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain opacity-80 shrink-0" />
+                                        <span className="text-gray-800 dark:text-gray-300 font-bold truncate">{m}</span>
+                                      </div>
+                                      <span className="text-indigo-600 font-black shrink-0 ml-1">{formatQty(flow.missing[m] as number, globalSetMode)}</span>
                                     </div>
-                                    <span className="text-indigo-600 font-black shrink-0 ml-1">{formatQty(flow.missing[m] as number, globalSetMode)}</span>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+
+                            {s1.length > 0 && (
+                              <>
+                                <div className="hidden xl:flex items-center justify-center text-gray-400 dark:text-gray-700 shrink-0 text-xl font-black">{'>'}</div>
+                                <div className="flex-1 flex flex-col min-w-[220px]">
+                                  <span className="text-[9px] font-black text-purple-700 dark:text-purple-400 mb-1.5 uppercase tracking-widest px-1">Step 2. 1차 가공</span>
+                                  <div className="flex flex-col gap-2 h-full justify-center">
+                                    {s1.map(([m, q]) => renderProcessNode(m, q as number))}
                                   </div>
-                                ))
+                                </div>
+                              </>
+                            )}
+
+                            {s2.length > 0 && (
+                              <>
+                                <div className="hidden xl:flex items-center justify-center text-gray-400 dark:text-gray-700 shrink-0 text-xl font-black">{'>'}</div>
+                                <div className="flex-1 flex flex-col min-w-[220px]">
+                                  <span className="text-[9px] font-black text-rose-700 dark:text-rose-400 mb-1.5 uppercase tracking-widest px-1">Step 3. 2차 가공</span>
+                                  <div className="flex flex-col gap-2 h-full justify-center">
+                                    {s2.map(([m, q]) => renderProcessNode(m, q as number))}
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            <div className="hidden xl:flex items-center justify-center text-indigo-400 dark:text-indigo-800 shrink-0 text-xl font-black">{'>'}</div>
+                            
+                            <div className="flex-1 flex flex-col min-w-[220px]">
+                              <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5 uppercase tracking-widest px-1">Step 4. 최종 연성</span>
+                              <div className="flex flex-col h-full justify-center">
+                                {renderProcessNode(itemName, targetQty, true)}
+                              </div>
+                            </div>
+
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-4 flex-1 mt-2">
+                            <div>
+                              <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">Step 1. 바닐라 조달</p>
+                              {missingKeys.length === 0 ? (
+                                <span className="text-[10px] text-gray-500 font-bold">조달 필요 없음</span>
+                              ) : (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {missingKeys.map((m) => (
+                                      <span key={m} className="bg-gray-100 dark:bg-[#16161a] border border-gray-300 dark:border-white/5 px-2 py-1 rounded text-[9px] font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1 shadow-sm">
+                                          <img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain" />
+                                          {m} <span className="text-indigo-700 dark:text-indigo-400">{formatQty(flow.missing[m] as number, globalSetMode)}</span>
+                                      </span>
+                                    ))}
+                                </div>
                               )}
                             </div>
-                          </div>
 
-                          {s1.length > 0 && (
-                            <>
-                              <div className="hidden xl:flex items-center justify-center text-gray-400 dark:text-gray-700 shrink-0 text-xl font-black">{'>'}</div>
-                              <div className="flex-1 flex flex-col min-w-[220px]">
-                                <span className="text-[9px] font-black text-purple-700 dark:text-purple-400 mb-1.5 uppercase tracking-widest px-1">Step 2. 1차 가공</span>
-                                <div className="flex flex-col gap-2 h-full justify-center">
-                                  {s1.map(([m, q]) => renderProcessNode(m, q as number))}
-                                </div>
-                              </div>
-                            </>
-                          )}
-
-                          {s2.length > 0 && (
-                            <>
-                              <div className="hidden xl:flex items-center justify-center text-gray-400 dark:text-gray-700 shrink-0 text-xl font-black">{'>'}</div>
-                              <div className="flex-1 flex flex-col min-w-[220px]">
-                                <span className="text-[9px] font-black text-rose-700 dark:text-rose-400 mb-1.5 uppercase tracking-widest px-1">Step 3. 2차 가공</span>
-                                <div className="flex flex-col gap-2 h-full justify-center">
-                                  {s2.map(([m, q]) => renderProcessNode(m, q as number))}
-                                </div>
-                              </div>
-                            </>
-                          )}
-
-                          <div className="hidden xl:flex items-center justify-center text-indigo-400 dark:text-indigo-800 shrink-0 text-xl font-black">{'>'}</div>
-                          
-                          <div className="flex-1 flex flex-col min-w-[220px]">
-                            <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5 uppercase tracking-widest px-1">Step 4. 최종 연성</span>
-                            <div className="flex flex-col h-full justify-center">
-                              {renderProcessNode(itemName, targetQty, true)}
-                            </div>
-                          </div>
-
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-4 flex-1 mt-2">
-                          <div>
-                            <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">Step 1. 바닐라 조달</p>
-                            {missingKeys.length === 0 ? (
-                              <span className="text-[10px] text-gray-500 font-bold">조달 필요 없음</span>
-                            ) : (
-                              <div className="flex flex-wrap gap-1.5">
-                                  {missingKeys.map((m) => (
-                                    <span key={m} className="bg-gray-100 dark:bg-[#16161a] border border-gray-300 dark:border-white/5 px-2 py-1 rounded text-[9px] font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1 shadow-sm">
-                                        <img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain" />
-                                        {m} <span className="text-indigo-700 dark:text-indigo-400">{formatQty(flow.missing[m] as number, globalSetMode)}</span>
-                                    </span>
-                                  ))}
+                            {s1.length > 0 && (
+                              <div>
+                                  <p className="text-[10px] font-black text-purple-700 dark:text-purple-400 mb-1.5">Step 2. 하위 연금/가공 (창고에서 꺼내기)</p>
+                                  <div className="flex flex-col gap-2">
+                                    {s1.map(([m, q]) => renderCraftStep(m, q as number))}
+                                  </div>
                               </div>
                             )}
-                          </div>
 
-                          {s1.length > 0 && (
-                            <div>
-                                <p className="text-[10px] font-black text-purple-700 dark:text-purple-400 mb-1.5">Step 2. 하위 연금/가공 (창고에서 꺼내기)</p>
-                                <div className="flex flex-col gap-2">
-                                  {s1.map(([m, q]) => renderCraftStep(m, q as number))}
-                                </div>
-                            </div>
-                          )}
-
-                          {s2.length > 0 && (
-                            <div>
-                                <p className="text-[10px] font-black text-rose-700 dark:text-rose-400 mb-1.5">Step 3. 중급 연금 가공</p>
-                                <div className="flex flex-col gap-2">
-                                  {s2.map(([m, q]) => renderCraftStep(m, q as number))}
-                                </div>
-                            </div>
-                          )}
-
-                          <div className="mt-auto pt-2">
-                              <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">Step 4. 최종 연금 가공</p>
-                              <div className="flex flex-col gap-2">
-                                {renderCraftStep(itemName, targetQty)}
+                            {s2.length > 0 && (
+                              <div>
+                                  <p className="text-[10px] font-black text-rose-700 dark:text-rose-400 mb-1.5">Step 3. 중급 연금 가공</p>
+                                  <div className="flex flex-col gap-2">
+                                    {s2.map(([m, q]) => renderCraftStep(m, q as number))}
+                                  </div>
                               </div>
-                          </div>
-                        </div>
-                      )}
+                            )}
 
-                    </div>
-                  );
-                })}
+                            <div className="mt-auto pt-2">
+                                <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">Step 4. 최종 연금 가공</p>
+                                <div className="flex flex-col gap-2">
+                                  {renderCraftStep(itemName, targetQty)}
+                                </div>
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

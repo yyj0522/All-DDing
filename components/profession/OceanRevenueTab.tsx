@@ -56,7 +56,7 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
     const actions = Math.floor(userStats.stamina / 15);
     const rodData = userStats.rodLv > 0 ? SAGE_TOOL_EFFECTS.rod[userStats.rodLv - 1] : { '어패류 드롭 수': '1', '조개 등장 확률': '0%' };
     const baseDrop = parseInt(rodData['어패류 드롭 수']) || 1;
-    const baseShellChance = parseFloat(rodData['조개 등장 확률']) / 100 || 0;
+    const baseShellChance = parseFloat(rodData['조개 등장 확률'].replace('%', '')) / 100 || 0;
 
     const rodImprints = toolImprints?.['rod'] || {};
     
@@ -67,21 +67,23 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
     const rayImprintLv = rodImprints['rod_ray'] || 0;
     const fishImprintLv = rodImprints['rod_fish'] || 0;
 
-    const o11Bonus = [0, 0.05, 0.07, 0.10, 0.15, 0.20][userStats.o11Lv] || 0;
+    const o11Bonus = [0, 0.05, 0.07, 0.10, 0.15, 0.20][userStats.o11Lv || 0] || 0;
     
     const extraShellsFromImprint = actions * IMPRINT_ROD_SHELL_CHANCE[shellImprintLv];
     const rouletteShells = actions * IMPRINT_ROD_ROULETTE_CHANCE[rouletteImprintLv] * 19.25;
 
-    const totalSeafood = (actions * baseDrop * (1 + o11Bonus)) + extraShellsFromImprint + rouletteShells;
+    const expectedDropPerAction = baseDrop + o11Bonus + IMPRINT_ROD_SHELL_CHANCE[shellImprintLv] + (IMPRINT_ROD_ROULETTE_CHANCE[rouletteImprintLv] * 19.25);
+    const totalSeafood = actions * expectedDropPerAction;
 
     const expectedWhales = actions * IMPRINT_ROD_WHALE_CHANCE[whaleImprintLv];
     const expectedRays = actions * IMPRINT_ROD_RAY_CHANCE[rayImprintLv];
     const expectedExtraFish = actions * IMPRINT_ROD_FISH_CHANCE[fishImprintLv];
 
-    const o17Bonus = [0, 0.01, 0.03, 0.05, 0.07, 0.10, 0.15][userStats.o17Lv] || 0;
+    // [임의 조정] 별별별! 확률 조정 로직
+    const o17Bonus = [0, 0.01, 0.03, 0.05, 0.07, 0.10, 0.15][userStats.o17Lv || 0] || 0;
     const rate3 = 0.10 + o17Bonus;
-    const rate2 = 0.30;
-    const rate1 = 1.0 - rate2 - rate3;
+    const rate2 = 0.30 - (o17Bonus * (1 / 3));
+    const rate1 = 0.60 - (o17Bonus * (2 / 3));
 
     const qty1 = totalSeafood * rate1;
     const qty2 = totalSeafood * rate2;
@@ -95,7 +97,7 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
     const rem2 = Math.floor(qty2 % 3);
     const rem3 = Math.floor(qty3 % 6);
 
-    const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
+    const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv || 0] || 0;
     
     const unitPrice1 = Math.ceil(5393 * (1 + o16Bonus));
     const unitPrice2 = Math.ceil(11399 * (1 + o16Bonus));
@@ -127,7 +129,7 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
     const totalVanillaCost = cost1 + cost2 + cost3;
     const netProfit = totalAlchemyRev - totalVanillaCost;
 
-    const o14Bonus = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10][userStats.o14Lv] || 0;
+    const o14Bonus = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10][userStats.o14Lv || 0] || 0;
     const totalShellChance = baseShellChance + o14Bonus + IMPRINT_ROD_SHELL_FIND_CHANCE[shellFindImprintLv];
     const mysteryShells = actions * totalShellChance * 0.5;
 
@@ -153,7 +155,7 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
     };
   }, [userStats, toolImprints, cost]);
 
-  const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv] || 0;
+  const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv || 0] || 0;
 
   return (
     <div className="flex flex-col gap-6 md:gap-8 w-full relative transition-colors duration-300 animate-fade-in-up">
@@ -188,23 +190,23 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
                   <span className="text-[10px] md:text-[11px] font-bold text-gray-600 dark:text-gray-400 tracking-tight">[심해 채집꾼]</span>
-                  <span className="text-[11px] md:text-xs font-black text-blue-600 dark:text-blue-400 whitespace-nowrap">Lv.{userStats.o11Lv}</span>
+                  <span className="text-[11px] md:text-xs font-black text-blue-600 dark:text-blue-400 whitespace-nowrap">Lv.{userStats.o11Lv || 0}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
                   <span className="text-[10px] md:text-[11px] font-bold text-gray-600 dark:text-gray-400 tracking-tight">[조개 좀 사조개]</span>
-                  <span className="text-[11px] md:text-xs font-black text-blue-600 dark:text-blue-400 whitespace-nowrap">Lv.{userStats.o12Lv}</span>
+                  <span className="text-[11px] md:text-xs font-black text-blue-600 dark:text-blue-400 whitespace-nowrap">Lv.{userStats.o12Lv || 0}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
                   <span className="text-[10px] md:text-[11px] font-bold text-gray-600 dark:text-gray-400 tracking-tight">[조개 무한리필]</span>
-                  <span className="text-[11px] md:text-xs font-black text-blue-600 dark:text-blue-400 whitespace-nowrap">Lv.{userStats.o14Lv}</span>
+                  <span className="text-[11px] md:text-xs font-black text-blue-600 dark:text-blue-400 whitespace-nowrap">Lv.{userStats.o14Lv || 0}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
                   <span className="text-[10px] md:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">[프리미엄 한정가]</span>
-                  <span className="text-[11px] md:text-xs font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Lv.{userStats.o16Lv}</span>
+                  <span className="text-[11px] md:text-xs font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Lv.{userStats.o16Lv || 0}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white dark:bg-black px-3 py-2.5 rounded-xl border border-gray-200 dark:border-transparent shadow-sm transition-colors gap-1 sm:gap-0">
                   <span className="text-[10px] md:text-[11px] font-bold text-fuchsia-600 dark:text-fuchsia-400 tracking-tight">[별별별!]</span>
-                  <span className="text-[11px] md:text-xs font-black text-fuchsia-600 dark:text-fuchsia-400 whitespace-nowrap">Lv.{userStats.o17Lv}</span>
+                  <span className="text-[11px] md:text-xs font-black text-fuchsia-600 dark:text-fuchsia-400 whitespace-nowrap">Lv.{userStats.o17Lv || 0}</span>
                 </div>
               </div>
             </div>
@@ -416,7 +418,7 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
           <h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white tracking-tight transition-colors">NPC 연금품 고정 매입가</h3>
           <div className="flex items-center gap-2">
             <span className="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-transparent px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest transition-colors">프리미엄 한정가 적용</span>
-            <span className="text-sm font-black text-gray-800 dark:text-gray-300 transition-colors">Lv.{userStats.o16Lv}</span>
+            <span className="text-sm font-black text-gray-800 dark:text-gray-300 transition-colors">Lv.{userStats.o16Lv || 0}</span>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 flex-1">
@@ -452,7 +454,7 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
             <div>
               <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div> 1단계: 수중 어획 횟수 및 어패류 획득</h4>
               <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed break-keep">
-                총 스태미나를 15 단위로 나눈 값을 기준으로 기본 낚시 횟움을 산출합니다. 낚싯대 고유 드롭 수 × (1 + [심해 채집꾼] 보너스)를 기본으로 합니다.<br/>
+                총 스태미나를 15 단위로 나눈 값을 기준으로 기본 낚시 횟수를 산출합니다. 낚싯대 고유 드롭 수 + [심해 채집꾼] 보너스를 기본으로 합니다.<br/>
                 <strong className="text-blue-500 dark:text-blue-400 mt-1 block">각인석 보너스: 어패 행운, 어부 룰렛 효과가 기댓값에 추가 합산되어 최종 획득량을 증가시킵니다.</strong>
               </p>
             </div>
