@@ -14,7 +14,7 @@ interface Props {
   diffToolCost: { coin: number; ruby: number; stone1: number; stone2: number; stone3: number };
   getToolImageName: (toolId: string, level: number) => string;
   toolImprints?: Record<string, Record<string, number>>;
-  savedToolImprints?: Record<string, Record<string, number>>; // 저장된 각인 상태 추가
+  savedToolImprints?: Record<string, Record<string, number>>;
   handleImprintChange?: (toolId: string, imprintId: string, level: number) => void;
 }
 
@@ -162,6 +162,23 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
     }
   };
 
+  const handleResetCurrentImprints = () => {
+    const sId = normalizeId(activeToolId);
+    if (imprintConfig) {
+      if (handleImprintChange) {
+        imprintConfig.items.forEach(item => {
+          if ((effectiveImprints[sId]?.[item.id] || 0) > 0) {
+            handleImprintChange(activeToolId, item.id, 0);
+          }
+        });
+      } else {
+        const updated = { ...localImprints };
+        updated[sId] = {};
+        setLocalImprints(updated);
+      }
+    }
+  };
+
   const handleSafeSaveAll = () => {
     if (!handleImprintChange) {
       const currentSaved = localStorage.getItem('alldding_sage_tools');
@@ -212,7 +229,6 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
       const currentLv = effectiveImprints[safeToolId]?.[item.id] || 0;
       const savedLv = effectiveSavedImprints[safeToolId]?.[item.id] || 0;
       
-      // 저장된 레벨보다 높을 때만, 그 차액(구간)에 대해서만 기댓값을 누적합니다.
       if (currentLv > savedLv) {
         for (let i = savedLv + 1; i <= currentLv; i++) {
           expectedGold += probData.gold * attemptsMultiplier;
@@ -272,7 +288,7 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
       <div className="flex flex-col xl:flex-row gap-6 w-full transition-colors">
         <div className="flex-[2] flex flex-col gap-6 transition-colors">
           
-          <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl p-6 md:p-8 shadow-sm dark:shadow-2xl transition-colors flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl p-6 md:p-8 shadow-sm dark:shadow-2xl transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto">
               <div className="w-32 h-32 md:w-40 md:h-40 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl flex items-center justify-center relative shadow-inner shrink-0">
                 <img 
@@ -284,32 +300,40 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
               </div>
               <div className="flex flex-col items-center sm:items-start gap-2">
                 <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white">{activeToolData?.name}</h2>
-                <p className="text-xs md:text-sm font-bold text-gray-500">최대 강화 수치: +{activeToolData?.maxLevel}</p>
-                <div className="flex items-center gap-4 bg-gray-50 dark:bg-black rounded-xl p-2 mt-2 w-max border border-gray-200 dark:border-white/10">
+                <div className="flex flex-col sm:flex-row items-center gap-3 mt-2">
+                  <div className="flex items-center gap-4 bg-gray-50 dark:bg-black rounded-xl p-2 w-max border border-gray-200 dark:border-white/10">
+                    <button 
+                      onClick={() => handleToolLevelChange(activeToolId, -1, activeToolData?.maxLevel || 15)} 
+                      disabled={activeToolLv === 0} 
+                      className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-30 bg-white dark:bg-[#16161a] rounded-lg shadow-sm"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
+                    </button>
+                    <span className={`text-xl font-black w-10 text-center ${activeToolLv > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-400'}`}>
+                      +{activeToolLv}
+                    </span>
+                    <button 
+                      onClick={() => handleToolLevelChange(activeToolId, 1, activeToolData?.maxLevel || 15)} 
+                      disabled={activeToolLv === activeToolData?.maxLevel} 
+                      className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-30 bg-white dark:bg-[#16161a] rounded-lg shadow-sm"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+                    </button>
+                  </div>
                   <button 
-                    onClick={() => handleToolLevelChange(activeToolId, -1, activeToolData?.maxLevel || 15)} 
-                    disabled={activeToolLv === 0} 
-                    className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-30 bg-white dark:bg-[#16161a] rounded-lg shadow-sm"
+                    onClick={() => handleToolLevelChange(activeToolId, -activeToolLv, activeToolData?.maxLevel || 15)} 
+                    disabled={activeToolLv === 0}
+                    className="px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-600 hover:text-rose-600 dark:text-gray-400 dark:hover:text-rose-400 font-bold rounded-xl transition-colors text-[11px] h-10 disabled:opacity-30 border border-gray-200 dark:border-transparent flex items-center gap-1.5 shrink-0"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
-                  </button>
-                  <span className={`text-xl font-black w-10 text-center ${activeToolLv > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-400'}`}>
-                    +{activeToolLv}
-                  </span>
-                  <button 
-                    onClick={() => handleToolLevelChange(activeToolId, 1, activeToolData?.maxLevel || 15)} 
-                    disabled={activeToolLv === activeToolData?.maxLevel} 
-                    className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-30 bg-white dark:bg-[#16161a] rounded-lg shadow-sm"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    강화 초기화
                   </button>
                 </div>
               </div>
             </div>
             
-            <div className="w-full md:w-auto flex flex-row md:flex-col gap-3">
-              <button onClick={resetTools} className="flex-1 md:w-32 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 font-bold py-3 rounded-xl transition-colors text-sm">도구 초기화</button>
-              <button onClick={handleSafeSaveAll} className="flex-[2] md:w-32 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black font-black py-3 rounded-xl transition-all shadow-md active:scale-95 text-sm">전체 저장</button>
+            <div className="w-full md:w-auto mt-4 md:mt-0">
+              <button onClick={handleSafeSaveAll} className="w-full md:w-32 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black font-black py-3.5 rounded-2xl transition-all shadow-md active:scale-95 text-sm">전체 저장</button>
             </div>
           </div>
 
@@ -322,8 +346,17 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
                   </div>
                 )}
                 <div>
-                  <h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white">도구 각인 설정</h3>
-                  <p className="text-[10px] md:text-xs text-gray-500 mt-1">확률을 선택하고 레벨을 설정하세요. 선행 강화 수치가 부족하면 각인할 수 없습니다.</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white">도구 각인 설정</h3>
+                    <button 
+                      onClick={handleResetCurrentImprints} 
+                      className="px-2 py-1 bg-gray-100 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-600 hover:text-rose-600 dark:text-gray-400 dark:hover:text-rose-400 font-bold rounded-lg transition-colors text-[10px] flex items-center gap-1 border border-gray-200 dark:border-transparent"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                      각인 초기화
+                    </button>
+                  </div>
+                  <p className="text-[10px] md:text-xs text-gray-500">확률을 선택하고 레벨을 설정하세요. 선행 강화 수치가 부족하면 각인할 수 없습니다.</p>
                 </div>
               </div>
               
@@ -344,7 +377,6 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {imprintConfig.items.map(item => {
                   const currentLv = effectiveImprints[safeToolId]?.[item.id] || 0;
-                  const savedLv = effectiveSavedImprints[safeToolId]?.[item.id] || 0;
                   const isMax = currentLv === item.reqs.length;
                   const nextReq = isMax ? null : item.reqs[currentLv];
                   const canUpgrade = !isMax && activeToolLv >= (nextReq || 0);
@@ -379,7 +411,7 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
                           )}
                         </div>
                         <div className="flex items-center gap-2 bg-white dark:bg-black rounded-lg border border-gray-200 dark:border-white/10">
-                          <button onClick={() => handleLevelDown(item.id)} disabled={currentLv <= savedLv} className="w-8 h-7 flex items-center justify-center text-gray-500 hover:text-rose-500 disabled:opacity-30 transition-colors">
+                          <button onClick={() => handleLevelDown(item.id)} disabled={currentLv === 0} className="w-8 h-7 flex items-center justify-center text-gray-500 hover:text-rose-500 disabled:opacity-30 transition-colors">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
                           </button>
                           <button onClick={() => handleLevelUp(item.id, item.reqs)} disabled={!canUpgrade} className={`w-8 h-7 flex items-center justify-center disabled:opacity-30 transition-colors ${canUpgrade ? 'text-gray-500 hover:text-emerald-500' : 'text-gray-300'}`}>
@@ -435,35 +467,35 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
               <div className="flex justify-between items-center border-b border-gray-100 dark:border-white/5 pb-3">
                 <span className="text-sm font-bold text-gray-600 dark:text-gray-400">필요 코인</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-black text-amber-600 dark:text-amber-400 text-base">{(diffToolCost.coin + allImprintsExpectations).toLocaleString()}</span>
+                  <span className="font-black text-amber-600 dark:text-amber-400 text-base">{(Math.max(0, diffToolCost.coin) + allImprintsExpectations).toLocaleString()}</span>
                   <img src={`${STORAGE_BASE_URL}/coin.png`} alt="C" className="w-4 h-4 object-contain" onError={(e) => {e.currentTarget.style.display='none'}} />
                 </div>
               </div>
               <div className="flex justify-between items-center border-b border-gray-100 dark:border-white/5 pb-3">
                 <span className="text-sm font-bold text-gray-600 dark:text-gray-400">필요 루비</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-black text-rose-600 dark:text-rose-400 text-base">{diffToolCost.ruby.toLocaleString()}</span>
+                  <span className="font-black text-rose-600 dark:text-rose-400 text-base">{Math.max(0, diffToolCost.ruby).toLocaleString()}</span>
                   <img src={`${STORAGE_BASE_URL}/ruby.png`} alt="R" className="w-4 h-4 object-contain" onError={(e) => {e.currentTarget.style.display='none'}} />
                 </div>
               </div>
               <div className="flex justify-between items-center border-b border-gray-100 dark:border-white/5 pb-2 transition-colors">
                 <span className="text-xs font-bold text-gray-500 dark:text-gray-500 transition-colors">하급 라이프스톤</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-gray-700 dark:text-gray-300 text-sm transition-colors">{diffToolCost.stone1.toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
+                  <span className="font-bold text-gray-700 dark:text-gray-300 text-sm transition-colors">{Math.max(0, diffToolCost.stone1).toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
                   <img src={`${STORAGE_BASE_URL}/tools/lifestone1.png`} alt="하급" className="w-4 h-4 object-contain drop-shadow-sm dark:drop-shadow-none" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
                 </div>
               </div>
               <div className="flex justify-between items-center border-b border-gray-100 dark:border-white/5 pb-2 transition-colors">
                 <span className="text-xs font-bold text-gray-500 dark:text-gray-500 transition-colors">중급 라이프스톤</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-gray-700 dark:text-gray-300 text-sm transition-colors">{diffToolCost.stone2.toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
+                  <span className="font-bold text-gray-700 dark:text-gray-300 text-sm transition-colors">{Math.max(0, diffToolCost.stone2).toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
                   <img src={`${STORAGE_BASE_URL}/tools/lifestone3.png`} alt="중급" className="w-4 h-4 object-contain drop-shadow-sm dark:drop-shadow-none" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
                 </div>
               </div>
               <div className="flex justify-between items-center transition-colors">
                 <span className="text-xs font-bold text-gray-500 dark:text-gray-500 transition-colors">상급 라이프스톤</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-gray-700 dark:text-gray-300 text-sm transition-colors">{diffToolCost.stone3.toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
+                  <span className="font-bold text-gray-700 dark:text-gray-300 text-sm transition-colors">{Math.max(0, diffToolCost.stone3).toLocaleString(undefined, {maximumFractionDigits: 1})}</span>
                   <img src={`${STORAGE_BASE_URL}/tools/lifestone2.png`} alt="상급" className="w-4 h-4 object-contain drop-shadow-sm dark:drop-shadow-none" style={{ imageRendering: 'pixelated' }} onError={(e) => {e.currentTarget.style.display='none';}} />
                 </div>
               </div>

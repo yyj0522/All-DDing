@@ -58,6 +58,17 @@ const WIDGET_OPTIONS = [
   { id: 'quickLinks', name: '빠른 메뉴 이동' }
 ];
 
+const IMPRINT_NAMES: Record<string, string> = {
+  hoe_power: '채집 강화', hoe_speed: '채집 가속', hoe_seed: '씨앗 행운', hoe_fruit: '과일 행운', hoe_fruit_speed: '과일 가속', hoe_bean: '원두 행운', hoe_fast: '빠른 농부', hoe_box: '작물 상자', hoe_basket: '과일 바구니', hoe_meteor: '유성 낙하', hoe_roulette: '농부 룰렛',
+  pick_power: '채광 강화', pick_speed: '채광 가속', pick_ore: '광물 행운', pick_relic: '유물 탐색', pick_coby: '코비 탐색', pick_fast: '빠른 광부', pick_gem_coby: '보석 코비', pick_cart: '광산 수레', pick_roulette: '광부 룰렛',
+  rod_fish: '물고기 행운', rod_power: '어획 강화', rod_shell_find: '조개 탐색', rod_shell: '어패 행운', rod_breath: '수중 호흡', rod_fast: '빠른 어부', rod_whale: '정령 고래', rod_ray: '가오리 인도', rod_roulette: '어부 룰렛',
+  sword_power: '공격 강화', sword_speed: '공격 가속', sword_loot: '전리품 행운', sword_piece: '조각 탐색', sword_fast: '빠른 사냥꾼', sword_track: '흔적 추적', sword_resonance: '조각 공명', sword_blackhole: '흡인 사냥', sword_roulette: '사냥꾼 룰렛'
+};
+
+const TOOL_NAMES: Record<string, string> = {
+  hoe: '세이지 괭이', pickaxe: '세이지 곡괭이', rod: '세이지 낚싯대', sword: '세이지 대검'
+};
+
 const DEFAULT_SUB_LAYOUT = ['marketPrices', 'recipes', 'dailyRevenue', 'quickLinks'];
 
 function SortableWidget({ id, children }: { id: string, children: React.ReactNode }) {
@@ -106,7 +117,8 @@ export default function Home() {
     luckyHitLv: 0, gemDropLv: 0, flamingPickLv: 0, ingotBuffLv: 0, gemBuffLv: 0,
     o11Lv: 0, o12Lv: 0, o14Lv: 0, o16Lv: 0, o17Lv: 0,
     f3Lv: 0, f8Lv: 0, f15Lv: 0, f16Lv: 0, f22Lv: 0,
-    h2Lv: 0, h6Lv: 0, h9Lv: 0, h14Lv: 0, h15Lv: 0
+    h2Lv: 0, h6Lv: 0, h9Lv: 0, h14Lv: 0, h15Lv: 0,
+    toolImprints: {}
   });
 
   const sensors = useSensors(
@@ -168,10 +180,12 @@ export default function Home() {
     }
     if (sTools) {
       const t = JSON.parse(sTools);
-      uStats.pickaxeLv = t['pickaxe'] || 0;
-      uStats.rodLv = t['rod'] || 0;
-      uStats.hoeLv = t['hoe'] || 0;
-      uStats.weaponLv = t['weapon'] || 0;
+      const levels = t.levels || t;
+      uStats.pickaxeLv = levels['pickaxe'] || 0;
+      uStats.rodLv = levels['rod'] || 0;
+      uStats.hoeLv = levels['hoe'] || 0;
+      uStats.weaponLv = levels['weapon'] || 0;
+      uStats.toolImprints = t.imprints || {};
     }
     if (sMisc) {
       const m = JSON.parse(sMisc);
@@ -306,7 +320,7 @@ export default function Home() {
           <p className="text-base font-black text-green-500 dark:text-green-400">+{userStats.hoeLv}</p>
         </div>
         <div className="bg-gray-100 dark:bg-black/50 border border-gray-200 dark:border-white/5 rounded-xl p-3 text-center shadow-inner">
-          <p className="text-[10px] text-gray-500 font-bold mb-1 uppercase">세이지 무기</p>
+          <p className="text-[10px] text-gray-500 font-bold mb-1 uppercase">세이지 대검</p>
           <p className="text-base font-black text-rose-500 dark:text-rose-400">+{userStats.weaponLv}</p>
         </div>
       </div>
@@ -352,6 +366,40 @@ export default function Home() {
             <span className="text-gray-500 dark:text-gray-400">넌 이제 내 거야!</span><span className="text-gray-900 dark:text-white text-right">Lv.{userStats.h15Lv}</span>
           </div>
         </div>
+
+        <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-500/20 rounded-2xl p-5 md:col-span-2 mt-4">
+          <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-4 border-b border-indigo-200 dark:border-indigo-500/20 pb-2">도구 각인 현황</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {['hoe', 'pickaxe', 'rod', 'sword'].map(toolKey => {
+              const imprints = userStats.toolImprints?.[toolKey] || userStats.toolImprints?.[`sage_${toolKey}`] || {};
+              const activeImprints = Object.entries(imprints).filter(([_, lv]: any) => lv > 0);
+              
+              return (
+                <div key={toolKey} className="flex flex-col bg-white dark:bg-black/40 border border-indigo-100 dark:border-indigo-500/10 rounded-xl p-3 shadow-sm">
+                  <h5 className="text-xs font-black text-gray-800 dark:text-gray-200 mb-2 pb-2 border-b border-gray-100 dark:border-white/5 flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                    {TOOL_NAMES[toolKey]}
+                  </h5>
+                  <div className="flex flex-col gap-1.5">
+                    {activeImprints.length > 0 ? (
+                      activeImprints.map(([imprintId, lv]: any) => (
+                        <div key={imprintId} className="flex justify-between items-center">
+                          <span className="text-[11px] font-bold text-gray-600 dark:text-gray-400 truncate pr-2">{IMPRINT_NAMES[imprintId] || imprintId}</span>
+                          <span className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 shrink-0">Lv.{lv}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-[10px] font-bold text-gray-400 text-center py-2 border border-dashed border-gray-200 dark:border-white/10 rounded-lg">
+                        적용된 각인 없음
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -364,7 +412,7 @@ export default function Home() {
           content: isMain ? renderMyStatsFull() : (
             <div className="flex flex-col h-full items-center justify-center text-center">
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center mb-3"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-              <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">마을 등급: <span className="text-gray-900 dark:text-white">{userStats.townRank}</span></p>
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">마 마을 등급: <span className="text-gray-900 dark:text-white">{userStats.townRank}</span></p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">보유 스태미나: {userStats.stamina.toLocaleString()}</p>
               <Link href="/settings" className="mt-auto w-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-white py-2.5 rounded-xl text-xs font-bold transition-colors">상세 스펙 확인 및 설정</Link>
             </div>
