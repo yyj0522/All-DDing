@@ -880,7 +880,7 @@ export default function OceanStaminaRecommend({
             </div>
 
             <div className="bg-gradient-to-r from-gray-50 to-white dark:from-[#111113] dark:to-[#0a0a0c] p-6 rounded-2xl border border-gray-300 dark:border-transparent shadow-md mt-6">
-              <p className="text-[12px] font-black text-gray-800 dark:text-gray-200 mb-4 tracking-widest uppercase border-b border-gray-300 dark:border-white/5 pb-3">Phase 4. 최종 재무 리포트</p>
+              <p className="text-[12px] font-black text-gray-800 dark:text-gray-200 mb-4 tracking-widest uppercase border-b border-gray-300 dark:border-white/5 pb-3">Phase 4. 최종 수익계산 결과</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-[#1a1a1e] p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm text-center flex flex-col justify-center">
                   <p className="text-[10px] font-bold text-gray-600 dark:text-gray-500 mb-1.5">기존 창고 재고 가치</p>
