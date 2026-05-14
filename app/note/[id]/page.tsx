@@ -85,7 +85,6 @@ export default function NoteDetailPage() {
             </div>
             
             <div className="bg-gray-50 dark:bg-[#0c0c0e] px-8 md:px-12 py-6 border-t border-gray-200 dark:border-white/5 flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Alltting Release Notes</span>
               <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="w-10 h-10 flex items-center justify-center bg-white dark:bg-[#111113] border border-gray-200 dark:border-white/10 rounded-full text-gray-500 hover:text-indigo-500 hover:border-indigo-200 transition-colors shadow-sm">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" /></svg>
               </button>
