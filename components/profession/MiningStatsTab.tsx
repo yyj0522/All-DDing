@@ -16,9 +16,9 @@ interface Props {
 const M16_BUFF_EFFECTS = [0, 0.05, 0.07, 0.10, 0.15, 0.20, 0.30];
 
 const APPRAISAL_BASE_EXPECTATION = {
-  '코룸': 359900,
-  '리프톤': 362950,
-  '세렌트': 366000
+  '코룸': 395890,
+  '리프톤': 399245,
+  '세렌트': 402600
 };
 
 const IMPRINT_PICK_ORE_CHANCE = [0, 0.25, 0.50, 0.75, 1.00];
@@ -90,7 +90,6 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
     const rouletteImprintLv = pickImprints['pick_roulette'] || 0;
     const rouletteOres = totalMiningAttempts * IMPRINT_PICK_ROULETTE_CHANCE[rouletteImprintLv] * 23.1;
 
-    // 핵심 버그 수정: 추가로 획득한 '광석'을 '주괴'로 변환하기 위해 16으로 나눕니다.
     const totalExtraOres = extraOresFromImprint + rouletteOres;
     const extraIngots = totalExtraOres / 16;
     
