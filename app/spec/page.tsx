@@ -289,7 +289,6 @@ export default function SpecUpPage() {
             else break;
           }
           
-          // 💡 [치명적 버그 수정 완료] 배열 합치기 순서를 정상(오름차순)으로 보정
           reqs = [...tempReqs, ...reqs];
           curr = sData.req as string | null;
         }

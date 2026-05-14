@@ -79,7 +79,6 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
     const expectedRays = actions * IMPRINT_ROD_RAY_CHANCE[rayImprintLv];
     const expectedExtraFish = actions * IMPRINT_ROD_FISH_CHANCE[fishImprintLv];
 
-    // [임의 조정] 별별별! 확률 조정 로직
     const o17Bonus = [0, 0.01, 0.03, 0.05, 0.07, 0.10, 0.15][userStats.o17Lv || 0] || 0;
     const rate3 = 0.10 + o17Bonus;
     const rate2 = 0.30 - (o17Bonus * (1 / 3));

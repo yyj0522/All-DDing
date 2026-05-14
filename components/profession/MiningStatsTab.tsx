@@ -152,7 +152,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
     const ROYAL_TOKEN_COST = 10000;
     const totalAppraisalCost = blockCost + ROYAL_TOKEN_COST;
     const appraisalProfitPerCraft = expectedAppraisalRev - totalAppraisalCost;
-    const appraisalVal = Math.round(appraisalProfitPerCraft / 32) || 0;
+    const appraisalVal = Math.round(appraisalProfitPerCraft / 20) || 0;
 
     let lifeProfit = 0;
     let lifeReq = 1;
@@ -176,7 +176,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
     const lifeVal = Math.round(lifeProfit / lifeReq) || 0;
 
     const options = [
-      { type: 'appraisal', name: '귀중품 세공 (감정)', val: appraisalVal, profit: appraisalProfitPerCraft, req: 32, limit: 5, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/20' },
+      { type: 'appraisal', name: '귀중품 세공 (감정)', val: appraisalVal, profit: appraisalProfitPerCraft, req: 20, limit: 5, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/20' },
       { type: 'stone', name: '어빌리티 스톤 제작', val: stoneVal, profit: stoneProfit, req: stoneReq, limit: Infinity, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-950/20' },
       { type: 'lifestone', name: lifeName, val: lifeVal, profit: lifeProfit, req: lifeReq, limit: Infinity, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/20' },
       { type: 'npc', name: 'NPC 상점 매각', val: npcVal, profit: npcProfit, req: 1, limit: Infinity, color: 'text-gray-700 dark:text-gray-300', bg: 'bg-gray-50 dark:bg-[#111113]' }

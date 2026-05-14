@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
 interface PollWidgetProps {
-  pollId: number; // 어드민에서 확인한 투표 ID를 여기에 넘겨주면 돼!
+  pollId: number; 
 }
 
 export default function PollWidget({ pollId }: PollWidgetProps) {

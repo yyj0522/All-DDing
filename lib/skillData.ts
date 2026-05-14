@@ -132,7 +132,6 @@ export const SKILL_DATA: Record<Profession, Record<string, SkillNode>> = {
     f17: { id: 'f17', name: '[아일랜드] 신선함 유지 기술', max: 3, req: 'f16', costs: [
       { p: 50, g: 5000000, s: 100, effect: "유통기한 3일" }, { p: 70, g: 10000000, s: 140, effect: "유통기한 4일" }, { p: 100, g: 30000000, s: 200, effect: "유통기한 5일" }
     ]},
-    // req가 f19로 변경되었습니다.
     f23: { id: 'f23', name: '[아일랜드] 식은 커피 먹기지', max: 3, req: 'f19', costs: [
       { p: 10, g: 1000000, s: 20, effect: "커피/믹서기 미니게임 클릭 20% 감소" }, { p: 15, g: 2000000, s: 30, effect: "커피/믹서기 미니게임 클릭 40% 감소" }, { p: 30, g: 4000000, s: 60, effect: "커피/믹서기 미니게임 클릭 60% 감소" }
     ]}

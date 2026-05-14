@@ -311,8 +311,7 @@ export const getImagePath = (name: string) => {
     '미감정 토파즈 보석함': '/ore/topaz_gembox_0.png',
     '철 곡괭이': '/ore/Iron_Pickaxe.png',
     '드릴': '/ore/drill.png',
-    
-    // 사냥 전문가 아이템 추가
+  
     '수상한 각인석': '/h_item/suspect_stone.png',
     '번영의 영혼 계약서': '/h_item/prosperity_contract.png',
     '파쇄의 영혼 계약서': '/h_item/shatter_contract.png',

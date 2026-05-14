@@ -46,14 +46,13 @@ export default function OceanStaminaRecommend({
   const [isCalculating, setIsCalculating] = useState(false);
   const [staminaRecommendation, setStaminaRecommendation] = useState<any>(null);
   const [blueprintViewMode, setBlueprintViewMode] = useState<'flow' | 'compact'>('flow');
-  const [isPhase3Open, setIsPhase3Open] = useState(false); // 기본 상태 접힘으로 변경
+  const [isPhase3Open, setIsPhase3Open] = useState(false); 
   const [actualYields, setActualYields] = useState<Record<string, number>>({});
 
   const o13Reduction = O13_EFFECTS[userStats.o13Lv || 0] || 0;
 
   useEffect(() => {
     if (staminaRecommendation?.combinedYield) {
-      // 초기값으로 기댓값을 세팅해줍니다.
       setActualYields(staminaRecommendation.combinedYield);
     }
   }, [staminaRecommendation]);
@@ -334,7 +333,6 @@ export default function OceanStaminaRecommend({
     return () => clearTimeout(timer);
   }, [stock, cost, blacklist, userStats, toolImprints, recommendMode, itemBaseReqsPerUnit]);
 
-  // 창고에 실제 획득량 합산하는 로직
   const handleMergeStock = () => {
     if (confirm('입력하신 실제 획득량을 내 창고 재고에 합산하시겠습니까?')) {
       const savedV3 = localStorage.getItem('ocean_trade_v3');
@@ -352,7 +350,6 @@ export default function OceanStaminaRecommend({
       if (hasUpdates) {
         localStorage.setItem('ocean_trade_v3', JSON.stringify(parsedV3));
         
-        // v2 하위호환 유지
         const savedV2 = localStorage.getItem('ocean_trade_v2');
         if (savedV2) {
             const parsedV2 = JSON.parse(savedV2);
