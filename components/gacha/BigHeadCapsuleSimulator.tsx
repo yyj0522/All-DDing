@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
-import { useTheme } from 'next-themes';
 
 interface Reward {
   id: string;
@@ -43,7 +41,6 @@ export default function BigHeadCapsuleSimulator() {
   const [showAnimation, setShowAnimation] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [mode, setMode] = useState<'normal' | 'test' | 'snipe'>('normal');
-  const [showProbModal, setShowProbModal] = useState(false);
   const [strip, setStrip] = useState<Reward[]>([]);
   const [offset, setOffset] = useState(0);
   const [wonItem, setWonItem] = useState<Reward | null>(null);
@@ -55,46 +52,13 @@ export default function BigHeadCapsuleSimulator() {
   const [snipeResult, setSnipeResult] = useState<{ attempts: number, cost: number, target: Reward } | null>(null);
   const [isSniping, setIsSniping] = useState(false);
 
-  const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const confettiCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const [testResults, setTestResults] = useState<Record<string, number>>({});
   const [testCount, setTestCount] = useState(0);
-  const { theme } = useTheme();
 
-  const [mounted, setMounted] = useState(false);
-  const [panelRect, setPanelRect] = useState({ top: 0, left: 0, height: 0 });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!rootRef.current) return;
-    const parent = rootRef.current.closest('.max-w-5xl') as HTMLElement;
-    if (!parent) return;
-
-    const updatePosition = () => {
-      const bounds = parent.getBoundingClientRect();
-      setPanelRect({
-        top: bounds.top + window.scrollY,
-        left: bounds.right + 5,
-        height: bounds.height
-      });
-    };
-
-    updatePosition();
-    const ro = new ResizeObserver(updatePosition);
-    ro.observe(parent);
-    window.addEventListener('resize', updatePosition);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, []);
 
   useEffect(() => {
     const initial: Reward[] = [];
@@ -234,7 +198,7 @@ export default function BigHeadCapsuleSimulator() {
   };
 
   return (
-    <div ref={rootRef} className="w-full space-y-6 relative transition-colors duration-300">
+    <div className="w-full space-y-6 relative transition-colors duration-300">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-lg gap-4 transition-colors">
         <div className="flex items-center gap-4">
           <img src={`${STORAGE_BASE_URL}/f1/mythic_special_box.png`} alt="대두 치장 캡슐" className="w-16 h-16 object-contain drop-shadow-md dark:drop-shadow-lg" />
@@ -269,9 +233,6 @@ export default function BigHeadCapsuleSimulator() {
           )}
           <button onClick={handleReset} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-[11px] md:text-sm font-bold border border-red-200 dark:border-red-500/30 rounded-lg transition-colors">
             초기화
-          </button>
-          <button onClick={() => setShowProbModal(!showProbModal)} className={`px-4 py-2 text-[11px] md:text-sm font-bold border rounded-lg transition-all ${showProbModal ? 'bg-fuchsia-600 text-white border-fuchsia-600 dark:bg-fuchsia-500 dark:border-fuchsia-500 shadow-md' : 'bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border-fuchsia-200 dark:border-fuchsia-500/30 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-500/20'}`}>
-            {showProbModal ? '확률표 접기' : '확률표 보기'}
           </button>
         </div>
       </div>
@@ -452,67 +413,31 @@ export default function BigHeadCapsuleSimulator() {
         </div>
       )}
 
-      {showProbModal && (
-        <div className="xl:hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setShowProbModal(false)}>
-          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-5 max-w-md w-full shadow-2xl transition-colors" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">대두 치장 캡슐 확률표</h3>
-              <button onClick={() => setShowProbModal(false)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">✕</button>
-            </div>
-            
-            <div className="flex flex-col gap-1.5 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1.5 pb-6">
-              {BIGHEAD_REWARDS.map((item, idx) => (
-                <div key={idx} className="group relative hover:z-50 flex items-center gap-2 bg-gray-50 dark:bg-white/5 p-2 rounded-lg text-[11px] md:text-xs transition-colors cursor-default">
-                  <div className="relative w-6 h-6 shrink-0"><Image src={item.image} alt="I" fill unoptimized className="drop-shadow-sm dark:drop-shadow-none" /></div>
-                  <span className="text-gray-700 dark:text-gray-200 flex-1 font-medium truncate transition-colors">{item.name} {item.amount > 1 ? `x${item.amount}` : ''}</span>
-                  <span className="text-fuchsia-600 dark:text-white font-bold bg-fuchsia-100 dark:bg-fuchsia-500/20 dark:text-fuchsia-300 px-1.5 py-0.5 rounded transition-colors">
-                    {item.prob.toFixed(4)}%
-                  </span>
-
-                  <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
-                    {item.name} {item.amount > 1 ? `x${item.amount}` : ''}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+      <div className="bg-white dark:bg-[#0e0e12] border border-gray-200 dark:border-white/10 rounded-[2rem] p-5 md:p-6 shadow-lg dark:shadow-black/30 transition-colors max-w-5xl mx-auto mt-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
+          <div>
+            <h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white transition-colors">대두 치장 캡슐 확률표</h3>
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xl transition-colors">항목별 획득 확률을 아래에서 빠르게 확인하세요. 스크롤만 내려도 언제든 보입니다.</p>
           </div>
         </div>
-      )}
 
-      {mounted && document.body && createPortal(
-        <div 
-          className={`hidden xl:block absolute z-40 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${showProbModal ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-          style={{
-            top: panelRect.top,
-            left: panelRect.left,
-            height: panelRect.height,
-            width: showProbModal ? '400px' : '0px'
-          }}
-        >
-          <div style={{ width: '400px', height: '100%' }} className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-4 md:p-5 flex flex-col transition-colors">
-            <div className="flex justify-between items-center mb-5 shrink-0">
-              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">대두 치장 캡슐 확률표</h3>
-              <button onClick={() => setShowProbModal(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors text-lg">✕</button>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {BIGHEAD_REWARDS.map((item, idx) => (
+            <div key={idx} className="group relative hover:z-50 flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-default">
+              <div className="relative w-12 h-12 shrink-0 rounded-2xl bg-white dark:bg-[#12131a] flex items-center justify-center shadow-sm dark:shadow-black/20 overflow-hidden">
+                <Image src={item.image} alt="I" fill unoptimized className="drop-shadow-sm dark:drop-shadow-none object-contain" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm md:text-base font-bold text-gray-900 dark:text-white truncate">{item.name} {item.amount > 1 ? `x${item.amount}` : ''}</div>
+                <div className="text-[11px] md:text-xs text-gray-500 dark:text-gray-400 mt-1">획득 확률</div>
+              </div>
+              <div className="text-sm font-black text-fuchsia-600 dark:text-fuchsia-300 bg-fuchsia-100 dark:bg-fuchsia-500/20 px-3 py-1 rounded-full transition-colors whitespace-nowrap">
+                {item.prob.toFixed(4)}%
+              </div>
             </div>
-            <div className="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar flex-1 pr-1.5 pb-6">
-              {BIGHEAD_REWARDS.map((item, idx) => (
-                <div key={idx} className="group relative hover:z-50 flex items-center gap-2 bg-gray-50 dark:bg-white/5 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-default">
-                  <div className="relative w-6 h-6 shrink-0"><Image src={item.image} alt="I" fill unoptimized className="drop-shadow-sm dark:drop-shadow-none" /></div>
-                  <span className="text-gray-700 dark:text-gray-200 flex-1 font-bold text-[11px] truncate transition-colors">{item.name} {item.amount > 1 ? `x${item.amount}` : ''}</span>
-                  <span className="text-white font-black bg-fuchsia-100 dark:bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-300 px-1.5 py-0.5 rounded text-[10px] transition-colors">{item.prob.toFixed(4)}%</span>
-
-                  <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
-                    {item.name} {item.amount > 1 ? `x${item.amount}` : ''}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

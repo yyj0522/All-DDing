@@ -39,10 +39,6 @@ export default function WelcomePopup() {
 
   return (
     <div className="fixed top-20 left-4 md:top-24 md:left-8 z-[999] pointer-events-none animate-fade-in-up">
-      
-      {/* max-h-[calc...] 속성 완전 삭제하여 창 크기가 줄어도 팝업 크기가 줄어들지 않게 고정.
-        w-[400px] h-[580px] 고정 크기 유지. 
-      */}
       <div className="pointer-events-auto bg-white dark:bg-gray-950 w-[400px] h-[650px] rounded-none shadow-[0_10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.4)] flex flex-col overflow-hidden border border-gray-300 dark:border-gray-700">
         
         <div className="bg-indigo-600 px-6 py-5 shrink-0 text-center relative z-10 rounded-none border-none">
@@ -50,10 +46,6 @@ export default function WelcomePopup() {
             올띵에 오신 것을 환영합니다!
           </h2>
         </div>
-        
-        {/* overflow-y-auto, custom-scrollbar 완전 삭제 -> overflow-hidden으로 대체
-          스크롤이 절대 생기지 않도록 차단 
-        */}
         <div className="flex-1 flex flex-col p-5 pt-7 gap-3 text-gray-800 dark:text-gray-100 z-0 overflow-hidden bg-white dark:bg-transparent">
           
           <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-700 rounded-none p-3 text-center shrink-0">

@@ -48,8 +48,13 @@ export default function OceanStaminaRecommend({
   const [blueprintViewMode, setBlueprintViewMode] = useState<'flow' | 'compact'>('flow');
   const [isPhase3Open, setIsPhase3Open] = useState(false); 
   const [actualYields, setActualYields] = useState<Record<string, number>>({});
+  const [localRecommendMode, setLocalRecommendMode] = useState<'balance' | 'max_profit'>(recommendMode);
 
   const o13Reduction = O13_EFFECTS[userStats.o13Lv || 0] || 0;
+
+  useEffect(() => {
+    setLocalRecommendMode(recommendMode);
+  }, [recommendMode]);
 
   useEffect(() => {
     if (staminaRecommendation?.combinedYield) {
@@ -103,7 +108,7 @@ export default function OceanStaminaRecommend({
 
             if (canCraft) {
                 let penaltyCost = 0;
-                if (recommendMode === 'balance') {
+                if (localRecommendMode === 'balance') {
                     for (const mat of CORE_ITEMS) {
                         const before = tempStock[mat] || 0;
                         const after = sim.stock[mat] || 0;
@@ -137,7 +142,7 @@ export default function OceanStaminaRecommend({
           }
         }
 
-        if (recommendMode === 'balance') {
+        if (localRecommendMode === 'balance') {
             let trimmed = true;
             let loopSafetyTrim = 0;
             while (trimmed && loopSafetyTrim < 1000) {
@@ -193,7 +198,7 @@ export default function OceanStaminaRecommend({
         const finalEqSum = Object.values(getBaseEquivalents(tempStock, itemBaseReqsPerUnit)).reduce((a: number, b: number) => a + b, 0);
         const stockConsumed = initialEqSum - finalEqSum;
 
-        return { profit: totalP, totalVanillaCost, stockConsumed, crafted, resultingStock: tempStock };
+        return { profit: totalP, totalVanillaCost, stockConsumed, crafted, resultingStock: finalSim.stock };
       };
 
       const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv || 0] || 0;
@@ -323,6 +328,7 @@ export default function OceanStaminaRecommend({
               trackingStock = sim.stock;
           }
           bestScenario.flowDetails = flowDetails;
+          bestScenario.finalTrackingStock = trackingStock;
       }
 
       setStaminaRecommendation(bestScenario);
@@ -331,7 +337,7 @@ export default function OceanStaminaRecommend({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [stock, cost, blacklist, userStats, toolImprints, recommendMode, itemBaseReqsPerUnit]);
+  }, [stock, cost, blacklist, userStats, toolImprints, localRecommendMode, itemBaseReqsPerUnit]);
 
   const handleMergeStock = () => {
     if (confirm('입력하신 실제 획득량을 내 창고 재고에 합산하시겠습니까?')) {
@@ -450,6 +456,73 @@ export default function OceanStaminaRecommend({
     );
   };
 
+  const renderGroupedStock = (stockObj: Record<string, number>, globalSetMode: boolean) => {
+    const CATEGORY_ORDER = ['굴', '소라', '문어', '미역', '성게'];
+    const grouped: Record<string, [string, number][]> = {
+      '굴': [], '소라': [], '문어': [], '미역': [], '성게': [], '기타': []
+    };
+
+    Object.entries(stockObj).forEach(([item, qty]) => {
+      if (qty <= 0) return;
+      let matched = false;
+      for (const cat of CATEGORY_ORDER) {
+        if (item.startsWith(cat)) {
+          grouped[cat].push([item, qty]);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) grouped['기타'].push([item, qty]);
+    });
+
+    Object.values(grouped).forEach(arr => {
+        arr.sort((a, b) => {
+            const getTier = (name: string) => {
+                if (name.includes('1성')) return 1;
+                if (name.includes('2성')) return 2;
+                if (name.includes('3성')) return 3;
+                return 99;
+            };
+            const tierA = getTier(a[0]);
+            const tierB = getTier(b[0]);
+            if (tierA !== tierB) return tierA - tierB;
+            return a[0].localeCompare(b[0]);
+        });
+    });
+
+    return (
+      <div className="flex flex-col gap-4">
+        {['굴', '소라', '문어', '미역', '성게', '기타'].map(catName => {
+          const items = grouped[catName];
+          if (!items || items.length === 0) return null;
+          return (
+            <div key={catName} className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-2 px-1">
+                <span className="text-[11px] font-black text-emerald-800 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800/50 shadow-sm">
+                  {catName === '기타' ? '기타 잉여 재료' : `${catName} 라인업`}
+                </span>
+                <div className="flex-1 h-[1px] bg-gray-200 dark:bg-white/10"></div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {items.map(([item, qty]) => (
+                  <div key={item} className="flex flex-col gap-1.5 bg-white dark:bg-[#16161a] px-3 py-2.5 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm transition-colors hover:border-emerald-300 dark:hover:border-emerald-500/50">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <img src={getImagePath(item)||undefined} className="w-4 h-4 object-contain shrink-0" />
+                      <span className="text-[11px] font-black text-gray-900 dark:text-white truncate">{item}</span>
+                    </div>
+                    <div className="text-right mt-1">
+                      <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{formatQty(qty, globalSetMode)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   if (isCalculating && !staminaRecommendation) {
     return (
       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-6 shadow-md transition-colors">
@@ -469,13 +542,28 @@ export default function OceanStaminaRecommend({
 
   return (
     <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-6 shadow-md transition-colors">
-      <div className="flex justify-between items-center mb-5 border-b border-gray-200 dark:border-white/5 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 border-b border-gray-200 dark:border-white/5 pb-4 gap-4">
         <div>
           <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tighter flex items-center gap-2">
             스태미나 추천
             {isCalculating && <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>}
           </h3>
           <p className="text-[10px] text-gray-500 mt-1">현재 창고에 보유 중인 재고를 가장 효율적으로 소모할 수 있는 채집 경로입니다.</p>
+        </div>
+        
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111113] p-1.5 rounded-xl border border-gray-200 dark:border-transparent shadow-inner w-full sm:w-auto">
+          <button 
+            onClick={() => setLocalRecommendMode('balance')} 
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[11px] font-black transition-all ${localRecommendMode === 'balance' ? 'bg-indigo-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+          >
+            재고 균등 소모
+          </button>
+          <button 
+            onClick={() => setLocalRecommendMode('max_profit')} 
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[11px] font-black transition-all ${localRecommendMode === 'max_profit' ? 'bg-indigo-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+          >
+            최대 수익 집중
+          </button>
         </div>
       </div>
       
@@ -609,8 +697,8 @@ export default function OceanStaminaRecommend({
                       
                       <div className="flex items-center justify-between text-[10px] bg-gray-50 dark:bg-black/30 p-1.5 rounded-lg border border-gray-200 dark:border-transparent">
                          <span className="font-bold text-gray-600 dark:text-gray-400 truncate pr-1">기존 재고: {formatQty(currentStock, globalSetMode)}</span>
-                         <span className="font-black text-purple-700 dark:text-purple-500 shrink-0">
-                           <span className="text-gray-500 font-bold mr-1">예상 획득량</span>
+                         <span className="font-black text-purple-700 dark:text-purple-500 shrink-0 flex items-center gap-1">
+                           <span className="text-gray-500 font-bold">예상 획득량</span>
                            +{formatQty(expected, globalSetMode)}
                          </span>
                       </div>
@@ -720,7 +808,7 @@ export default function OceanStaminaRecommend({
                 </div>
               </div>
               
-              <div className={`transition-all duration-300 overflow-hidden ${isPhase3Open ? 'max-h-[5000px] opacity-100 mt-5' : 'max-h-0 opacity-0 mt-0'}`}>
+              <div className={`transition-all duration-300 overflow-hidden ${isPhase3Open ? 'max-h-[50000px] opacity-100 mt-5' : 'max-h-0 opacity-0 mt-0'}`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {staminaRecommendation.flowDetails && staminaRecommendation.flowDetails.map((flow: any) => {
                     const itemName = flow.name;
@@ -897,6 +985,16 @@ export default function OceanStaminaRecommend({
                   <p className="text-lg font-black text-white">{Math.round(staminaRecommendation.profit).toLocaleString()} G</p>
                 </div>
               </div>
+            </div>
+
+            <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-6 shadow-md mt-6 transition-all">
+              <p className="text-[12px] font-black text-emerald-800 dark:text-emerald-400 flex items-center gap-1.5 mb-2">
+                Phase 5. 모든 작업 완료 후 최종 재고 (예상)
+              </p>
+              <p className="text-[10px] font-bold text-gray-700 dark:text-gray-400 leading-relaxed mb-5">
+                추천된 경로에 따라 채집과 가공을 모두 마친 후 창고에 최종적으로 남게 되는 잉여 재고입니다.
+              </p>
+              {renderGroupedStock(staminaRecommendation.finalTrackingStock || staminaRecommendation.resultingStock || {}, globalSetMode)}
             </div>
 
           </div>

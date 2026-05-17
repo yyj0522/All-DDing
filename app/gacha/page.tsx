@@ -45,15 +45,15 @@ export default function GachaPage() {
         </div>
 
         <div className="w-full max-w-4xl mx-auto flex items-center justify-center mb-8 relative">
-          <div className="w-full flex flex-wrap justify-center gap-2 md:gap-2.5 px-1">
+          <div className="w-full rounded-full bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/10 shadow-sm backdrop-blur-xl px-2 py-2 flex flex-wrap justify-center gap-2 md:gap-2.5">
             {GACHA_CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 md:px-5 py-2 md:py-2.5 rounded-full text-[11px] md:text-xs font-bold transition-all border whitespace-nowrap shadow-sm ${
                   activeCategory === cat 
-                  ? 'bg-blue-600 text-white border-transparent shadow-blue-500/30 scale-105' 
-                  : 'bg-white dark:bg-[#111113] border-gray-300 dark:border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                  ? 'bg-gradient-to-r from-blue-600 to-sky-500 text-white border-transparent shadow-[0_15px_30px_rgba(37,99,235,0.18)] scale-105' 
+                  : 'bg-white dark:bg-[#111113] border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                 }`}
               >
                 {cat}
@@ -62,7 +62,7 @@ export default function GachaPage() {
           </div>
         </div>
 
-        <div className="w-full max-w-5xl flex-1 bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-10 shadow-md dark:shadow-2xl relative overflow-hidden flex flex-col min-h-[500px] md:min-h-[700px] transition-colors">
+        <div className="w-full max-w-5xl flex-1 bg-white dark:bg-[#07070d] border border-gray-200 dark:border-white/10 rounded-[2rem] p-5 md:p-10 shadow-xl dark:shadow-[0_35px_120px_rgba(0,0,0,0.25)] relative overflow-hidden flex flex-col min-h-[500px] md:min-h-[700px] transition-colors">
           <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03] pointer-events-none transition-opacity" 
             style={{ backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
           </div>

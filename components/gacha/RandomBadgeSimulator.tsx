@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import confetti from 'canvas-confetti';
 import { useTheme } from 'next-themes';
 
@@ -86,7 +85,7 @@ export default function RandomBadgeSimulator() {
   const [showAnimation, setShowAnimation] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [mode, setMode] = useState<'normal' | 'test' | 'snipe' | 'budget'>('normal');
-  const [showProbModal, setShowProbModal] = useState(false);
+  
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [strip, setStrip] = useState<Reward[]>([]);
   const [offset, setOffset] = useState(0);
@@ -100,43 +99,13 @@ export default function RandomBadgeSimulator() {
   const [budgetResult, setBudgetResult] = useState<{ pulls: number, results: [Reward, number][] } | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
+  
   const confettiCanvasRef = useRef<HTMLCanvasElement>(null);
   const [testResults, setTestResults] = useState<Record<string, number>>({});
   const [testCount, setTestCount] = useState(0);
   const { theme } = useTheme();
 
-  const [mounted, setMounted] = useState(false);
-  const [panelRect, setPanelRect] = useState({ top: 0, left: 0, height: 0 });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!rootRef.current) return;
-    const parent = rootRef.current.closest('.max-w-5xl') as HTMLElement;
-    if (!parent) return;
-
-    const updatePosition = () => {
-      const bounds = parent.getBoundingClientRect();
-      setPanelRect({
-        top: bounds.top + window.scrollY,
-        left: bounds.right + 5,
-        height: bounds.height
-      });
-    };
-
-    updatePosition();
-    const ro = new ResizeObserver(updatePosition);
-    ro.observe(parent);
-    window.addEventListener('resize', updatePosition);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, []);
+  
 
   useEffect(() => {
     const initial: Reward[] = [];
@@ -305,7 +274,7 @@ export default function RandomBadgeSimulator() {
   };
 
   return (
-    <div ref={rootRef} className="w-full space-y-6 relative transition-colors duration-300">
+    <div className="w-full space-y-6 relative transition-colors duration-300">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-lg gap-4 transition-colors">
         <div className="flex items-center gap-4">
           <img src={`${STORAGE_BASE_URL}/sailing/diamond_chest.png`} alt="랜덤 뱃지 보급품" className="w-16 h-16 object-contain drop-shadow-md dark:drop-shadow-lg" />
@@ -345,9 +314,7 @@ export default function RandomBadgeSimulator() {
           <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-sm font-bold border border-blue-200 dark:border-blue-500/30 rounded-lg transition-colors">
             효과별 뱃지
           </button>
-          <button onClick={() => setShowProbModal(!showProbModal)} className={`px-4 py-2 text-sm font-bold border rounded-lg transition-all ${showProbModal ? 'bg-fuchsia-600 text-white border-fuchsia-600 dark:bg-fuchsia-500 dark:border-fuchsia-500 shadow-md' : 'bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 border-fuchsia-200 dark:border-fuchsia-500/30 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/40'}`}>
-            {showProbModal ? '확률표 접기' : '확률표 보기'}
-          </button>
+          
         </div>
       </div>
 
@@ -566,74 +533,25 @@ export default function RandomBadgeSimulator() {
         </div>
       )}
 
-      {showProbModal && (
-        <div className="xl:hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setShowProbModal(false)}>
-          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl p-5 max-w-md w-full shadow-2xl transition-colors" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">랜덤 뱃지 보급품 확률표</h3>
-              <button onClick={() => setShowProbModal(false)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">✕</button>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5 max-h-[65vh] overflow-y-auto custom-scrollbar pr-1.5 pb-6 content-start">
-              {BADGE_REWARDS.map((item, idx) => (
-                <div key={idx} className="group relative hover:z-50 flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-default">
-                  <div className="relative w-5 h-5 shrink-0">
-                    <img src={item.image} alt="I" className="w-full h-full object-contain drop-shadow-sm dark:drop-shadow-none" />
-                  </div>
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-gray-700 dark:text-gray-200 font-bold text-[10px] truncate transition-colors">{item.name}</span>
-                    <span className="text-[8px] text-yellow-600 dark:text-yellow-500 font-bold truncate">{item.effect}</span>
-                  </div>
-                  <span className="text-white font-black bg-fuchsia-100 dark:bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-300 px-1 py-0.5 rounded text-[9px] transition-colors">{item.prob.toFixed(4)}%</span>
-                  
-                  <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
-                    {item.name} ({item.effect})
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-[2rem] p-5 max-w-5xl mx-auto mt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400">랜덤 뱃지 보급품 확률표</h3>
         </div>
-      )}
-
-      {mounted && document.body && createPortal(
-        <div 
-          className={`hidden xl:block absolute z-40 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${showProbModal ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-          style={{
-            top: panelRect.top,
-            left: panelRect.left,
-            height: panelRect.height,
-            width: showProbModal ? '400px' : '0px'
-          }}
-        >
-          <div style={{ width: '400px', height: '100%' }} className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-4 md:p-5 flex flex-col transition-colors">
-            <div className="flex justify-between items-center mb-5 shrink-0">
-              <h3 className="text-base font-black text-fuchsia-600 dark:text-fuchsia-400 transition-colors">랜덤 뱃지 보급품 확률표</h3>
-              <button onClick={() => setShowProbModal(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors text-lg">✕</button>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {BADGE_REWARDS.map((item, idx) => (
+            <div key={idx} className="group relative hover:z-50 flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-default">
+              <div className="relative w-12 h-12 shrink-0 rounded-lg bg-white dark:bg-[#0b0b0b] flex items-center justify-center overflow-hidden border border-gray-200 dark:border-white/10">
+                <img src={item.image} alt={item.name} className="w-10 h-10 object-contain" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-gray-900 dark:text-white truncate">{item.name}</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">{item.effect}</div>
+              </div>
+              <div className="ml-auto text-sm font-black text-fuchsia-600 dark:text-white bg-fuchsia-100 dark:bg-fuchsia-500/10 px-3 py-1 rounded-full">{item.prob.toFixed(4)}%</div>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 overflow-y-auto custom-scrollbar flex-1 pr-1.5 pb-6 content-start">
-              {BADGE_REWARDS.map((item, idx) => (
-                <div key={idx} className="group relative hover:z-50 flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-default">
-                  <div className="relative w-5 h-5 shrink-0">
-                    <img src={item.image} alt="I" className="w-full h-full object-contain drop-shadow-sm dark:drop-shadow-none" />
-                  </div>
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-gray-700 dark:text-gray-200 font-bold text-[10px] truncate transition-colors">{item.name}</span>
-                    <span className="text-[8px] text-yellow-600 dark:text-yellow-500 font-bold truncate">{item.effect}</span>
-                  </div>
-                  <span className="text-white font-black bg-fuchsia-100 dark:bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-300 px-1 py-0.5 rounded text-[9px] transition-colors">{item.prob.toFixed(4)}%</span>
-                  
-                  <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
-                    {item.name} ({item.effect})
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

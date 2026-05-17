@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useTheme } from 'next-themes';
 
 const STORAGE_BASE_URL = "https://cdn.jsdelivr.net/gh/yyj0522/alldding-assets@main";
@@ -100,41 +99,9 @@ export default function IslandBoxSimulator() {
   const [showRates, setShowRates] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
   const activeBox = BOX_DATA[selectedBoxKey];
   const { theme } = useTheme();
-
-  const [mounted, setMounted] = useState(false);
-  const [panelRect, setPanelRect] = useState({ top: 0, left: 0, height: 0 });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!rootRef.current) return;
-    const parent = rootRef.current.closest('.max-w-5xl') as HTMLElement;
-    if (!parent) return;
-
-    const updatePosition = () => {
-      const bounds = parent.getBoundingClientRect();
-      setPanelRect({
-        top: bounds.top + window.scrollY,
-        left: bounds.right + 5,
-        height: bounds.height
-      });
-    };
-
-    updatePosition();
-    const ro = new ResizeObserver(updatePosition);
-    ro.observe(parent);
-    window.addEventListener('resize', updatePosition);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, []);
+  
 
   useEffect(() => {
     setIsOpening(false);
@@ -223,7 +190,7 @@ export default function IslandBoxSimulator() {
   }, [isOpening, showResult, selectedBoxKey, results]);
 
   return (
-    <div ref={rootRef} className="w-full space-y-6 animate-fade-in relative text-gray-900 dark:text-gray-200 transition-colors duration-300">
+    <div className="w-full space-y-6 animate-fade-in relative text-gray-900 dark:text-gray-200 transition-colors duration-300">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/5 rounded-2xl p-5 shadow-sm dark:shadow-lg gap-4 transition-colors">
         <div>
           <h2 className="text-xl font-bold text-blue-600 dark:text-blue-400 transition-colors">아일랜드 보물상자</h2>
@@ -254,12 +221,6 @@ export default function IslandBoxSimulator() {
             className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-xs md:text-sm font-semibold border border-red-200 dark:border-red-500/30 rounded-lg transition-colors flex-1 md:flex-none"
           >
             초기화
-          </button>
-          <button 
-            onClick={() => setShowRates(!showRates)} 
-            className={`px-4 py-2 text-xs md:text-sm font-semibold border rounded-lg transition-all flex-1 md:flex-none ${showRates ? 'bg-blue-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500 shadow-md' : 'bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 border-gray-200 dark:border-white/5'}`}
-          >
-            {showRates ? '확률표 접기' : '확률표 열기'}
           </button>
         </div>
       </div>
@@ -306,118 +267,37 @@ export default function IslandBoxSimulator() {
         </div>
       </div>
 
-      {showRates && (
-        <div className="xl:hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/40 dark:bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-2xl w-full max-w-sm max-h-[80vh] flex flex-col overflow-hidden shadow-2xl transition-colors">
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#1a1a1a] transition-colors shrink-0">
-              <h3 className="text-base font-black text-blue-600 dark:text-blue-400 transition-colors">{activeBox.name} 확률표</h3>
-              <button onClick={() => setShowRates(false)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">✕</button>
-            </div>
-            <div className="p-4 flex flex-col overflow-y-auto custom-scrollbar">
-              <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl text-[10px] text-yellow-800 dark:text-yellow-100/90 leading-relaxed transition-colors shrink-0">
-                <span className="font-bold text-yellow-600 dark:text-yellow-400 transition-colors">※ 확률 안내:</span><br/>
-                공식 위키에 누락된 정보인 '아이템 종류 수(1~3종)'의 확률 가중치와, 
-                '1~15개'처럼 범위로 나타나는 아이템의 세부 확률은 임의의 균등 분포를 적용하여 구현되었습니다.
+      <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-[2rem] p-5 max-w-5xl mx-auto mt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-base font-black text-blue-600 dark:text-blue-400">{activeBox.name} 확률표</h3>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {activeBox.drops.map((drop, idx) => (
+            <div key={idx} className="group relative hover:z-50 flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-default">
+              <div className="relative w-12 h-12 shrink-0 rounded-lg bg-white dark:bg-[#0b0b0b] flex items-center justify-center overflow-hidden border border-gray-200 dark:border-white/10">
+                <img src={ITEM_IMAGES[drop.name] || `${STORAGE_BASE_URL}/unknown.png`} className="w-10 h-10 object-contain" alt={drop.name} />
               </div>
-              <table className="w-full text-left text-[11px] text-gray-700 dark:text-gray-300 transition-colors">
-                <thead className="text-[10px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 uppercase transition-colors">
-                  <tr>
-                    <th className="px-2 py-2 rounded-tl-lg">아이템</th>
-                    <th className="px-2 py-2 text-center">개수</th>
-                    <th className="px-2 py-2 text-right rounded-tr-lg">확률</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-white/5 transition-colors">
-                  {activeBox.drops.map((drop, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                      <td className="px-2 py-2 font-medium text-gray-900 dark:text-white flex items-center gap-2 transition-colors">
-                        <img src={ITEM_IMAGES[drop.name] || `${STORAGE_BASE_URL}/unknown.png`} className="w-5 h-5 object-contain" />
-                        <span className="truncate max-w-[120px]">{drop.name}</span>
-                      </td>
-                      <td className="px-2 py-2 text-center text-gray-600 dark:text-gray-300 transition-colors">{drop.min === drop.max ? drop.min : `${drop.min}~${drop.max}`}개</td>
-                      <td className="px-2 py-2 text-right text-blue-600 dark:text-blue-400 font-bold transition-colors">{drop.chance}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-500/20 text-[10px] text-gray-600 dark:text-gray-400 transition-colors shrink-0">
-                <p className="font-semibold text-blue-600 dark:text-blue-300 mb-1 transition-colors">상자 슬롯 확률</p>
-                <ul className="list-disc list-inside pl-1">
-                  {activeBox.slotWeights.map((w, i) => (
-                    <li key={i}>{w.slots}종류 아이템 등장: <span className="font-bold text-gray-900 dark:text-gray-200">{w.chance}%</span></li>
-                  ))}
-                </ul>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-gray-900 dark:text-white truncate">{drop.name}</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">{drop.min === drop.max ? drop.min : `${drop.min}~${drop.max}`}개</div>
               </div>
+              <div className="ml-auto text-sm font-black text-blue-600 dark:text-blue-300 bg-blue-100 dark:bg-blue-500/10 px-3 py-1 rounded-full">{drop.chance}%</div>
             </div>
+          ))}
+        </div>
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-500/20 text-[12px] text-gray-600 dark:text-gray-400">
+          <p className="font-semibold text-blue-600 dark:text-blue-300 mb-2">상자 슬롯 확률</p>
+          <div className="flex gap-4 flex-wrap">
+            {activeBox.slotWeights.map((w, i) => (
+              <div key={i} className="text-sm"><span className="font-bold">{w.slots}종류</span> 등장: {w.chance}%</div>
+            ))}
           </div>
         </div>
-      )}
-
-      {mounted && document.body && createPortal(
-        <div 
-          className={`hidden xl:block absolute z-40 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${showRates ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-          style={{
-            top: panelRect.top,
-            left: panelRect.left,
-            height: panelRect.height,
-            width: showRates ? '400px' : '0px'
-          }}
-        >
-          <div style={{ width: '400px', height: '100%' }} className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-[2rem] shadow-2xl p-5 flex flex-col transition-colors">
-            <div className="flex justify-between items-center mb-4 shrink-0">
-              <h3 className="text-base font-black text-blue-600 dark:text-blue-400 transition-colors">{activeBox.name} 확률표</h3>
-              <button onClick={() => setShowRates(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors text-lg">✕</button>
-            </div>
-            
-            <div className="flex flex-col overflow-y-auto custom-scrollbar flex-1 pr-1.5 pb-6">
-              <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl text-[10px] text-yellow-800 dark:text-yellow-100/90 leading-relaxed transition-colors shrink-0">
-                <span className="font-bold text-yellow-600 dark:text-yellow-400 transition-colors">※ 확률 안내:</span><br/>
-                공식 위키에 누락된 정보인 '개봉 시 등장하는 아이템 종류 수(1~3종)'의 확률 가중치와, 
-                '1~15개'처럼 수량 범위로 나타나는 아이템의 세부 개별 획득 확률은 일반적인 균등 분포를 임의로 적용하여 구현되었습니다.
-                실제 인게임과 다소 차이가 있을 수 있습니다.
-              </div>
-              
-              <table className="w-full text-left text-[11px] text-gray-700 dark:text-gray-300 transition-colors mb-3">
-                <thead className="text-[10px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 uppercase transition-colors sticky top-0 z-10">
-                  <tr>
-                    <th className="px-3 py-2.5 rounded-tl-lg">아이템</th>
-                    <th className="px-3 py-2.5 text-center">개수</th>
-                    <th className="px-3 py-2.5 text-right rounded-tr-lg">확률</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-white/5 transition-colors">
-                  {activeBox.drops.map((drop, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
-                      <td className="px-3 py-2 font-medium text-gray-900 dark:text-white flex items-center gap-2 transition-colors relative">
-                        <div className="relative w-6 h-6 shrink-0">
-                          <img src={ITEM_IMAGES[drop.name] || `${STORAGE_BASE_URL}/unknown.png`} className="w-full h-full object-contain drop-shadow-sm dark:drop-shadow-none" />
-                        </div>
-                        <span className="truncate max-w-[140px] cursor-default">{drop.name}</span>
-                        <div className="absolute left-1/2 top-full mt-1.5 -translate-x-1/2 hidden group-hover:block bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-[200] shadow-lg pointer-events-none">
-                          {drop.name}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-800 dark:border-b-gray-200"></div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-center text-gray-600 dark:text-gray-300 transition-colors">{drop.min === drop.max ? drop.min : `${drop.min}~${drop.max}`}개</td>
-                      <td className="px-3 py-2 text-right text-blue-600 dark:text-blue-400 font-bold transition-colors">{drop.chance}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              
-              <div className="mt-auto p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-500/20 text-[10px] text-gray-600 dark:text-gray-400 transition-colors shrink-0">
-                <p className="font-semibold text-blue-600 dark:text-blue-300 mb-1 transition-colors">상자 슬롯 확률</p>
-                <ul className="list-disc list-inside pl-1 flex gap-4">
-                  {activeBox.slotWeights.map((w, i) => (
-                    <li key={i}>{w.slots}종류 등장: <span className="font-bold text-gray-900 dark:text-gray-200">{w.chance}%</span></li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+        <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 whitespace-pre-line">
+          ※ 확률 안내:
+          공식 위키에 누락된 정보인 '개봉 시 등장하는 아이템 종류 수(1~3종)'의 확률 가중치와, '1~15개'처럼 수량 범위로 나타나는 아이템의 세부 개별 획득 확률은 일반적인 균등 분포를 임의로 적용하여 구현되었습니다. 실제 인게임과 다소 차이가 있을 수 있습니다.
+        </div>
+      </div>
     </div>
   );
 }
