@@ -9,7 +9,7 @@ const CACHE_EXPIRE_MS = 3 * 60 * 60 * 1000;
 
 export async function getCachedPrices() {
   if (typeof window === 'undefined') {
-    const { data } = await supabase.from('item_prices').select('*').order('created_at', { ascending: true });
+    const { data } = await supabase.from('item_prices').select('*').order('created_at', { ascending: true }).limit(10000);
     return data || [];
   }
 
@@ -39,7 +39,7 @@ export async function getCachedPrices() {
     }
   }
 
-  const { data, error } = await supabase.from('item_prices').select('*').order('created_at', { ascending: true });
+  const { data, error } = await supabase.from('item_prices').select('*').order('created_at', { ascending: true }).limit(10000);
   
   if (data && !error) {
     localStorage.setItem('alldding_prices_cache', JSON.stringify({
