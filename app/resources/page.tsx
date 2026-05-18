@@ -65,14 +65,14 @@ export default function ResourcesPage() {
           
           <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
             <button 
-              onClick={() => handleDownload('fabric', 'https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-fabric-1.0.3.jar', 'timermod-fabric-1.0.3.jar')}
+              onClick={() => handleDownload('fabric', 'https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-fabric-1.0.4.jar', 'timermod-fabric-1.0.4.jar')}
               className="w-full md:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold tracking-widest px-6 py-4 rounded-xl transition-all duration-300 flex justify-center items-center gap-2 whitespace-nowrap shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 group"
             >
               <svg className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               Fabric 버전
             </button>
             <button 
-              onClick={() => handleDownload('neoforge', 'https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-neoforge-1.0.3.jar', 'timermod-neoforge-1.0.3.jar')}
+              onClick={() => handleDownload('neoforge', 'https://raw.githubusercontent.com/yyj0522/alldding-assets/main/files/timermod-neoforge-1.0.4.jar', 'timermod-neoforge-1.0.4.jar')}
               className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-widest px-6 py-4 rounded-xl transition-all duration-300 flex justify-center items-center gap-2 whitespace-nowrap shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 group"
             >
               <svg className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -95,7 +95,7 @@ export default function ResourcesPage() {
                 모드 파일 적용하기
               </h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm md:text-base font-bold transition-colors pl-2">
-                다운로드 받은 <code className="bg-gray-100 dark:bg-[#111113] border border-gray-300 dark:border-transparent px-2 py-0.5 rounded-md text-cyan-600 dark:text-cyan-400 transition-colors mx-1">timermod-fabric-1.0.3.jar</code> 또는 <code className="bg-gray-100 dark:bg-[#111113] border border-gray-300 dark:border-transparent px-2 py-0.5 rounded-md text-emerald-600 dark:text-emerald-400 transition-colors mx-1">timermod-neoforge-1.0.3.jar</code> 파일을 본인이 사용하는 로더(Fabric/NeoForge)에 맞춰 마인크래프트 설치 폴더 내의 <code className="bg-gray-100 dark:bg-[#111113] border border-gray-300 dark:border-transparent px-2 py-0.5 rounded-md text-cyan-600 dark:text-cyan-400 transition-colors mx-1">mods</code> 폴더에 넣어주세요. 패브릭 환경의 경우 <code className="bg-gray-100 dark:bg-[#111113] border border-gray-300 dark:border-transparent px-2 py-0.5 rounded-md text-cyan-600 dark:text-cyan-400 transition-colors mx-1">Fabric api</code> 파일이 함께 설치되어 있어야 정상 작동합니다. 오류나 적용이 안된다면 하단 의견남기기를 해주시면 최대한 빠른 답장 드리겠습니다.
+                다운로드 받은 <code className="bg-gray-100 dark:bg-[#111113] border border-gray-300 dark:border-transparent px-2 py-0.5 rounded-md text-cyan-600 dark:text-cyan-400 transition-colors mx-1">timermod-fabric-1.0.4.jar</code> 또는 <code className="bg-gray-100 dark:bg-[#111113] border border-gray-300 dark:border-transparent px-2 py-0.5 rounded-md text-emerald-600 dark:text-emerald-400 transition-colors mx-1">timermod-neoforge-1.0.4.jar</code> 파일을 본인이 사용하는 로더(Fabric/NeoForge)에 맞춰 마인크래프트 설치 폴더 내의 <code className="bg-gray-100 dark:bg-[#111113] border border-gray-300 dark:border-transparent px-2 py-0.5 rounded-md text-cyan-600 dark:text-cyan-400 transition-colors mx-1">mods</code> 폴더에 넣어주세요. 패브릭 환경의 경우 <code className="bg-gray-100 dark:bg-[#111113] border border-gray-300 dark:border-transparent px-2 py-0.5 rounded-md text-cyan-600 dark:text-cyan-400 transition-colors mx-1">Fabric api</code> 파일이 함께 설치되어 있어야 정상 작동합니다. 오류나 적용이 안된다면 하단 의견남기기를 해주시면 최대한 빠른 답장 드리겠습니다.
               </p>
               <div className="w-full bg-gray-50 dark:bg-[#111113] border border-gray-300 dark:border-transparent rounded-[1.5rem] p-2 shadow-inner transition-colors">
                  <img src={`${STORAGE_BASE_URL}/guide/guide1.png`} alt="모드 파일 적용 가이드" className="w-full h-auto object-contain rounded-xl block shadow-sm dark:shadow-none" />
