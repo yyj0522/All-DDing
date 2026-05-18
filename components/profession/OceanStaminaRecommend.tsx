@@ -13,7 +13,7 @@ interface Props {
   stock: Record<string, number>;
   cost: Record<string, number>;
   blacklist: string[];
-  recommendMode: 'balance' | 'max_profit';
+  recommendMode?: 'balance' | 'max_profit';
   userStats: any;
   toolImprints: any;
   globalSetMode: boolean;
@@ -40,21 +40,15 @@ const getBaseEquivalents = (currentStock: Record<string, number>, itemBaseReqsPe
 };
 
 export default function OceanStaminaRecommend({
-  stock, cost, blacklist, recommendMode, userStats, toolImprints, globalSetMode,
-  itemBaseReqsPerUnit
+  stock, cost, blacklist, userStats, toolImprints, globalSetMode, itemBaseReqsPerUnit
 }: Props) {
   const [isCalculating, setIsCalculating] = useState(false);
   const [staminaRecommendation, setStaminaRecommendation] = useState<any>(null);
   const [blueprintViewMode, setBlueprintViewMode] = useState<'flow' | 'compact'>('flow');
   const [isPhase3Open, setIsPhase3Open] = useState(false); 
   const [actualYields, setActualYields] = useState<Record<string, number>>({});
-  const [localRecommendMode, setLocalRecommendMode] = useState<'balance' | 'max_profit'>(recommendMode);
 
   const o13Reduction = O13_EFFECTS[userStats.o13Lv || 0] || 0;
-
-  useEffect(() => {
-    setLocalRecommendMode(recommendMode);
-  }, [recommendMode]);
 
   useEffect(() => {
     if (staminaRecommendation?.combinedYield) {
@@ -66,149 +60,152 @@ export default function OceanStaminaRecommend({
     setIsCalculating(true);
 
     const timer = setTimeout(() => {
-      const evalStockFast = (addedStock: Record<string, number>, sortedItems: any[]) => {
-        let tempStock = { ...stock };
-        for(const k in addedStock) tempStock[k] = (tempStock[k] || 0) + addedStock[k];
-        
-        const initialEqSum = Object.values(getBaseEquivalents(tempStock, itemBaseReqsPerUnit)).reduce((a: number, b: number) => a + b, 0);
-        const crafted: Record<string, number> = {};
-        const baseInvSnapshot = { ...tempStock };
-        
-        let keepGoing = true;
-        let loopSafety = 0;
-        
-        while(keepGoing && loopSafety < 1000) {
-          keepGoing = false;
-          loopSafety++;
-          let bestItem = null;
-          let bestScore = -Infinity;
-          let bestSim = null;
-          let bestBatchSize = 1;
-
-          const eqStock = getBaseEquivalents(tempStock, itemBaseReqsPerUnit);
-
-          for (const item of sortedItems) {
-            let maxPossible = Infinity;
-            let possible = true;
-            for (const [mat, count] of Object.entries(itemBaseReqsPerUnit[item.name] || {})) {
-                const countNum = count as number;
-                if (CORE_BASE_SHELLS.includes(mat)) {
-                    const avail = eqStock[mat] || 0;
-                    if (avail < countNum) { possible = false; break; }
-                    maxPossible = Math.min(maxPossible, Math.floor(avail / countNum));
-                }
-            }
-            if (!possible) continue;
-
-            const batchSize = Math.max(1, Math.floor(maxPossible / 5));
-
-            const sim = simulateCraftPure({ [item.name]: batchSize }, tempStock);
-            const missingKeys = Object.keys(sim.missing);
-            const canCraft = missingKeys.every(k => VANILLA.includes(k) && !blacklist.includes(k));
-
-            if (canCraft) {
-                let penaltyCost = 0;
-                if (localRecommendMode === 'balance') {
-                    for (const mat of CORE_ITEMS) {
-                        const before = tempStock[mat] || 0;
-                        const after = sim.stock[mat] || 0;
-                        const consumed = before - after;
-                        if (consumed > 0) {
-                            const initial = Math.max(1, baseInvSnapshot[mat] || 1);
-                            const ratio = initial / (after + 1); 
-                            penaltyCost += consumed * Math.pow(ratio, 10);
-                        }
-                    }
-                } else {
-                    penaltyCost = 1;
-                }
-
-                if (penaltyCost === 0) penaltyCost = 0.001; 
-                const score = (item.profit * batchSize) / penaltyCost;
-
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestItem = item;
-                    bestSim = sim;
-                    bestBatchSize = batchSize;
-                }
-            }
-          }
-
-          if (bestItem && bestSim) {
-              tempStock = bestSim.stock;
-              crafted[bestItem.name] = (crafted[bestItem.name] || 0) + bestBatchSize;
-              keepGoing = true;
-          }
-        }
-
-        if (localRecommendMode === 'balance') {
-            let trimmed = true;
-            let loopSafetyTrim = 0;
-            while (trimmed && loopSafetyTrim < 1000) {
-              trimmed = false;
-              loopSafetyTrim++;
-
-              const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock });
-              const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0) + 1));
-
-              if (badMats.length > 0) {
-                const candidates = Object.keys(crafted).filter(k => crafted[k] > 0).sort((a, b) => {
-                  const pA = sortedItems.find(i=>i.name===a)?.sellPrice || 0;
-                  const pB = sortedItems.find(i=>i.name===b)?.sellPrice || 0;
-                  return pA - pB; 
-                });
-
-                for (const itemName of candidates) {
-                  const testCounts = { ...crafted };
-                  testCounts[itemName]--;
-                  if (testCounts[itemName] === 0) delete testCounts[itemName];
-
-                  const testSim = simulateCraftPure(testCounts, { ...stock, ...addedStock });
-                  let oldLeftover = 0;
-                  let newLeftover = 0;
-                  badMats.forEach(mat => {
-                    oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
-                    newLeftover += Math.max(0, (testSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
-                  });
-
-                  if (newLeftover < oldLeftover) {
-                    crafted[itemName]--;
-                    if (crafted[itemName] === 0) delete crafted[itemName];
-                    trimmed = true;
-                    break; 
-                  }
-                }
-                if (!trimmed) break;
-              }
-            }
-        }
-        
-        let totalP = 0;
-        const finalSim = simulateCraftPure(crafted, { ...stock, ...addedStock });
-        let totalVanillaCost = 0;
-        Object.entries(finalSim.missing).forEach(([m, q]) => totalVanillaCost += (q as number) * (cost[m] || 0));
-
-        Object.entries(crafted).forEach(([m, q]) => {
-            const itemDef = sortedItems.find(i => i.name === m);
-            if (itemDef) totalP += itemDef.sellPrice * (q as number);
-        });
-        totalP -= totalVanillaCost;
-
-        const finalEqSum = Object.values(getBaseEquivalents(tempStock, itemBaseReqsPerUnit)).reduce((a: number, b: number) => a + b, 0);
-        const stockConsumed = initialEqSum - finalEqSum;
-
-        return { profit: totalP, totalVanillaCost, stockConsumed, crafted, resultingStock: finalSim.stock };
-      };
-
       const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv || 0] || 0;
-      const sortedItems = OCEAN_FIXED_PRICES.map(item => {
+      
+      const itemsWithProfit = OCEAN_FIXED_PRICES.map(item => {
           const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
           const baseMats = itemBaseReqsPerUnit[item.name] || {};
           let totalCost = 0;
-          Object.entries(baseMats).forEach(([mat, qty]) => totalCost += (cost[mat] || 0) * (qty as number));
-          return { name: item.name, sellPrice, profit: sellPrice - totalCost };
-      }).filter(i => i.profit > 0);
+          let hasBlacklist = false;
+
+          Object.entries(baseMats).forEach(([mat, qty]) => {
+              if (blacklist.includes(mat)) hasBlacklist = true;
+              totalCost += (cost[mat] || 0) * (qty as number);
+          });
+
+          return { name: item.name, sellPrice, totalCost, profit: sellPrice - totalCost, hasBlacklist, baseMats };
+      }).filter(r => !r.hasBlacklist && r.profit > 0);
+
+      const T0_NAME = '추출된 희석액';
+      const T1_NAMES = ['영생의 아쿠티스', '크라켄의 광란체', '리바이던의 깃털'];
+      const T2_NAMES = ['해구의 파동 코어', '침묵의 심해 비약', '청해룡의 날개'];
+      const T3_NAMES = ['아쿠아 펄스 파편', '나우틸러스의 손', '무저의 척추'];
+
+      const validT0 = itemsWithProfit.find(i => i.name === T0_NAME);
+      const validT1 = T1_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
+      const validT2 = T2_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
+      const validT3 = T3_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
+
+      const targetMats = [...CORE_BASE_SHELLS];
+      const getReqs = (item: any) => targetMats.map(m => itemBaseReqsPerUnit[item.name]?.[m] || 0);
+
+      const reqsT0 = validT0 ? getReqs(validT0) : new Array(targetMats.length).fill(0);
+      const reqsT1 = validT1.map(getReqs);
+      const reqsT2 = validT2.map(getReqs);
+      const reqsT3 = validT3.map(getReqs);
+
+      const solveGroup = (validItems: any[], reqsArr: number[][], currentLimits: number[]) => {
+          const usedMats: number[] = [];
+          for(let m=0; m<targetMats.length; m++) {
+              if (reqsArr.some(r => r[m] > 0)) usedMats.push(m);
+          }
+
+          if (validItems.length === 0) return { profit: 0, counts: [] };
+          if (validItems.length === 1) {
+              let max = Infinity;
+              for(let m of usedMats) max = Math.min(max, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
+              if (max === Infinity) max = 0;
+              return { profit: max * validItems[0].profit, counts: [max] };
+          }
+          if (validItems.length === 2) {
+              let bestP = -1;
+              let bestC = [0, 0];
+              let max0 = Infinity;
+              for(let m of usedMats) max0 = Math.min(max0, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
+              if (max0 === Infinity) max0 = 0;
+              for (let i = 0; i <= max0; i++) {
+                  let max1 = Infinity;
+                  for(let m of usedMats) max1 = Math.min(max1, Math.floor((currentLimits[m] - reqsArr[0][m]*i) / reqsArr[1][m] + 1e-9));
+                  if (max1 === Infinity) max1 = 0;
+                  let p = i * validItems[0].profit + max1 * validItems[1].profit;
+                  if (p > bestP) { bestP = p; bestC = [i, max1]; }
+              }
+              return { profit: bestP, counts: bestC };
+          }
+          if (validItems.length === 3) {
+              let bestP = -1;
+              let bestC = [0, 0, 0];
+              let max0 = Infinity;
+              for(let m of usedMats) max0 = Math.min(max0, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
+              if (max0 === Infinity) max0 = 0;
+              for (let i = 0; i <= max0; i++) {
+                  let max1 = Infinity;
+                  for(let m of usedMats) max1 = Math.min(max1, Math.floor((currentLimits[m] - reqsArr[0][m]*i) / reqsArr[1][m] + 1e-9));
+                  if (max1 === Infinity) max1 = 0;
+                  for (let j = 0; j <= max1; j++) {
+                      let max2 = Infinity;
+                      for(let m of usedMats) max2 = Math.min(max2, Math.floor((currentLimits[m] - reqsArr[0][m]*i - reqsArr[1][m]*j) / reqsArr[2][m] + 1e-9));
+                      if (max2 === Infinity) max2 = 0;
+                      let p = i * validItems[0].profit + j * validItems[1].profit + max2 * validItems[2].profit;
+                      if (p > bestP) { bestP = p; bestC = [i, j, max2]; }
+                  }
+              }
+              return { profit: bestP, counts: bestC };
+          }
+          return { profit: 0, counts: [] };
+      };
+
+      const evaluateStockOptimal = (addedStock: Record<string, number>) => {
+          let tempStock = { ...stock };
+          for(const k in addedStock) tempStock[k] = (tempStock[k] || 0) + addedStock[k];
+
+          const eqStock = getBaseEquivalents(tempStock, itemBaseReqsPerUnit);
+          const limits = targetMats.map(m => eqStock[m] || 0);
+
+          let bestGlobalProfit = -Infinity;
+          let bestGlobalCounts: Record<string, number> = {};
+
+          let maxT0 = Infinity;
+          if (validT0) {
+              for(let i=0; i<targetMats.length; i++) {
+                  if (reqsT0[i] > 0) maxT0 = Math.min(maxT0, Math.floor(limits[i] / reqsT0[i] + 1e-9));
+              }
+              if (maxT0 === Infinity) maxT0 = 0;
+          } else {
+              maxT0 = 0;
+          }
+
+          for (let t0 = 0; t0 <= maxT0; t0++) {
+              let curLimits = [...limits];
+              if (validT0 && t0 > 0) {
+                  for(let i=0; i<targetMats.length; i++) curLimits[i] -= reqsT0[i] * t0;
+              }
+
+              let resT1 = solveGroup(validT1, reqsT1, curLimits);
+              let resT2 = solveGroup(validT2, reqsT2, curLimits);
+              let resT3 = solveGroup(validT3, reqsT3, curLimits);
+
+              let totalP = (validT0 ? t0 * validT0.profit : 0) + resT1.profit + resT2.profit + resT3.profit;
+
+              if (totalP > bestGlobalProfit) {
+                  bestGlobalProfit = totalP;
+                  bestGlobalCounts = {};
+                  if (validT0 && t0 > 0) bestGlobalCounts[T0_NAME] = t0;
+                  resT1.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT1[idx].name] = c; });
+                  resT2.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT2[idx].name] = c; });
+                  resT3.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT3[idx].name] = c; });
+              }
+          }
+
+          let stockConsumed = 0;
+          if (validT0 && bestGlobalCounts[T0_NAME]) stockConsumed += reqsT0.reduce((sum, r) => sum + r, 0) * bestGlobalCounts[T0_NAME];
+          validT1.forEach((v, idx) => { if (bestGlobalCounts[v.name]) stockConsumed += reqsT1[idx].reduce((sum, r) => sum + r, 0) * bestGlobalCounts[v.name]; });
+          validT2.forEach((v, idx) => { if (bestGlobalCounts[v.name]) stockConsumed += reqsT2[idx].reduce((sum, r) => sum + r, 0) * bestGlobalCounts[v.name]; });
+          validT3.forEach((v, idx) => { if (bestGlobalCounts[v.name]) stockConsumed += reqsT3[idx].reduce((sum, r) => sum + r, 0) * bestGlobalCounts[v.name]; });
+
+          let totalVanillaCost = 0;
+          Object.entries(bestGlobalCounts).forEach(([m, q]) => {
+              const itemDef = itemsWithProfit.find(i => i.name === m);
+              if (itemDef) totalVanillaCost += itemDef.totalCost * q;
+          });
+
+          return { 
+              profit: bestGlobalProfit, 
+              totalVanillaCost, 
+              stockConsumed, 
+              crafted: bestGlobalCounts
+          };
+      };
 
       if (!userStats.stamina || userStats.stamina < 15) {
         setStaminaRecommendation(null);
@@ -247,8 +244,8 @@ export default function OceanStaminaRecommend({
       const maxActions = Math.floor(totalStamina / 15);
 
       let bestScenario: any = null;
-      let maxFoundConsumed = -1;
-      let maxFoundProfitForConsumed = -1;
+      let maxFoundProfit = -Infinity;
+      let maxFoundConsumed = -Infinity;
 
       if (maxActions > 0) {
           const NUM_CHUNKS = Math.min(maxActions, 6);
@@ -280,11 +277,19 @@ export default function OceanStaminaRecommend({
                   }
               }
 
-              const res = evalStockFast(combinedYield, sortedItems);
+              const res = evaluateStockOptimal(combinedYield);
 
-              if (res.stockConsumed > maxFoundConsumed || (res.stockConsumed === maxFoundConsumed && res.profit > maxFoundProfitForConsumed)) {
+              let isBetter = false;
+              if (res.profit > maxFoundProfit) {
+                  isBetter = true;
+              } else if (res.profit === maxFoundProfit && res.stockConsumed > maxFoundConsumed) {
+                  isBetter = true;
+              }
+
+              if (isBetter) {
+                  maxFoundProfit = res.profit;
                   maxFoundConsumed = res.stockConsumed;
-                  maxFoundProfitForConsumed = res.profit;
+                  
                   bestScenario = {
                       type: 'multi',
                       distribution,
@@ -293,14 +298,13 @@ export default function OceanStaminaRecommend({
                       totalVanillaCost: res.totalVanillaCost,
                       stockConsumed: res.stockConsumed,
                       crafted: res.crafted,
-                      finalStock: res.resultingStock
                   };
               }
           }
       }
       
       if (bestScenario) {
-          const baseRes = evalStockFast({}, sortedItems);
+          const baseRes = evaluateStockOptimal({});
           bestScenario.baseProfit = baseRes.profit;
           bestScenario.addedProfit = bestScenario.profit - baseRes.profit;
 
@@ -309,15 +313,28 @@ export default function OceanStaminaRecommend({
           for(const k in addedStock) trackingStock[k] = (trackingStock[k] || 0) + addedStock[k];
 
           const sortedCraftedNames = Object.keys(bestScenario.crafted).sort((a, b) => {
-              const pA = sortedItems.find(i=>i.name===a)?.profit || 0;
-              const pB = sortedItems.find(i=>i.name===b)?.profit || 0;
+              const pA = itemsWithProfit.find(i=>i.name===a)?.profit || 0;
+              const pB = itemsWithProfit.find(i=>i.name===b)?.profit || 0;
               return pB - pA;
           });
 
           const flowDetails = [];
+          let finalVanillaCost = 0;
+
           for (const itemName of sortedCraftedNames) {
-              const qty = bestScenario.crafted[itemName];
-              const sim = simulateCraftPure({ [itemName]: qty }, trackingStock);
+              let qty = bestScenario.crafted[itemName];
+              let sim = simulateCraftPure({ [itemName]: qty }, trackingStock);
+              
+              while (qty > 0 && Object.keys(sim.missing).some(m => CORE_BASE_SHELLS.includes(m))) {
+                  qty--;
+                  sim = simulateCraftPure({ [itemName]: qty }, trackingStock);
+              }
+              if (qty <= 0) continue;
+
+              Object.entries(sim.missing).forEach(([m, q]) => {
+                  finalVanillaCost += (cost[m] || 0) * (q as number);
+              });
+
               flowDetails.push({
                   name: itemName,
                   qty: qty,
@@ -327,8 +344,10 @@ export default function OceanStaminaRecommend({
               });
               trackingStock = sim.stock;
           }
+
           bestScenario.flowDetails = flowDetails;
           bestScenario.finalTrackingStock = trackingStock;
+          bestScenario.totalVanillaCost = finalVanillaCost;
       }
 
       setStaminaRecommendation(bestScenario);
@@ -337,7 +356,7 @@ export default function OceanStaminaRecommend({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [stock, cost, blacklist, userStats, toolImprints, localRecommendMode, itemBaseReqsPerUnit]);
+  }, [stock, cost, blacklist, userStats, toolImprints, itemBaseReqsPerUnit]);
 
   const handleMergeStock = () => {
     if (confirm('입력하신 실제 획득량을 내 창고 재고에 합산하시겠습니까?')) {
@@ -542,28 +561,13 @@ export default function OceanStaminaRecommend({
 
   return (
     <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-6 shadow-md transition-colors">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 border-b border-gray-200 dark:border-white/5 pb-4 gap-4">
+      <div className="flex flex-col justify-between items-start mb-5 border-b border-gray-200 dark:border-white/5 pb-4 gap-4">
         <div>
           <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tighter flex items-center gap-2">
             스태미나 추천
             {isCalculating && <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>}
           </h3>
           <p className="text-[10px] text-gray-500 mt-1">현재 창고에 보유 중인 재고를 가장 효율적으로 소모할 수 있는 채집 경로입니다.</p>
-        </div>
-        
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111113] p-1.5 rounded-xl border border-gray-200 dark:border-transparent shadow-inner w-full sm:w-auto">
-          <button 
-            onClick={() => setLocalRecommendMode('balance')} 
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[11px] font-black transition-all ${localRecommendMode === 'balance' ? 'bg-indigo-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
-          >
-            재고 균등 소모
-          </button>
-          <button 
-            onClick={() => setLocalRecommendMode('max_profit')} 
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[11px] font-black transition-all ${localRecommendMode === 'max_profit' ? 'bg-indigo-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
-          >
-            최대 수익 집중
-          </button>
         </div>
       </div>
       
@@ -784,7 +788,7 @@ export default function OceanStaminaRecommend({
                     Phase 3. 예상 제작 가이드
                   </p>
                   <p className="text-[10px] font-bold text-gray-700 dark:text-gray-400 leading-relaxed">
-                    통합된 재고를 바탕으로 바닐라 블록을 조달하여 최종 수익품을 제작합니다.
+                    통합된 재고를 바탕으로 바닐라 블록 조달 여부를 확인하여 최종 수익품을 제작합니다.
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -915,7 +919,7 @@ export default function OceanStaminaRecommend({
                         ) : (
                           <div className="flex flex-col gap-4 flex-1 mt-2">
                             <div>
-                              <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">Step 1. 바닐라 조달</p>
+                              <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">STEP 1. 부족한 바닐라 재료</p>
                               {missingKeys.length === 0 ? (
                                 <span className="text-[10px] text-gray-500 font-bold">조달 필요 없음</span>
                               ) : (
@@ -932,7 +936,7 @@ export default function OceanStaminaRecommend({
 
                             {s1.length > 0 && (
                               <div>
-                                  <p className="text-[10px] font-black text-purple-700 dark:text-purple-400 mb-1.5">Step 2. 하위 연금/가공 (창고에서 꺼내기)</p>
+                                  <p className="text-[10px] font-black text-purple-700 dark:text-purple-400 mb-1.5">STEP 2. 하위 연금/가공 (창고에서 꺼내기)</p>
                                   <div className="flex flex-col gap-2">
                                     {s1.map(([m, q]) => renderCraftStep(m, q as number))}
                                   </div>
@@ -941,7 +945,7 @@ export default function OceanStaminaRecommend({
 
                             {s2.length > 0 && (
                               <div>
-                                  <p className="text-[10px] font-black text-rose-700 dark:text-rose-400 mb-1.5">Step 3. 중급 연금 가공</p>
+                                  <p className="text-[10px] font-black text-rose-700 dark:text-rose-400 mb-1.5">STEP 3. 중급 연금 가공</p>
                                   <div className="flex flex-col gap-2">
                                     {s2.map(([m, q]) => renderCraftStep(m, q as number))}
                                   </div>
@@ -949,7 +953,7 @@ export default function OceanStaminaRecommend({
                             )}
 
                             <div className="mt-auto pt-2">
-                                <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">Step 4. 최종 연금 가공</p>
+                                <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">STEP 4. 최종 연금 가공</p>
                                 <div className="flex flex-col gap-2">
                                   {renderCraftStep(itemName, targetQty)}
                                 </div>
@@ -964,7 +968,7 @@ export default function OceanStaminaRecommend({
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-gray-50 to-white dark:from-[#111113] dark:to-[#0a0a0c] p-6 rounded-2xl border border-gray-300 dark:border-transparent shadow-md mt-6">
+            <div className="bg-gradient-to-r from-gray-50 to-white dark:from-[#111113] dark:to-[#0a0a0c] p-6 rounded-2xl border border-gray-300 dark:border-white/5 shadow-md mt-6">
               <p className="text-[12px] font-black text-gray-800 dark:text-gray-200 mb-4 tracking-widest uppercase border-b border-gray-300 dark:border-white/5 pb-3">Phase 4. 최종 수익계산 결과</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-[#1a1a1e] p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm text-center flex flex-col justify-center">
