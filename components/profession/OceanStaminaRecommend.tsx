@@ -13,7 +13,7 @@ interface Props {
   stock: Record<string, number>;
   cost: Record<string, number>;
   blacklist: string[];
-  recommendMode?: 'balance' | 'max_profit';
+  recommendMode: 'balance' | 'max_profit';
   userStats: any;
   toolImprints: any;
   globalSetMode: boolean;
@@ -25,6 +25,7 @@ const IMPRINT_ROD_ROULETTE_CHANCE = [0, 0.01, 0.02, 0.03, 0.04, 0.05];
 
 const getBaseEquivalents = (currentStock: Record<string, number>, itemBaseReqsPerUnit: Record<string, Record<string, number>>) => {
   const eq: Record<string, number> = {};
+
   Object.entries(currentStock).forEach(([name, qty]) => {
     if (qty > 0) {
       if (itemBaseReqsPerUnit[name] && Object.keys(itemBaseReqsPerUnit[name]).length > 0) {
@@ -40,14 +41,14 @@ const getBaseEquivalents = (currentStock: Record<string, number>, itemBaseReqsPe
 };
 
 export default function OceanStaminaRecommend({
-  stock, cost, blacklist, userStats, toolImprints, globalSetMode, itemBaseReqsPerUnit
+  stock, cost, blacklist, recommendMode, userStats, toolImprints, globalSetMode,
+  itemBaseReqsPerUnit
 }: Props) {
   const [isCalculating, setIsCalculating] = useState(false);
   const [staminaRecommendation, setStaminaRecommendation] = useState<any>(null);
   const [blueprintViewMode, setBlueprintViewMode] = useState<'flow' | 'compact'>('flow');
-  const [isPhase3Open, setIsPhase3Open] = useState(false); 
+  const [isPhase3Open, setIsPhase3Open] = useState(false);
   const [actualYields, setActualYields] = useState<Record<string, number>>({});
-
   const o13Reduction = O13_EFFECTS[userStats.o13Lv || 0] || 0;
 
   useEffect(() => {
@@ -58,154 +59,147 @@ export default function OceanStaminaRecommend({
 
   useEffect(() => {
     setIsCalculating(true);
-
     const timer = setTimeout(() => {
-      const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv || 0] || 0;
-      
-      const itemsWithProfit = OCEAN_FIXED_PRICES.map(item => {
-          const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
-          const baseMats = itemBaseReqsPerUnit[item.name] || {};
-          let totalCost = 0;
-          let hasBlacklist = false;
+      const evalStockFast = (addedStock: Record<string, number>, sortedItems: any[]) => {
+        let tempStock = { ...stock };
+        for (const k in addedStock) tempStock[k] = (tempStock[k] || 0) + addedStock[k];
+        const initialEqSum = Object.values(getBaseEquivalents(tempStock, itemBaseReqsPerUnit)).reduce((a: number, b: number) => a + b, 0);
+        const crafted: Record<string, number> = {};
+        const baseInvSnapshot = { ...tempStock };
+        let keepGoing = true;
+        let loopSafety = 0;
 
-          Object.entries(baseMats).forEach(([mat, qty]) => {
-              if (blacklist.includes(mat)) hasBlacklist = true;
-              totalCost += (cost[mat] || 0) * (qty as number);
-          });
-
-          return { name: item.name, sellPrice, totalCost, profit: sellPrice - totalCost, hasBlacklist, baseMats };
-      }).filter(r => !r.hasBlacklist && r.profit > 0);
-
-      const T0_NAME = '추출된 희석액';
-      const T1_NAMES = ['영생의 아쿠티스', '크라켄의 광란체', '리바이던의 깃털'];
-      const T2_NAMES = ['해구의 파동 코어', '침묵의 심해 비약', '청해룡의 날개'];
-      const T3_NAMES = ['아쿠아 펄스 파편', '나우틸러스의 손', '무저의 척추'];
-
-      const validT0 = itemsWithProfit.find(i => i.name === T0_NAME);
-      const validT1 = T1_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
-      const validT2 = T2_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
-      const validT3 = T3_NAMES.map(n => itemsWithProfit.find(i => i.name === n)).filter(Boolean) as typeof itemsWithProfit;
-
-      const targetMats = [...CORE_BASE_SHELLS];
-      const getReqs = (item: any) => targetMats.map(m => itemBaseReqsPerUnit[item.name]?.[m] || 0);
-
-      const reqsT0 = validT0 ? getReqs(validT0) : new Array(targetMats.length).fill(0);
-      const reqsT1 = validT1.map(getReqs);
-      const reqsT2 = validT2.map(getReqs);
-      const reqsT3 = validT3.map(getReqs);
-
-      const solveGroup = (validItems: any[], reqsArr: number[][], currentLimits: number[]) => {
-          const usedMats: number[] = [];
-          for(let m=0; m<targetMats.length; m++) {
-              if (reqsArr.some(r => r[m] > 0)) usedMats.push(m);
-          }
-
-          if (validItems.length === 0) return { profit: 0, counts: [] };
-          if (validItems.length === 1) {
-              let max = Infinity;
-              for(let m of usedMats) max = Math.min(max, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
-              if (max === Infinity) max = 0;
-              return { profit: max * validItems[0].profit, counts: [max] };
-          }
-          if (validItems.length === 2) {
-              let bestP = -1;
-              let bestC = [0, 0];
-              let max0 = Infinity;
-              for(let m of usedMats) max0 = Math.min(max0, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
-              if (max0 === Infinity) max0 = 0;
-              for (let i = 0; i <= max0; i++) {
-                  let max1 = Infinity;
-                  for(let m of usedMats) max1 = Math.min(max1, Math.floor((currentLimits[m] - reqsArr[0][m]*i) / reqsArr[1][m] + 1e-9));
-                  if (max1 === Infinity) max1 = 0;
-                  let p = i * validItems[0].profit + max1 * validItems[1].profit;
-                  if (p > bestP) { bestP = p; bestC = [i, max1]; }
-              }
-              return { profit: bestP, counts: bestC };
-          }
-          if (validItems.length === 3) {
-              let bestP = -1;
-              let bestC = [0, 0, 0];
-              let max0 = Infinity;
-              for(let m of usedMats) max0 = Math.min(max0, Math.floor(currentLimits[m] / reqsArr[0][m] + 1e-9));
-              if (max0 === Infinity) max0 = 0;
-              for (let i = 0; i <= max0; i++) {
-                  let max1 = Infinity;
-                  for(let m of usedMats) max1 = Math.min(max1, Math.floor((currentLimits[m] - reqsArr[0][m]*i) / reqsArr[1][m] + 1e-9));
-                  if (max1 === Infinity) max1 = 0;
-                  for (let j = 0; j <= max1; j++) {
-                      let max2 = Infinity;
-                      for(let m of usedMats) max2 = Math.min(max2, Math.floor((currentLimits[m] - reqsArr[0][m]*i - reqsArr[1][m]*j) / reqsArr[2][m] + 1e-9));
-                      if (max2 === Infinity) max2 = 0;
-                      let p = i * validItems[0].profit + j * validItems[1].profit + max2 * validItems[2].profit;
-                      if (p > bestP) { bestP = p; bestC = [i, j, max2]; }
-                  }
-              }
-              return { profit: bestP, counts: bestC };
-          }
-          return { profit: 0, counts: [] };
-      };
-
-      const evaluateStockOptimal = (addedStock: Record<string, number>) => {
-          let tempStock = { ...stock };
-          for(const k in addedStock) tempStock[k] = (tempStock[k] || 0) + addedStock[k];
-
+        while (keepGoing && loopSafety < 1000) {
+          keepGoing = false;
+          loopSafety++;
+          let bestItem = null;
+          let bestScore = -Infinity;
+          let bestSim = null;
+          let bestBatchSize = 1;
           const eqStock = getBaseEquivalents(tempStock, itemBaseReqsPerUnit);
-          const limits = targetMats.map(m => eqStock[m] || 0);
 
-          let bestGlobalProfit = -Infinity;
-          let bestGlobalCounts: Record<string, number> = {};
-
-          let maxT0 = Infinity;
-          if (validT0) {
-              for(let i=0; i<targetMats.length; i++) {
-                  if (reqsT0[i] > 0) maxT0 = Math.min(maxT0, Math.floor(limits[i] / reqsT0[i] + 1e-9));
+          for (const item of sortedItems) {
+            let maxPossible = Infinity;
+            let possible = true;
+            for (const [mat, count] of Object.entries(itemBaseReqsPerUnit[item.name] || {})) {
+              const countNum = count as number;
+              if (CORE_BASE_SHELLS.includes(mat)) {
+                const avail = eqStock[mat] || 0;
+                if (avail < countNum) { possible = false; break; }
+                maxPossible = Math.min(maxPossible, Math.floor(avail / countNum));
               }
-              if (maxT0 === Infinity) maxT0 = 0;
-          } else {
-              maxT0 = 0;
+            }
+
+            if (!possible) continue;
+            const batchSize = Math.max(1, Math.floor(maxPossible / 5));
+            const sim = simulateCraftPure({ [item.name]: batchSize }, tempStock);
+            const missingKeys = Object.keys(sim.missing);
+            const canCraft = missingKeys.every(k => VANILLA.includes(k) && !blacklist.includes(k));
+
+            if (canCraft) {
+              let penaltyCost = 0;
+              if (recommendMode === 'balance') {
+                for (const mat of CORE_ITEMS) {
+                  const before = tempStock[mat] || 0;
+                  const after = sim.stock[mat] || 0;
+                  const consumed = before - after;
+                  if (consumed > 0) {
+                    const initial = Math.max(1, baseInvSnapshot[mat] || 1);
+                    const ratio = initial / (after + 1);
+                    penaltyCost += consumed * Math.pow(ratio, 10);
+                  }
+                }
+              } else {
+                penaltyCost = 1;
+              }
+
+              if (penaltyCost === 0) penaltyCost = 0.001;
+              const score = (item.profit * batchSize) / penaltyCost;
+
+              if (score > bestScore) {
+                bestScore = score;
+                bestItem = item;
+                bestSim = sim;
+                bestBatchSize = batchSize;
+              }
+            }
           }
 
-          for (let t0 = 0; t0 <= maxT0; t0++) {
-              let curLimits = [...limits];
-              if (validT0 && t0 > 0) {
-                  for(let i=0; i<targetMats.length; i++) curLimits[i] -= reqsT0[i] * t0;
-              }
-
-              let resT1 = solveGroup(validT1, reqsT1, curLimits);
-              let resT2 = solveGroup(validT2, reqsT2, curLimits);
-              let resT3 = solveGroup(validT3, reqsT3, curLimits);
-
-              let totalP = (validT0 ? t0 * validT0.profit : 0) + resT1.profit + resT2.profit + resT3.profit;
-
-              if (totalP > bestGlobalProfit) {
-                  bestGlobalProfit = totalP;
-                  bestGlobalCounts = {};
-                  if (validT0 && t0 > 0) bestGlobalCounts[T0_NAME] = t0;
-                  resT1.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT1[idx].name] = c; });
-                  resT2.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT2[idx].name] = c; });
-                  resT3.counts.forEach((c, idx) => { if (c > 0) bestGlobalCounts[validT3[idx].name] = c; });
-              }
+          if (bestItem && bestSim) {
+            tempStock = bestSim.stock;
+            crafted[bestItem.name] = (crafted[bestItem.name] || 0) + bestBatchSize;
+            keepGoing = true;
           }
+        }
 
-          let stockConsumed = 0;
-          if (validT0 && bestGlobalCounts[T0_NAME]) stockConsumed += reqsT0.reduce((sum, r) => sum + r, 0) * bestGlobalCounts[T0_NAME];
-          validT1.forEach((v, idx) => { if (bestGlobalCounts[v.name]) stockConsumed += reqsT1[idx].reduce((sum, r) => sum + r, 0) * bestGlobalCounts[v.name]; });
-          validT2.forEach((v, idx) => { if (bestGlobalCounts[v.name]) stockConsumed += reqsT2[idx].reduce((sum, r) => sum + r, 0) * bestGlobalCounts[v.name]; });
-          validT3.forEach((v, idx) => { if (bestGlobalCounts[v.name]) stockConsumed += reqsT3[idx].reduce((sum, r) => sum + r, 0) * bestGlobalCounts[v.name]; });
+        if (recommendMode === 'balance') {
+          let trimmed = true;
+          let loopSafetyTrim = 0;
+          while (trimmed && loopSafetyTrim < 1000) {
+            trimmed = false;
+            loopSafetyTrim++;
 
-          let totalVanillaCost = 0;
-          Object.entries(bestGlobalCounts).forEach(([m, q]) => {
-              const itemDef = itemsWithProfit.find(i => i.name === m);
-              if (itemDef) totalVanillaCost += itemDef.totalCost * q;
-          });
+            const currentSim = simulateCraftPure(crafted, { ...stock, ...addedStock });
+            const badMats = BATCH_MATS.filter(mat => (currentSim.stock[mat] || 0) > ((stock[mat] || 0) + (addedStock[mat] || 0) + 1));
 
-          return { 
-              profit: bestGlobalProfit, 
-              totalVanillaCost, 
-              stockConsumed, 
-              crafted: bestGlobalCounts
-          };
+            if (badMats.length > 0) {
+              const candidates = Object.keys(crafted).filter(k => crafted[k] > 0).sort((a, b) => {
+                const pA = sortedItems.find(i => i.name === a)?.sellPrice || 0;
+                const pB = sortedItems.find(i => i.name === b)?.sellPrice || 0;
+                return pA - pB;
+              });
+
+              for (const itemName of candidates) {
+                const testCounts = { ...crafted };
+                testCounts[itemName]--;
+                if (testCounts[itemName] === 0) delete testCounts[itemName];
+
+                const testSim = simulateCraftPure(testCounts, { ...stock, ...addedStock });
+                let oldLeftover = 0;
+                let newLeftover = 0;
+                badMats.forEach(mat => {
+                  oldLeftover += Math.max(0, (currentSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
+                  newLeftover += Math.max(0, (testSim.stock[mat] || 0) - ((stock[mat] || 0) + (addedStock[mat] || 0)));
+                });
+
+                if (newLeftover < oldLeftover) {
+                  crafted[itemName]--;
+                  if (crafted[itemName] === 0) delete crafted[itemName];
+                  trimmed = true;
+                  break;
+                }
+              }
+              if (!trimmed) break;
+            }
+          }
+        }
+
+        let totalP = 0;
+        const finalSim = simulateCraftPure(crafted, { ...stock, ...addedStock });
+        let totalVanillaCost = 0;
+        Object.entries(finalSim.missing).forEach(([m, q]) => totalVanillaCost += (q as number) * (cost[m] || 0));
+
+        Object.entries(crafted).forEach(([m, q]) => {
+          const itemDef = sortedItems.find(i => i.name === m);
+          if (itemDef) totalP += itemDef.sellPrice * (q as number);
+        });
+        totalP -= totalVanillaCost;
+
+        const finalEqSum = Object.values(getBaseEquivalents(tempStock, itemBaseReqsPerUnit)).reduce((a: number, b: number) => a + b, 0);
+        const stockConsumed = initialEqSum - finalEqSum;
+
+        return { profit: totalP, totalVanillaCost, stockConsumed, crafted, resultingStock: tempStock };
       };
+
+      const o16Bonus = [0, 0.05, 0.07, 0.09, 0.12, 0.15, 0.20, 0.25, 0.30][userStats.o16Lv || 0] || 0;
+
+      const sortedItems = OCEAN_FIXED_PRICES.map(item => {
+        const sellPrice = Math.ceil(item.base * (1 + o16Bonus));
+        const baseMats = itemBaseReqsPerUnit[item.name] || {};
+        let totalCost = 0;
+        Object.entries(baseMats).forEach(([mat, qty]) => totalCost += (cost[mat] || 0) * (qty as number));
+        return { name: item.name, sellPrice, profit: sellPrice - totalCost };
+      }).filter(i => i.profit > 0);
 
       if (!userStats.stamina || userStats.stamina < 15) {
         setStaminaRecommendation(null);
@@ -216,7 +210,6 @@ export default function OceanStaminaRecommend({
       const o11Bonus = [0, 0.05, 0.07, 0.10, 0.15, 0.20][userStats.o11Lv || 0] || 0;
       const rodData = userStats.rodLv > 0 ? SAGE_TOOL_EFFECTS.rod[userStats.rodLv - 1] : { '어패류 드롭 수': '1' };
       const baseDrop = parseInt(rodData['어패류 드롭 수']) || 1;
-      
       const shellImprintLv = toolImprints?.['rod']?.['rod_shell'] || 0;
       const rouletteImprintLv = toolImprints?.['rod']?.['rod_roulette'] || 0;
 
@@ -228,15 +221,14 @@ export default function OceanStaminaRecommend({
       const p1 = 0.60 - (o17Bonus * (2 / 3));
 
       const getYield = (stamina: number, category: string) => {
-          const actions = Math.floor(stamina / 15);
-          if (actions <= 0) return {};
-          const totalItems = actions * expectedDropPerAction;
-          
-          return {
-              [`${category}(1성)`]: Math.round(totalItems * p1),
-              [`${category}(2성)`]: Math.round(totalItems * p2),
-              [`${category}(3성)`]: Math.round(totalItems * p3),
-          };
+        const actions = Math.floor(stamina / 15);
+        if (actions <= 0) return {};
+        const totalItems = actions * expectedDropPerAction;
+        return {
+          [`${category}(1성)`]: Math.round(totalItems * p1),
+          [`${category}(2성)`]: Math.round(totalItems * p2),
+          [`${category}(3성)`]: Math.round(totalItems * p3),
+        };
       };
 
       const TARGET_CATEGORIES = ['굴', '소라', '문어', '미역', '성게'];
@@ -244,126 +236,100 @@ export default function OceanStaminaRecommend({
       const maxActions = Math.floor(totalStamina / 15);
 
       let bestScenario: any = null;
-      let maxFoundProfit = -Infinity;
-      let maxFoundConsumed = -Infinity;
+      let maxFoundConsumed = -1;
+      let maxFoundProfitForConsumed = -1;
 
       if (maxActions > 0) {
-          const NUM_CHUNKS = Math.min(maxActions, 6);
-          const actionsPerChunk = Math.floor(maxActions / NUM_CHUNKS);
-          const remainderActions = maxActions % NUM_CHUNKS;
+        const NUM_CHUNKS = Math.min(maxActions, 6);
+        const actionsPerChunk = Math.floor(maxActions / NUM_CHUNKS);
+        const remainderActions = maxActions % NUM_CHUNKS;
+        const chunksCombos = getCombinations(5, NUM_CHUNKS);
 
-          const chunksCombos = getCombinations(5, NUM_CHUNKS);
+        for (let c = 0; c < chunksCombos.length; c++) {
+          const combo = chunksCombos[c];
+          let combinedYield: Record<string, number> = {};
+          let distribution: Record<string, number> = {};
+          let maxChunkVal = Math.max(...combo);
+          let remainderAdded = false;
 
-          for (let c = 0; c < chunksCombos.length; c++) {
-              const combo = chunksCombos[c];
-              let combinedYield: Record<string, number> = {};
-              let distribution: Record<string, number> = {};
+          for (let i = 0; i < 5; i++) {
+            let actions = combo[i] * actionsPerChunk;
+            if (!remainderAdded && combo[i] === maxChunkVal) {
+              actions += remainderActions;
+              remainderAdded = true;
+            }
 
-              let maxChunkVal = Math.max(...combo);
-              let remainderAdded = false;
-
-              for (let i = 0; i < 5; i++) {
-                  let actions = combo[i] * actionsPerChunk;
-                  if (!remainderAdded && combo[i] === maxChunkVal) {
-                      actions += remainderActions;
-                      remainderAdded = true;
-                  }
-
-                  if (actions > 0) {
-                      const cat = TARGET_CATEGORIES[i];
-                      distribution[cat] = actions * 15;
-                      const catYield = getYield(actions * 15, cat);
-                      for (const k in catYield) combinedYield[k] = (combinedYield[k] || 0) + catYield[k];
-                  }
-              }
-
-              const res = evaluateStockOptimal(combinedYield);
-
-              let isBetter = false;
-              if (res.profit > maxFoundProfit) {
-                  isBetter = true;
-              } else if (res.profit === maxFoundProfit && res.stockConsumed > maxFoundConsumed) {
-                  isBetter = true;
-              }
-
-              if (isBetter) {
-                  maxFoundProfit = res.profit;
-                  maxFoundConsumed = res.stockConsumed;
-                  
-                  bestScenario = {
-                      type: 'multi',
-                      distribution,
-                      combinedYield,
-                      profit: res.profit,
-                      totalVanillaCost: res.totalVanillaCost,
-                      stockConsumed: res.stockConsumed,
-                      crafted: res.crafted,
-                  };
-              }
+            if (actions > 0) {
+              const cat = TARGET_CATEGORIES[i];
+              distribution[cat] = actions * 15;
+              const catYield = getYield(actions * 15, cat);
+              for (const k in catYield) combinedYield[k] = (combinedYield[k] || 0) + catYield[k];
+            }
           }
+
+          const res = evalStockFast(combinedYield, sortedItems);
+
+          if (res.stockConsumed > maxFoundConsumed || (res.stockConsumed === maxFoundConsumed && res.profit > maxFoundProfitForConsumed)) {
+            maxFoundConsumed = res.stockConsumed;
+            maxFoundProfitForConsumed = res.profit;
+            bestScenario = {
+              type: 'multi',
+              distribution,
+              combinedYield,
+              profit: res.profit,
+              totalVanillaCost: res.totalVanillaCost,
+              stockConsumed: res.stockConsumed,
+              crafted: res.crafted,
+              finalStock: res.resultingStock
+            };
+          }
+        }
       }
-      
+
       if (bestScenario) {
-          const baseRes = evaluateStockOptimal({});
-          bestScenario.baseProfit = baseRes.profit;
-          bestScenario.addedProfit = bestScenario.profit - baseRes.profit;
+        const baseRes = evalStockFast({}, sortedItems);
+        bestScenario.baseProfit = baseRes.profit;
+        bestScenario.addedProfit = bestScenario.profit - baseRes.profit;
 
-          const addedStock = bestScenario.combinedYield;
-          let trackingStock = { ...stock };
-          for(const k in addedStock) trackingStock[k] = (trackingStock[k] || 0) + addedStock[k];
+        const addedStock = bestScenario.combinedYield;
+        let trackingStock = { ...stock };
+        for (const k in addedStock) trackingStock[k] = (trackingStock[k] || 0) + addedStock[k];
 
-          const sortedCraftedNames = Object.keys(bestScenario.crafted).sort((a, b) => {
-              const pA = itemsWithProfit.find(i=>i.name===a)?.profit || 0;
-              const pB = itemsWithProfit.find(i=>i.name===b)?.profit || 0;
-              return pB - pA;
+        const sortedCraftedNames = Object.keys(bestScenario.crafted).sort((a, b) => {
+          const pA = sortedItems.find(i => i.name === a)?.profit || 0;
+          const pB = sortedItems.find(i => i.name === b)?.profit || 0;
+          return pB - pA;
+        });
+
+        const flowDetails = [];
+        for (const itemName of sortedCraftedNames) {
+          const qty = bestScenario.crafted[itemName];
+          const sim = simulateCraftPure({ [itemName]: qty }, trackingStock);
+          flowDetails.push({
+            name: itemName,
+            qty: qty,
+            missing: sim.missing,
+            craftedLog: sim.craftedLog,
+            stockBeforeCraft: { ...trackingStock }
           });
-
-          const flowDetails = [];
-          let finalVanillaCost = 0;
-
-          for (const itemName of sortedCraftedNames) {
-              let qty = bestScenario.crafted[itemName];
-              let sim = simulateCraftPure({ [itemName]: qty }, trackingStock);
-              
-              while (qty > 0 && Object.keys(sim.missing).some(m => CORE_BASE_SHELLS.includes(m))) {
-                  qty--;
-                  sim = simulateCraftPure({ [itemName]: qty }, trackingStock);
-              }
-              if (qty <= 0) continue;
-
-              Object.entries(sim.missing).forEach(([m, q]) => {
-                  finalVanillaCost += (cost[m] || 0) * (q as number);
-              });
-
-              flowDetails.push({
-                  name: itemName,
-                  qty: qty,
-                  missing: sim.missing,
-                  craftedLog: sim.craftedLog,
-                  stockBeforeCraft: { ...trackingStock }
-              });
-              trackingStock = sim.stock;
-          }
-
-          bestScenario.flowDetails = flowDetails;
-          bestScenario.finalTrackingStock = trackingStock;
-          bestScenario.totalVanillaCost = finalVanillaCost;
+          trackingStock = sim.stock;
+        }
+        bestScenario.flowDetails = flowDetails;
       }
 
       setStaminaRecommendation(bestScenario);
       setIsCalculating(false);
-
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [stock, cost, blacklist, userStats, toolImprints, itemBaseReqsPerUnit]);
+  }, [stock, cost, blacklist, userStats, toolImprints, recommendMode, itemBaseReqsPerUnit]);
 
   const handleMergeStock = () => {
     if (confirm('입력하신 실제 획득량을 내 창고 재고에 합산하시겠습니까?')) {
       const savedV3 = localStorage.getItem('ocean_trade_v3');
       const parsedV3 = savedV3 ? JSON.parse(savedV3) : { stock: {} };
       if (!parsedV3.stock) parsedV3.stock = { ...stock };
-      
+
       let hasUpdates = false;
       Object.entries(actualYields).forEach(([item, qty]) => {
         if (qty > 0) {
@@ -371,23 +337,21 @@ export default function OceanStaminaRecommend({
           hasUpdates = true;
         }
       });
-      
+
       if (hasUpdates) {
         localStorage.setItem('ocean_trade_v3', JSON.stringify(parsedV3));
-        
         const savedV2 = localStorage.getItem('ocean_trade_v2');
         if (savedV2) {
-            const parsedV2 = JSON.parse(savedV2);
-            if (parsedV2.stock) {
-              Object.entries(actualYields).forEach(([item, qty]) => {
-                if (qty > 0) {
-                  parsedV2.stock[item] = (parsedV2.stock[item] || 0) + qty;
-                }
-              });
-              localStorage.setItem('ocean_trade_v2', JSON.stringify(parsedV2));
-            }
+          const parsedV2 = JSON.parse(savedV2);
+          if (parsedV2.stock) {
+            Object.entries(actualYields).forEach(([item, qty]) => {
+              if (qty > 0) {
+                parsedV2.stock[item] = (parsedV2.stock[item] || 0) + qty;
+              }
+            });
+            localStorage.setItem('ocean_trade_v2', JSON.stringify(parsedV2));
+          }
         }
-
         alert('성공적으로 재고에 합산되었습니다!\n변경사항을 적용하기 위해 페이지를 새로고침합니다.');
         window.location.reload();
       } else {
@@ -414,7 +378,7 @@ export default function OceanStaminaRecommend({
       <div key={itemName} className="bg-gray-100 dark:bg-[#16161a] border border-gray-300 dark:border-white/5 rounded px-2.5 py-2 flex flex-col xl:flex-row xl:items-center justify-between gap-1.5 shadow-sm">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <div className="flex items-center gap-1.5 shrink-0">
-            <img src={getImagePath(itemName)||undefined} className="w-3.5 h-3.5 object-contain opacity-90" />
+            <img src={getImagePath(itemName) || undefined} className="w-3.5 h-3.5 object-contain opacity-90" />
             <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200">{itemName}</span>
             <span className="text-[10px] font-black text-blue-700 dark:text-blue-400">{formatQty(qty, globalSetMode)}</span>
           </div>
@@ -422,7 +386,7 @@ export default function OceanStaminaRecommend({
           <div className="flex flex-wrap items-center gap-1.5">
             {recipe.ingredients.map((ing: any) => (
               <span key={ing.name} className="text-[10px] font-medium text-gray-700 dark:text-gray-400 flex items-center gap-1 bg-white dark:bg-black/30 px-1.5 py-0.5 rounded border border-gray-300 dark:border-white/5 shadow-sm">
-                <img src={getImagePath(ing.name)||undefined} className="w-3 h-3 object-contain opacity-70" />
+                <img src={getImagePath(ing.name) || undefined} className="w-3 h-3 object-contain opacity-70" />
                 {ing.name} <span className="text-gray-900 dark:text-white font-bold">{formatQty(ing.req * crafts, globalSetMode)}</span>
               </span>
             ))}
@@ -453,7 +417,7 @@ export default function OceanStaminaRecommend({
       <div key={itemName} className={`flex flex-col gap-2 p-3 rounded-xl border shadow-sm ${isFinal ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-300 dark:border-blue-500/30' : 'bg-gray-100 dark:bg-white/[0.02] border-gray-300 dark:border-white/5'}`}>
         <div className="flex items-center justify-between pb-2 border-b border-gray-300 dark:border-white/10">
           <div className="flex items-center gap-1.5">
-            <img src={getImagePath(itemName)||undefined} className="w-4 h-4 object-contain" />
+            <img src={getImagePath(itemName) || undefined} className="w-4 h-4 object-contain" />
             <span className={`text-[11px] font-black ${isFinal ? 'text-blue-800 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`}>{itemName}</span>
           </div>
           <span className={`text-[10px] font-black ${isFinal ? 'text-blue-700 dark:text-blue-400' : 'text-gray-700 dark:text-gray-400'}`}>{formatQty(qty, globalSetMode)}</span>
@@ -461,7 +425,7 @@ export default function OceanStaminaRecommend({
         <div className="flex flex-wrap gap-1.5 pt-1">
           {recipe.ingredients.map((ing: any) => (
             <span key={ing.name} className="text-[9px] font-medium text-gray-700 dark:text-gray-400 flex items-center gap-1 bg-white dark:bg-black/30 px-1.5 py-0.5 rounded shadow-sm border border-gray-300 dark:border-transparent">
-              <img src={getImagePath(ing.name)||undefined} className="w-3 h-3 object-contain opacity-80" />
+              <img src={getImagePath(ing.name) || undefined} className="w-3 h-3 object-contain opacity-80" />
               {ing.name} <span className="font-bold text-gray-900 dark:text-white">{formatQty(ing.req * crafts, globalSetMode)}</span>
             </span>
           ))}
@@ -471,73 +435,6 @@ export default function OceanStaminaRecommend({
             <span className="text-[8px] font-bold text-gray-600 dark:text-gray-400 bg-white dark:bg-white/5 px-1.5 py-0.5 rounded border border-gray-300 dark:border-transparent">소요시간: {timeStr}</span>
           </div>
         )}
-      </div>
-    );
-  };
-
-  const renderGroupedStock = (stockObj: Record<string, number>, globalSetMode: boolean) => {
-    const CATEGORY_ORDER = ['굴', '소라', '문어', '미역', '성게'];
-    const grouped: Record<string, [string, number][]> = {
-      '굴': [], '소라': [], '문어': [], '미역': [], '성게': [], '기타': []
-    };
-
-    Object.entries(stockObj).forEach(([item, qty]) => {
-      if (qty <= 0) return;
-      let matched = false;
-      for (const cat of CATEGORY_ORDER) {
-        if (item.startsWith(cat)) {
-          grouped[cat].push([item, qty]);
-          matched = true;
-          break;
-        }
-      }
-      if (!matched) grouped['기타'].push([item, qty]);
-    });
-
-    Object.values(grouped).forEach(arr => {
-        arr.sort((a, b) => {
-            const getTier = (name: string) => {
-                if (name.includes('1성')) return 1;
-                if (name.includes('2성')) return 2;
-                if (name.includes('3성')) return 3;
-                return 99;
-            };
-            const tierA = getTier(a[0]);
-            const tierB = getTier(b[0]);
-            if (tierA !== tierB) return tierA - tierB;
-            return a[0].localeCompare(b[0]);
-        });
-    });
-
-    return (
-      <div className="flex flex-col gap-4">
-        {['굴', '소라', '문어', '미역', '성게', '기타'].map(catName => {
-          const items = grouped[catName];
-          if (!items || items.length === 0) return null;
-          return (
-            <div key={catName} className="flex flex-col gap-2.5">
-              <div className="flex items-center gap-2 px-1">
-                <span className="text-[11px] font-black text-emerald-800 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800/50 shadow-sm">
-                  {catName === '기타' ? '기타 잉여 재료' : `${catName} 라인업`}
-                </span>
-                <div className="flex-1 h-[1px] bg-gray-200 dark:bg-white/10"></div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {items.map(([item, qty]) => (
-                  <div key={item} className="flex flex-col gap-1.5 bg-white dark:bg-[#16161a] px-3 py-2.5 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm transition-colors hover:border-emerald-300 dark:hover:border-emerald-500/50">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <img src={getImagePath(item)||undefined} className="w-4 h-4 object-contain shrink-0" />
-                      <span className="text-[11px] font-black text-gray-900 dark:text-white truncate">{item}</span>
-                    </div>
-                    <div className="text-right mt-1">
-                      <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{formatQty(qty, globalSetMode)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
       </div>
     );
   };
@@ -561,7 +458,7 @@ export default function OceanStaminaRecommend({
 
   return (
     <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-5 md:p-6 shadow-md transition-colors">
-      <div className="flex flex-col justify-between items-start mb-5 border-b border-gray-200 dark:border-white/5 pb-4 gap-4">
+      <div className="flex justify-between items-center mb-5 border-b border-gray-200 dark:border-white/5 pb-4">
         <div>
           <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tighter flex items-center gap-2">
             스태미나 추천
@@ -570,7 +467,7 @@ export default function OceanStaminaRecommend({
           <p className="text-[10px] text-gray-500 mt-1">현재 창고에 보유 중인 재고를 가장 효율적으로 소모할 수 있는 채집 경로입니다.</p>
         </div>
       </div>
-      
+
       {!userStats.stamina || userStats.stamina < 15 ? (
         <div className="py-12 text-center bg-gray-50 dark:bg-[#111113] rounded-xl border border-gray-300 dark:border-transparent">
           <p className="text-[10px] font-bold text-rose-600 dark:text-rose-500">가용 스태미나가 15 미만입니다. 우측 상단 개인설정에서 스태미나를 올바르게 입력해 주세요.</p>
@@ -590,12 +487,12 @@ export default function OceanStaminaRecommend({
         <>
           <div className="bg-gray-50 dark:bg-[#111113] border border-gray-300 dark:border-transparent rounded-xl p-5 shadow-sm transition-colors md:text-left">
             <p className="text-[11px] font-bold text-gray-800 dark:text-gray-300 leading-loose break-keep text-center md:text-left">
-              현재 가용 스태미나 <span className="font-black text-gray-900 dark:text-white">{userStats.stamina.toLocaleString()}</span>, 창고의 재고를 분석했을 때 <br className="hidden md:block"/>
+              현재 가용 스태미나 <span className="font-black text-gray-900 dark:text-white">{userStats.stamina.toLocaleString()}</span>, 창고의 재고를 분석했을 때 <br className="hidden md:block" />
               {Object.keys(staminaRecommendation.distribution).length === 1 ? (
                 <span className="flex items-center gap-1 mt-1 justify-center md:justify-start">
                   전체 스태미나를
                   <span className="flex items-center gap-1 font-black text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-200 dark:border-transparent">
-                    <img src={getImagePath(`${Object.keys(staminaRecommendation.distribution)[0]}(1성)`)||undefined} className="w-3.5 h-3.5 object-contain" />
+                    <img src={getImagePath(`${Object.keys(staminaRecommendation.distribution)[0]}(1성)`) || undefined} className="w-3.5 h-3.5 object-contain" />
                     {Object.keys(staminaRecommendation.distribution)[0]}
                   </span>
                   채집에 전량 사용하는 것을 추천드립니다.
@@ -603,14 +500,14 @@ export default function OceanStaminaRecommend({
               ) : (
                 <span className="flex flex-wrap items-center gap-1 mt-1 justify-center md:justify-start">
                   {Object.entries(staminaRecommendation.distribution).map(([cat, stam], idx, arr) => (
-                      <span key={cat} className="flex items-center gap-1">
-                          <span className="font-black text-blue-700 dark:text-blue-400">{(stam as number).toLocaleString()}</span> 스태미나는 
-                          <span className="flex items-center gap-1 font-black text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-200 dark:border-transparent">
-                            <img src={getImagePath(`${cat}(1성)`)||undefined} className="w-3.5 h-3.5 object-contain" />
-                            {cat}
-                          </span>
-                          채집에{idx === arr.length - 1 ? ' 사용하는 것을 추천드립니다.' : ', '}
+                    <span key={cat} className="flex items-center gap-1">
+                      <span className="font-black text-blue-700 dark:text-blue-400">{(stam as number).toLocaleString()}</span> 스태미나는
+                      <span className="flex items-center gap-1 font-black text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-200 dark:border-transparent">
+                        <img src={getImagePath(`${cat}(1성)`) || undefined} className="w-3.5 h-3.5 object-contain" />
+                        {cat}
                       </span>
+                      채집에{idx === arr.length - 1 ? ' 사용하는 것을 추천드립니다.' : ', '}
+                    </span>
                   ))}
                 </span>
               )}
@@ -619,7 +516,7 @@ export default function OceanStaminaRecommend({
 
           <div className="mt-8 space-y-6">
             <h4 className="text-[13px] font-black text-gray-900 dark:text-white tracking-tight mb-2 ml-1">스태미나 분배 상세 리포트</h4>
-            
+
             <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl overflow-hidden shadow-md">
               <div className="p-4 border-b border-gray-200 dark:border-white/5 bg-gray-100 dark:bg-white/[0.02]">
                 <p className="text-[11px] font-black text-blue-800 dark:text-blue-400 flex items-center gap-1.5 mb-1.5">
@@ -635,13 +532,13 @@ export default function OceanStaminaRecommend({
                   const y2 = staminaRecommendation.combinedYield[`${cat}(2성)`] || 0;
                   const y3 = staminaRecommendation.combinedYield[`${cat}(3성)`] || 0;
                   const total = y1 + y2 + y3;
-                  
+
                   return (
                     <div key={cat} className="flex flex-col bg-white dark:bg-[#111113] p-3 rounded-xl border border-gray-300 dark:border-white/5 shadow-sm">
                       <div className="flex items-center justify-between mb-3 border-b border-gray-200 dark:border-white/5 pb-2">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1.5">
-                            <img src={getImagePath(`${cat}(1성)`)||undefined} className="w-5 h-5 object-contain" />
+                            <img src={getImagePath(`${cat}(1성)`) || undefined} className="w-5 h-5 object-contain" />
                             <span className="text-[12px] font-black text-gray-900 dark:text-white">{cat} 채집</span>
                           </div>
                           <span className="text-[9px] font-bold text-gray-600 dark:text-gray-500">{(stam as number).toLocaleString()} 스태미나 소모</span>
@@ -678,8 +575,8 @@ export default function OceanStaminaRecommend({
                     예상 획득량 대신 <strong className="text-purple-600 dark:text-purple-400">실제 획득한 수량</strong>을 입력하고 창고 재고에 바로 합산할 수 있습니다.
                   </p>
                 </div>
-                <button 
-                  onClick={handleMergeStock} 
+                <button
+                  onClick={handleMergeStock}
                   className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-black px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-95 whitespace-nowrap shrink-0"
                 >
                   내 재고에 합산하기
@@ -691,86 +588,86 @@ export default function OceanStaminaRecommend({
                   const currentStock = stock[item] || 0;
                   const actual = actualYields[item] !== undefined ? actualYields[item] : expected;
                   const total = currentStock + (Number(actual) || 0);
-                  
+
                   return (
                     <div key={item} className="flex flex-col gap-2 bg-white dark:bg-[#111113] p-3 rounded-xl border border-gray-300 dark:border-white/5 shadow-sm transition-colors focus-within:border-purple-400 dark:focus-within:border-purple-500/50">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <img src={getImagePath(item)||undefined} className="w-4 h-4 object-contain" />
+                        <img src={getImagePath(item) || undefined} className="w-4 h-4 object-contain" />
                         <span className="text-[11px] font-black text-gray-900 dark:text-white">{item}</span>
                       </div>
-                      
+
                       <div className="flex items-center justify-between text-[10px] bg-gray-50 dark:bg-black/30 p-1.5 rounded-lg border border-gray-200 dark:border-transparent">
-                         <span className="font-bold text-gray-600 dark:text-gray-400 truncate pr-1">기존 재고: {formatQty(currentStock, globalSetMode)}</span>
-                         <span className="font-black text-purple-700 dark:text-purple-500 shrink-0 flex items-center gap-1">
-                           <span className="text-gray-500 font-bold">예상 획득량</span>
-                           +{formatQty(expected, globalSetMode)}
-                         </span>
+                        <span className="font-bold text-gray-600 dark:text-gray-400 truncate pr-1">기존 재고: {formatQty(currentStock, globalSetMode)}</span>
+                        <span className="font-black text-purple-700 dark:text-purple-500 shrink-0">
+                          <span className="text-gray-500 font-bold mr-1">예상 획득량</span>
+                          +{formatQty(expected, globalSetMode)}
+                        </span>
                       </div>
-                      
+
                       <div className="flex flex-col justify-between text-[10px] mt-0.5 gap-1.5">
-                         <span className="font-bold text-gray-700 dark:text-gray-300">실제 획득 수량 입력</span>
-                         {globalSetMode ? (
-                           <div className="grid grid-cols-3 gap-1 w-full">
-                             <input 
-                               type="number" 
-                               min="0" 
-                               placeholder="상자"
-                               value={actual >= 3456 ? Math.floor(actual / 3456) : ''} 
-                               onChange={(e) => {
-                                 const val = parseInt(e.target.value) || 0;
-                                 const s = Math.floor((actual % 3456) / 64);
-                                 const u = actual % 64;
-                                 setActualYields(prev => ({...prev, [item]: (val * 3456) + (s * 64) + u}));
-                               }}
-                               className="w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1 py-1 text-center text-[10px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors placeholder:font-normal placeholder:text-gray-400"
-                             />
-                             <input 
-                               type="number" 
-                               min="0" 
-                               placeholder="세트"
-                               value={(actual % 3456) >= 64 ? Math.floor((actual % 3456) / 64) : ''} 
-                               onChange={(e) => {
-                                 const val = parseInt(e.target.value) || 0;
-                                 const b = Math.floor(actual / 3456);
-                                 const u = actual % 64;
-                                 setActualYields(prev => ({...prev, [item]: (b * 3456) + (val * 64) + u}));
-                               }}
-                               className="w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1 py-1 text-center text-[10px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors placeholder:font-normal placeholder:text-gray-400"
-                             />
-                             <input 
-                               type="number" 
-                               min="0" 
-                               placeholder="개"
-                               value={actual % 64 !== 0 ? actual % 64 : ''} 
-                               onChange={(e) => {
-                                 const val = parseInt(e.target.value) || 0;
-                                 const b = Math.floor(actual / 3456);
-                                 const s = Math.floor((actual % 3456) / 64);
-                                 setActualYields(prev => ({...prev, [item]: (b * 3456) + (s * 64) + val}));
-                               }}
-                               className="w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1 py-1 text-center text-[10px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors placeholder:font-normal placeholder:text-gray-400"
-                             />
-                           </div>
-                         ) : (
-                           <div className="flex items-center gap-1 w-full justify-end">
-                             <input 
-                               type="number" 
-                               min="0"
-                               value={actual === 0 && actualYields[item] === 0 ? '' : actual} 
-                               onChange={(e) => {
-                                 const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-                                 setActualYields(prev => ({...prev, [item]: isNaN(val) ? 0 : val}));
-                               }}
-                               className="w-full sm:w-20 bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1.5 py-1 text-right text-[11px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors"
-                             />
-                             <span className="text-gray-500 font-bold shrink-0">개</span>
-                           </div>
-                         )}
+                        <span className="font-bold text-gray-700 dark:text-gray-300">실제 획득 수량 입력</span>
+                        {globalSetMode ? (
+                          <div className="grid grid-cols-3 gap-1 w-full">
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="상자"
+                              value={actual >= 3456 ? Math.floor(actual / 3456) : ''}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value) || 0;
+                                const s = Math.floor((actual % 3456) / 64);
+                                const u = actual % 64;
+                                setActualYields(prev => ({ ...prev, [item]: (val * 3456) + (s * 64) + u }));
+                              }}
+                              className="w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1 py-1 text-center text-[10px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors placeholder:font-normal placeholder:text-gray-400"
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="세트"
+                              value={(actual % 3456) >= 64 ? Math.floor((actual % 3456) / 64) : ''}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value) || 0;
+                                const b = Math.floor(actual / 3456);
+                                const u = actual % 64;
+                                setActualYields(prev => ({ ...prev, [item]: (b * 3456) + (val * 64) + u }));
+                              }}
+                              className="w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1 py-1 text-center text-[10px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors placeholder:font-normal placeholder:text-gray-400"
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="개"
+                              value={actual % 64 !== 0 ? actual % 64 : ''}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value) || 0;
+                                const b = Math.floor(actual / 3456);
+                                const s = Math.floor((actual % 3456) / 64);
+                                setActualYields(prev => ({ ...prev, [item]: (b * 3456) + (s * 64) + val }));
+                              }}
+                              className="w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1 py-1 text-center text-[10px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors placeholder:font-normal placeholder:text-gray-400"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 w-full justify-end">
+                            <input
+                              type="number"
+                              min="0"
+                              value={actual === 0 && actualYields[item] === 0 ? '' : actual}
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                setActualYields(prev => ({ ...prev, [item]: isNaN(val) ? 0 : val }));
+                              }}
+                              className="w-full sm:w-20 bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-1.5 py-1 text-right text-[11px] font-black text-purple-700 dark:text-purple-400 outline-none focus:border-purple-500 transition-colors"
+                            />
+                            <span className="text-gray-500 font-bold shrink-0">개</span>
+                          </div>
+                        )}
                       </div>
-                      
+
                       <div className="flex items-center justify-between pt-2 mt-1 border-t border-gray-200 dark:border-white/5">
-                         <span className="text-[10px] font-bold text-gray-700 dark:text-gray-400">합산 후 총 재고</span>
-                         <span className="text-[11px] font-black text-gray-900 dark:text-white">{formatQty(total, globalSetMode)}</span>
+                        <span className="text-[10px] font-bold text-gray-700 dark:text-gray-400">합산 후 총 재고</span>
+                        <span className="text-[11px] font-black text-gray-900 dark:text-white">{formatQty(total, globalSetMode)}</span>
                       </div>
                     </div>
                   );
@@ -779,7 +676,7 @@ export default function OceanStaminaRecommend({
             </div>
 
             <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-5 shadow-md mt-4 transition-all">
-              <div 
+              <div
                 className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-3 cursor-pointer group"
                 onClick={() => setIsPhase3Open(!isPhase3Open)}
               >
@@ -788,50 +685,50 @@ export default function OceanStaminaRecommend({
                     Phase 3. 예상 제작 가이드
                   </p>
                   <p className="text-[10px] font-bold text-gray-700 dark:text-gray-400 leading-relaxed">
-                    통합된 재고를 바탕으로 바닐라 블록 조달 여부를 확인하여 최종 수익품을 제작합니다.
+                    통합된 재고를 바탕으로 바닐라 블록을 조달하여 최종 수익품을 제작합니다.
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#111113] p-1 rounded-lg border border-gray-300 dark:border-white/5 shadow-inner" onClick={e => e.stopPropagation()}>
-                    <button 
-                      onClick={() => setBlueprintViewMode('compact')} 
+                    <button
+                      onClick={() => setBlueprintViewMode('compact')}
                       className={`px-3 py-1.5 rounded-md text-[10px] font-black transition-all ${blueprintViewMode === 'compact' ? 'bg-white dark:bg-[#1a1a1e] text-indigo-700 dark:text-indigo-400 shadow-sm border border-gray-300 dark:border-transparent' : 'text-gray-600 hover:text-gray-900 dark:hover:text-gray-300'}`}
                     >
                       세로 그리드
                     </button>
-                    <button 
-                      onClick={() => setBlueprintViewMode('flow')} 
+                    <button
+                      onClick={() => setBlueprintViewMode('flow')}
                       className={`px-3 py-1.5 rounded-md text-[10px] font-black transition-all ${blueprintViewMode === 'flow' ? 'bg-white dark:bg-[#1a1a1e] text-indigo-700 dark:text-indigo-400 shadow-sm border border-gray-300 dark:border-transparent' : 'text-gray-600 hover:text-gray-900 dark:hover:text-gray-300'}`}
                     >
                       가로 플로우
                     </button>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-500 group-hover:bg-gray-200 dark:group-hover:bg-white/10 transition-colors">
-                     <svg className={`w-4 h-4 transition-transform duration-300 ${isPhase3Open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                    <svg className={`w-4 h-4 transition-transform duration-300 ${isPhase3Open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
                   </div>
                 </div>
               </div>
-              
-              <div className={`transition-all duration-300 overflow-hidden ${isPhase3Open ? 'max-h-[50000px] opacity-100 mt-5' : 'max-h-0 opacity-0 mt-0'}`}>
+
+              <div className={`transition-all duration-300 overflow-hidden ${isPhase3Open ? 'max-h-[5000px] opacity-100 mt-5' : 'max-h-0 opacity-0 mt-0'}`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {staminaRecommendation.flowDetails && staminaRecommendation.flowDetails.map((flow: any) => {
                     const itemName = flow.name;
                     const targetQty = flow.qty;
                     const missingKeys = Object.keys(flow.missing);
-                    const s1 = Object.entries(flow.craftedLog || {}).filter(([k]) => !k.includes("핵") && !k.includes("결정") && !k.includes("영약") && !OCEAN_FIXED_PRICES.find(p=>p.name===k) && k !== itemName);
+                    const s1 = Object.entries(flow.craftedLog || {}).filter(([k]) => !k.includes("핵") && !k.includes("결정") && !k.includes("영약") && !OCEAN_FIXED_PRICES.find(p => p.name === k) && k !== itemName);
                     const s2 = Object.entries(flow.craftedLog || {}).filter(([k]) => (k.includes("핵") || k.includes("결정") || k.includes("영약")) && k !== itemName);
 
                     let totalSec = 0;
                     Object.entries(flow.craftedLog || {}).forEach(([m, q]) => {
-                        let recipe: any = PARSED_RECIPES.find(r => r.name === m);
-                        if (!recipe && RECIPE_FIXES[m]) {
-                            recipe = { yieldAmount: RECIPE_FIXES[m].yield, time: '0초' };
-                        }
-                        if (recipe) {
-                            const crafts = Math.ceil((q as number) / recipe.yieldAmount);
-                            const baseSec = parseCraftTime(recipe.time || '0초') * crafts;
-                            totalSec += Math.floor(baseSec * (1 - o13Reduction));
-                        }
+                      let recipe: any = PARSED_RECIPES.find(r => r.name === m);
+                      if (!recipe && RECIPE_FIXES[m]) {
+                        recipe = { yieldAmount: RECIPE_FIXES[m].yield, time: '0초' };
+                      }
+                      if (recipe) {
+                        const crafts = Math.ceil((q as number) / recipe.yieldAmount);
+                        const baseSec = parseCraftTime(recipe.time || '0초') * crafts;
+                        totalSec += Math.floor(baseSec * (1 - o13Reduction));
+                      }
                     });
                     const totalTimeStr = formatTime(totalSec);
 
@@ -840,7 +737,7 @@ export default function OceanStaminaRecommend({
                     const revenue = sellPrice * targetQty;
                     let missingCost = 0;
                     Object.entries(flow.missing).forEach(([m, q]) => {
-                         missingCost += (cost[m] || 0) * (q as number);
+                      missingCost += (cost[m] || 0) * (q as number);
                     });
                     const netProfit = revenue - missingCost;
 
@@ -848,7 +745,7 @@ export default function OceanStaminaRecommend({
                       <div key={itemName} className={`bg-white dark:bg-[#111113] border border-gray-300 dark:border-white/5 rounded-2xl p-4 shadow-md flex flex-col ${blueprintViewMode === 'flow' ? 'col-span-full' : 'h-full'}`}>
                         <div className="flex items-start justify-between mb-4 pb-3 border-b border-gray-300 dark:border-white/10">
                           <div className="flex items-center gap-2 mt-1">
-                            <img src={getImagePath(itemName)||undefined} className="w-8 h-8 object-contain drop-shadow-md" />
+                            <img src={getImagePath(itemName) || undefined} className="w-8 h-8 object-contain drop-shadow-md" />
                             <div>
                               <span className="text-[15px] font-black text-indigo-800 dark:text-indigo-400 leading-none">{itemName}</span>
                               <p className="text-[11px] font-bold text-gray-600 dark:text-gray-400 mt-1">최종 연성 수량: {formatQty(targetQty, globalSetMode)}</p>
@@ -859,10 +756,9 @@ export default function OceanStaminaRecommend({
                             <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded shadow-sm border border-emerald-300 dark:border-transparent">예상 순수익: +{netProfit.toLocaleString()} G</span>
                           </div>
                         </div>
-                        
+
                         {blueprintViewMode === 'flow' ? (
                           <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-3 w-full">
-                            
                             <div className="flex-1 flex flex-col min-w-[200px]">
                               <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5 uppercase tracking-widest px-1">Step 1. 바닐라 조달</span>
                               <div className="bg-gray-50 dark:bg-white/[0.02] border border-gray-300 dark:border-white/5 rounded-xl p-3 h-full flex flex-col justify-center gap-1.5 shadow-sm">
@@ -872,7 +768,7 @@ export default function OceanStaminaRecommend({
                                   missingKeys.map((m) => (
                                     <div key={m} className="flex items-center justify-between text-[10px]">
                                       <div className="flex items-center gap-1.5 truncate">
-                                        <img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain opacity-80 shrink-0" />
+                                        <img src={getImagePath(m) || undefined} className="w-3.5 h-3.5 object-contain opacity-80 shrink-0" />
                                         <span className="text-gray-800 dark:text-gray-300 font-bold truncate">{m}</span>
                                       </div>
                                       <span className="text-indigo-600 font-black shrink-0 ml-1">{formatQty(flow.missing[m] as number, globalSetMode)}</span>
@@ -907,60 +803,57 @@ export default function OceanStaminaRecommend({
                             )}
 
                             <div className="hidden xl:flex items-center justify-center text-indigo-400 dark:text-indigo-800 shrink-0 text-xl font-black">{'>'}</div>
-                            
                             <div className="flex-1 flex flex-col min-w-[220px]">
                               <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5 uppercase tracking-widest px-1">Step 4. 최종 연성</span>
                               <div className="flex flex-col h-full justify-center">
                                 {renderProcessNode(itemName, targetQty, true)}
                               </div>
                             </div>
-
                           </div>
                         ) : (
                           <div className="flex flex-col gap-4 flex-1 mt-2">
                             <div>
-                              <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">STEP 1. 부족한 바닐라 재료</p>
+                              <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">Step 1. 바닐라 조달</p>
                               {missingKeys.length === 0 ? (
                                 <span className="text-[10px] text-gray-500 font-bold">조달 필요 없음</span>
                               ) : (
                                 <div className="flex flex-wrap gap-1.5">
-                                    {missingKeys.map((m) => (
-                                      <span key={m} className="bg-gray-100 dark:bg-[#16161a] border border-gray-300 dark:border-white/5 px-2 py-1 rounded text-[9px] font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1 shadow-sm">
-                                          <img src={getImagePath(m)||undefined} className="w-3.5 h-3.5 object-contain" />
-                                          {m} <span className="text-indigo-700 dark:text-indigo-400">{formatQty(flow.missing[m] as number, globalSetMode)}</span>
-                                      </span>
-                                    ))}
+                                  {missingKeys.map((m) => (
+                                    <span key={m} className="bg-gray-100 dark:bg-[#16161a] border border-gray-300 dark:border-white/5 px-2 py-1 rounded text-[9px] font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1 shadow-sm">
+                                      <img src={getImagePath(m) || undefined} className="w-3.5 h-3.5 object-contain" />
+                                      {m} <span className="text-indigo-700 dark:text-indigo-400">{formatQty(flow.missing[m] as number, globalSetMode)}</span>
+                                    </span>
+                                  ))}
                                 </div>
                               )}
                             </div>
 
                             {s1.length > 0 && (
                               <div>
-                                  <p className="text-[10px] font-black text-purple-700 dark:text-purple-400 mb-1.5">STEP 2. 하위 연금/가공 (창고에서 꺼내기)</p>
-                                  <div className="flex flex-col gap-2">
-                                    {s1.map(([m, q]) => renderCraftStep(m, q as number))}
-                                  </div>
+                                <p className="text-[10px] font-black text-purple-700 dark:text-purple-400 mb-1.5">Step 2. 하위 연금/가공 (창고에서 꺼내기)</p>
+                                <div className="flex flex-col gap-2">
+                                  {s1.map(([m, q]) => renderCraftStep(m, q as number))}
+                                </div>
                               </div>
                             )}
 
                             {s2.length > 0 && (
                               <div>
-                                  <p className="text-[10px] font-black text-rose-700 dark:text-rose-400 mb-1.5">STEP 3. 중급 연금 가공</p>
-                                  <div className="flex flex-col gap-2">
-                                    {s2.map(([m, q]) => renderCraftStep(m, q as number))}
-                                  </div>
+                                <p className="text-[10px] font-black text-rose-700 dark:text-rose-400 mb-1.5">Step 3. 중급 연금 가공</p>
+                                <div className="flex flex-col gap-2">
+                                  {s2.map(([m, q]) => renderCraftStep(m, q as number))}
+                                </div>
                               </div>
                             )}
 
                             <div className="mt-auto pt-2">
-                                <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">STEP 4. 최종 연금 가공</p>
-                                <div className="flex flex-col gap-2">
-                                  {renderCraftStep(itemName, targetQty)}
-                                </div>
+                              <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 mb-1.5">Step 4. 최종 연금 가공</p>
+                              <div className="flex flex-col gap-2">
+                                {renderCraftStep(itemName, targetQty)}
+                              </div>
                             </div>
                           </div>
                         )}
-
                       </div>
                     );
                   })}
@@ -968,7 +861,7 @@ export default function OceanStaminaRecommend({
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-gray-50 to-white dark:from-[#111113] dark:to-[#0a0a0c] p-6 rounded-2xl border border-gray-300 dark:border-white/5 shadow-md mt-6">
+            <div className="bg-gradient-to-r from-gray-50 to-white dark:from-[#111113] dark:to-[#0a0a0c] p-6 rounded-2xl border border-gray-300 dark:border-transparent shadow-md mt-6">
               <p className="text-[12px] font-black text-gray-800 dark:text-gray-200 mb-4 tracking-widest uppercase border-b border-gray-300 dark:border-white/5 pb-3">Phase 4. 최종 수익계산 결과</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-[#1a1a1e] p-4 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm text-center flex flex-col justify-center">
@@ -990,17 +883,6 @@ export default function OceanStaminaRecommend({
                 </div>
               </div>
             </div>
-
-            <div className="bg-white dark:bg-[#0a0a0c] border border-gray-300 dark:border-white/5 rounded-2xl p-6 shadow-md mt-6 transition-all">
-              <p className="text-[12px] font-black text-emerald-800 dark:text-emerald-400 flex items-center gap-1.5 mb-2">
-                Phase 5. 모든 작업 완료 후 최종 재고 (예상)
-              </p>
-              <p className="text-[10px] font-bold text-gray-700 dark:text-gray-400 leading-relaxed mb-5">
-                추천된 경로에 따라 채집과 가공을 모두 마친 후 창고에 최종적으로 남게 되는 잉여 재고입니다.
-              </p>
-              {renderGroupedStock(staminaRecommendation.finalTrackingStock || staminaRecommendation.resultingStock || {}, globalSetMode)}
-            </div>
-
           </div>
         </>
       )}
