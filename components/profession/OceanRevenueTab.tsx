@@ -20,7 +20,7 @@ const IMPRINT_ROD_RAY_CHANCE = [0, 0.01, 0.02, 0.03, 0.04, 0.05];
 const IMPRINT_ROD_FISH_CHANCE = [0, 0.25, 0.50, 0.75, 1.00];
 
 const ROD_IMPRINTS_MAP: Record<string, string> = {
-  'rod_fish': '물고기 행운',
+  'rod_fish': '낚시 행운',
   'rod_power': '어획 강화',
   'rod_shell_find': '조개 탐색',
   'rod_shell': '어패 행운',
@@ -474,7 +474,7 @@ export default function OceanRevenueTab({ userStats, toolImprints }: Props) {
             <div>
               <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div> 특수 각인 효과</h4>
               <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed break-keep">
-                물고기 행운, 정령 고래 조우, 가오리 인도 각인은 스태미나 횟수 기반으로 조우 기댓값이 별도로 산출되어 상단 요약 패널에 표시됩니다.
+                정령 고래 조우, 가오리 인도 각인은 스태미나 횟수 기반으로 조우 기댓값이 별도로 산출되어 상단 요약 패널에 표시됩니다.
               </p>
             </div>
           </div>

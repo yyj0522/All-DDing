@@ -25,7 +25,7 @@ const IMPRINT_CATEGORIES: Record<string, { toolId: string; category: string; con
     { id: 'pick_roulette', name: '광부 룰렛', maxLv: 5 }
   ]},
   '해양': { toolId: 'rod', category: 'fish', contractKey: 'contract_fish', items: [
-    { id: 'rod_fish', name: '물고기 행운', maxLv: 4 }, { id: 'rod_shell_find', name: '조개 탐색', maxLv: 3 }, { id: 'rod_shell', name: '어패 행운', maxLv: 4 }, 
+    { id: 'rod_fish', name: '낚시 행운', maxLv: 4 }, { id: 'rod_shell_find', name: '조개 탐색', maxLv: 3 }, { id: 'rod_shell', name: '어패 행운', maxLv: 4 }, 
     { id: 'rod_whale', name: '정령 고래', maxLv: 5 }, { id: 'rod_ray', name: '가오리 인도', maxLv: 5 }, { id: 'rod_roulette', name: '어부 룰렛', maxLv: 5 }
   ]},
   '사냥': { toolId: 'sword', category: 'hunt', contractKey: 'contract_hunt', items: [

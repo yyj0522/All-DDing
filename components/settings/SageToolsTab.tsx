@@ -54,7 +54,7 @@ const IMPRINT_SYSTEM: Record<string, { category: string; contract: string; contr
   rod: {
     category: 'fish', contract: 'hightide', contractName: '만조의 영혼 계약서',
     items: [
-      { id: 'rod_fish', name: '물고기 행운', reqs: [5, 7, 9, 11] },
+      { id: 'rod_fish', name: '낚시 행운', reqs: [5, 7, 9, 11] },
       { id: 'rod_power', name: '어획 강화', reqs: [5, 7, 9] },
       { id: 'rod_shell_find', name: '조개 탐색', reqs: [3, 5, 7] },
       { id: 'rod_shell', name: '어패 행운', reqs: [5, 7, 9, 11] },

@@ -95,7 +95,7 @@ const EFFECTS_DATA: Record<string, { name: string; maxLevel: number; reqs: numbe
     { name: '광부 룰렛', maxLevel: 5, reqs: [5, 5, 7, 7, 9] },
   ],
   rod: [
-    { name: '물고기 행운', maxLevel: 4, reqs: [5, 7, 9, 11] },
+    { name: '낚시 행운', maxLevel: 4, reqs: [5, 7, 9, 11] },
     { name: '어획 강화', maxLevel: 3, reqs: [5, 7, 9] },
     { name: '조개 탐색', maxLevel: 3, reqs: [3, 5, 7] },
     { name: '어패 행운', maxLevel: 4, reqs: [5, 7, 9, 11] },
