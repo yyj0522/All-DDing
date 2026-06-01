@@ -77,6 +77,12 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
 
   const clearTradeQty = () => setTradeQty({});
 
+  const clearCost = () => {
+    if (!confirm('입력된 모든 단가를 초기화하시겠습니까?')) return;
+    setCost({});
+    alert('모든 단가가 초기화되었습니다.');
+  };
+
   const saveCostData = () => {
     localStorage.setItem('ocean_trade_v3', JSON.stringify({ cost, stock, blacklist, globalSetMode, recommendMode }));
     alert('입력된 설정이 성공적으로 저장되었습니다.');
@@ -537,6 +543,7 @@ export default function OceanTradeCalcTab({ userStats, toolImprints }: Props) {
                 <p className="text-2xl md:text-3xl font-black text-blue-600 dark:text-blue-400">{totalTradeAmount.toLocaleString()} G</p>
               </div>
               <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
+                <button onClick={clearCost} className="flex-1 sm:flex-none bg-gray-200 dark:bg-white/10 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-[11px] font-black px-5 py-3 rounded-xl transition-all shadow-sm">단가 초기화</button>
                 <button onClick={clearTradeQty} className="flex-1 sm:flex-none bg-gray-200 dark:bg-white/10 hover:bg-gray-300 text-gray-700 dark:text-gray-300 text-[11px] font-black px-5 py-3 rounded-xl transition-all shadow-sm">수량 초기화</button>
                 <button onClick={addTradeToStock} className="flex-[2] sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black px-6 py-3 rounded-xl transition-all shadow-md">재고에 합산</button>
               </div>
