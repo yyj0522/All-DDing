@@ -51,8 +51,6 @@ export default function SkillTree({ profTab, levels, onLevelChange, selectedSkil
     if (id === 'h14') imageId = 'h6';
     if (id === 'h15') imageId = 'h14';
     if (id === 'h16') imageId = 'h15';
-    if (id === 'f22') imageId = 'f15';
-    if (id === 'f23') imageId = 'f4'; 
     if (id === 'm16') imageId = 'm5'; 
     if (id === 'm17') imageId = 'm17'; 
     if (id === 'o19') imageId = 'o18'; 
@@ -273,7 +271,12 @@ export default function SkillTree({ profTab, levels, onLevelChange, selectedSkil
                         <ul>
                           <li><SkillBox id="o18" />
                             <ul>
-                              <li><SkillBox id="o19" /></li>
+                              <li><SkillBox id="o19" />
+                                <ul>
+                                  <li><SkillBox id="o21" /></li>
+                                  <li><SkillBox id="o22" /></li>
+                                </ul>
+                              </li>
                             </ul>
                           </li>
                         </ul>

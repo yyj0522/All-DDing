@@ -20,63 +20,63 @@ interface Props {
 
 const normalizeId = (id: string) => id.replace(/^sage_/, '');
 
-const IMPRINT_SYSTEM: Record<string, { category: string; contract: string; contractName: string; items: { id: string; name: string; reqs: number[] }[] }> = {
+const IMPRINT_SYSTEM: Record<string, { category: string; contract: string; contractName: string; items: { id: string; name: string; reqs: number[]; rarity: string }[] }> = {
   hoe: {
     category: 'farm', contract: 'prosperity', contractName: '번영의 영혼 계약서',
     items: [
-      { id: 'hoe_power', name: '채집 강화', reqs: [5, 7, 9] },
-      { id: 'hoe_speed', name: '채집 가속', reqs: [3, 5, 7] },
-      { id: 'hoe_seed', name: '씨앗 행운', reqs: [5, 7, 9, 11] },
-      { id: 'hoe_fruit', name: '과일 행운', reqs: [5, 7, 9, 11] },
-      { id: 'hoe_fruit_speed', name: '과일 가속', reqs: [3, 5, 7] },
-      { id: 'hoe_bean', name: '원두 행운', reqs: [5, 7, 9, 11] },
-      { id: 'hoe_fast', name: '빠른 농부', reqs: [9, 9, 11, 11, 13] },
-      { id: 'hoe_box', name: '작물 상자', reqs: [7, 7, 9, 9, 11] },
-      { id: 'hoe_basket', name: '과일 바구니', reqs: [9, 9, 11, 11, 13] },
-      { id: 'hoe_meteor', name: '유성 낙하', reqs: [9, 9, 11, 11, 13] },
-      { id: 'hoe_roulette', name: '농부 룰렛', reqs: [5, 5, 7, 7, 9] }
+      { id: 'hoe_power', name: '채집 강화', reqs: [5, 7, 9], rarity: 'normal' },
+      { id: 'hoe_speed', name: '채집 가속', reqs: [3, 5, 7], rarity: 'normal' },
+      { id: 'hoe_seed', name: '씨앗 행운', reqs: [5, 7, 9, 11], rarity: 'epic' },
+      { id: 'hoe_fruit', name: '과일 행운', reqs: [5, 7, 9, 11], rarity: 'rare' },
+      { id: 'hoe_fruit_speed', name: '과일 가속', reqs: [3, 5, 7], rarity: 'normal' },
+      { id: 'hoe_bean', name: '원두 행운', reqs: [5, 7, 9, 11], rarity: 'rare' },
+      { id: 'hoe_fast', name: '빠른 농부', reqs: [9, 9, 11, 11, 13], rarity: 'normal' },
+      { id: 'hoe_box', name: '작물 상자', reqs: [7, 7, 9, 9, 11], rarity: 'rare' },
+      { id: 'hoe_basket', name: '과일 바구니', reqs: [9, 9, 11, 11, 13], rarity: 'normal' },
+      { id: 'hoe_meteor', name: '유성 낙하', reqs: [9, 9, 11, 11, 13], rarity: 'normal' },
+      { id: 'hoe_roulette', name: '농부 룰렛', reqs: [5, 5, 7, 7, 9], rarity: 'rare' }
     ]
   },
   pickaxe: {
     category: 'mine', contract: 'shatter', contractName: '파쇄의 영혼 계약서',
     items: [
-      { id: 'pick_power', name: '채광 강화', reqs: [5, 7, 9] },
-      { id: 'pick_speed', name: '채광 가속', reqs: [3, 5, 7] },
-      { id: 'pick_ore', name: '광물 행운', reqs: [5, 7, 9, 11] },
-      { id: 'pick_relic', name: '유물 탐색', reqs: [3, 5, 7] },
-      { id: 'pick_coby', name: '코비 탐색', reqs: [3, 5, 7] },
-      { id: 'pick_fast', name: '빠른 광부', reqs: [9, 9, 11, 11, 13] },
-      { id: 'pick_gem_coby', name: '보석 코비', reqs: [9, 9, 11, 11, 13] },
-      { id: 'pick_cart', name: '광산 수레', reqs: [7, 7, 9, 9, 11] },
-      { id: 'pick_roulette', name: '광부 룰렛', reqs: [5, 5, 7, 7, 9] }
+      { id: 'pick_power', name: '채광 강화', reqs: [5, 7, 9], rarity: 'legendary' },
+      { id: 'pick_speed', name: '채광 가속', reqs: [3, 5, 7], rarity: 'legendary' },
+      { id: 'pick_ore', name: '광물 행운', reqs: [5, 7, 9, 11], rarity: 'legendary' },
+      { id: 'pick_relic', name: '유물 탐색', reqs: [3, 5, 7], rarity: 'mythic' },
+      { id: 'pick_coby', name: '코비 탐색', reqs: [3, 5, 7], rarity: 'normal' },
+      { id: 'pick_fast', name: '빠른 광부', reqs: [9, 9, 11, 11, 13], rarity: 'rare' },
+      { id: 'pick_gem_coby', name: '보석 코비', reqs: [9, 9, 11, 11, 13], rarity: 'mythic' },
+      { id: 'pick_cart', name: '광산 수레', reqs: [7, 7, 9, 9, 11], rarity: 'mythic' },
+      { id: 'pick_roulette', name: '광부 룰렛', reqs: [5, 5, 7, 7, 9], rarity: 'legendary' }
     ]
   },
   rod: {
     category: 'fish', contract: 'hightide', contractName: '만조의 영혼 계약서',
     items: [
-      { id: 'rod_fish', name: '낚시 행운', reqs: [5, 7, 9, 11] },
-      { id: 'rod_power', name: '어획 강화', reqs: [5, 7, 9] },
-      { id: 'rod_shell_find', name: '조개 탐색', reqs: [3, 5, 7] },
-      { id: 'rod_shell', name: '어패 행운', reqs: [5, 7, 9, 11] },
-      { id: 'rod_breath', name: '수중 호흡', reqs: [9] },
-      { id: 'rod_fast', name: '빠른 어부', reqs: [9, 9, 11, 11, 13] },
-      { id: 'rod_whale', name: '정령 고래', reqs: [7, 7, 9, 9, 11] },
-      { id: 'rod_ray', name: '가오리 인도', reqs: [9, 9, 11, 11, 13] },
-      { id: 'rod_roulette', name: '어부 룰렛', reqs: [5, 5, 7, 7, 9] }
+      { id: 'rod_fish', name: '낚시 행운', reqs: [5, 7, 9, 11], rarity: 'legendary' },
+      { id: 'rod_power', name: '어획 강화', reqs: [5, 7, 9], rarity: 'normal' },
+      { id: 'rod_shell_find', name: '조개 탐색', reqs: [3, 5, 7], rarity: 'legendary' },
+      { id: 'rod_shell', name: '어패 행운', reqs: [5, 7, 9, 11], rarity: 'legendary' },
+      { id: 'rod_breath', name: '수중 호흡', reqs: [9], rarity: 'rare' },
+      { id: 'rod_fast', name: '빠른 어부', reqs: [9, 9, 11, 11, 13], rarity: 'epic' },
+      { id: 'rod_whale', name: '정령 고래', reqs: [7, 7, 9, 9, 11], rarity: 'mythic' },
+      { id: 'rod_ray', name: '가오리 인도', reqs: [9, 9, 11, 11, 13], rarity: 'legendary' },
+      { id: 'rod_roulette', name: '어부 룰렛', reqs: [5, 5, 7, 7, 9], rarity: 'legendary' }
     ]
   },
   sword: {
     category: 'hunt', contract: 'conquest', contractName: '정복의 영혼 계약서',
     items: [
-      { id: 'sword_power', name: '공격 강화', reqs: [5, 7, 9] },
-      { id: 'sword_speed', name: '공격 가속', reqs: [3, 5, 7] },
-      { id: 'sword_loot', name: '전리품 행운', reqs: [5, 7, 9, 11] },
-      { id: 'sword_piece', name: '조각 탐색', reqs: [5, 7, 9] },
-      { id: 'sword_fast', name: '빠른 사냥꾼', reqs: [9, 9, 11, 11, 13] },
-      { id: 'sword_track', name: '흔적 추적', reqs: [7, 7, 9, 9, 11] },
-      { id: 'sword_resonance', name: '조각 공명', reqs: [9, 9, 11, 11, 13] },
-      { id: 'sword_blackhole', name: '흡인 사냥', reqs: [9, 9, 11, 11, 13] },
-      { id: 'sword_roulette', name: '사냥꾼 룰렛', reqs: [5, 5, 7, 7, 9] }
+      { id: 'sword_power', name: '공격 강화', reqs: [5, 7, 9], rarity: 'rare' },
+      { id: 'sword_speed', name: '공격 가속', reqs: [3, 5, 7], rarity: 'normal' },
+      { id: 'sword_loot', name: '전리품 행운', reqs: [5, 7, 9, 11], rarity: 'normal' },
+      { id: 'sword_piece', name: '조각 탐색', reqs: [5, 7, 9], rarity: 'mythic' },
+      { id: 'sword_fast', name: '빠른 사냥꾼', reqs: [9, 9, 11, 11, 13], rarity: 'rare' },
+      { id: 'sword_track', name: '흔적 추적', reqs: [7, 7, 9, 9, 11], rarity: 'epic' },
+      { id: 'sword_resonance', name: '조각 공명', reqs: [9, 9, 11, 11, 13], rarity: 'mythic' },
+      { id: 'sword_blackhole', name: '흡인 사냥', reqs: [9, 9, 11, 11, 13], rarity: 'epic' },
+      { id: 'sword_roulette', name: '사냥꾼 룰렛', reqs: [5, 5, 7, 7, 9], rarity: 'rare' }
     ]
   }
 };
@@ -122,10 +122,18 @@ const IMPRINT_EFFECTS: Record<string, string[]> = {
   sword_roulette: ['초식 동물 사냥 시 1% 확률로 주사위가 등장합니다.', '초식 동물 사냥 시 2% 확률로 주사위가 등장합니다.', '초식 동물 사냥 시 3% 확률로 주사위가 등장합니다.', '초식 동물 사냥 시 4% 확률로 주사위가 등장합니다.', '초식 동물 사냥 시 5% 확률로 주사위가 등장합니다.']
 };
 
+const GOLD_COSTS: Record<string, Record<number, number>> = {
+  normal: { 10: 32000, 20: 65000, 30: 100000 },
+  rare: { 10: 100000, 20: 200000, 30: 300000 },
+  epic: { 10: 230000, 20: 460000, 30: 700000 },
+  legendary: { 10: 500000, 20: 1000000, 30: 1500000 },
+  mythic: { 10: 1000000, 20: 2000000, 30: 3000000 }
+};
+
 const PROB_COSTS = {
-  10: { gold: 100000, ruby: 3, grade: 'rough' },
-  20: { gold: 200000, ruby: 5, grade: 'neat' },
-  30: { gold: 300000, ruby: 7, grade: 'exquisite' }
+  10: { ruby: 3, grade: 'rough' },
+  20: { ruby: 5, grade: 'neat' },
+  30: { ruby: 7, grade: 'exquisite' }
 };
 
 export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels, handleToolLevelChange, resetTools, saveAll, diffToolCost, getToolImageName, toolImprints, savedToolImprints, handleImprintChange }: Props) {
@@ -230,8 +238,9 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
       const savedLv = effectiveSavedImprints[safeToolId]?.[item.id] || 0;
       
       if (currentLv > savedLv) {
+        const itemGoldCost = GOLD_COSTS[item.rarity]?.[selectedProb] || 0;
         for (let i = savedLv + 1; i <= currentLv; i++) {
-          expectedGold += probData.gold * attemptsMultiplier;
+          expectedGold += itemGoldCost * attemptsMultiplier;
           expectedRuby += probData.ruby * attemptsMultiplier;
           expectedStones += 1 * attemptsMultiplier;
           expectedContracts += (i * 5) * attemptsMultiplier;
@@ -247,7 +256,6 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
     
     Object.keys(IMPRINT_SYSTEM).forEach(tId => {
       const config = IMPRINT_SYSTEM[tId];
-      const probData = PROB_COSTS[selectedProb];
       const attemptsMultiplier = 100 / selectedProb;
 
       config.items.forEach(item => {
@@ -255,8 +263,9 @@ export default function SageToolsTab({ activeToolId, setActiveToolId, toolLevels
         const savedLv = effectiveSavedImprints[tId]?.[item.id] || 0;
 
         if (currentLv > savedLv) {
+          const itemGoldCost = GOLD_COSTS[item.rarity]?.[selectedProb] || 0;
           for (let i = savedLv + 1; i <= currentLv; i++) {
-            totalGold += probData.gold * attemptsMultiplier;
+            totalGold += itemGoldCost * attemptsMultiplier;
           }
         }
       });

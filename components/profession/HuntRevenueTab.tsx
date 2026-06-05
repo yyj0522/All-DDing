@@ -20,7 +20,7 @@ interface HuntRevenueTabProps {
 }
 
 const SWORD_TROPHY = [1, 2, 2, 2, 3, 3, 3, 4, 4, 6, 6, 7, 7, 8, 10];
-const SWORD_STONE_CHANCE = [0.01, 0.03, 0.03, 0.05, 0.05, 0.07, 0.07, 0.10, 0.10, 0.15, 0.15, 0.20, 0.20, 0.25, 0.30];
+const SWORD_STONE_CHANCE = [0.03, 0.05, 0.05, 0.07, 0.07, 0.09, 0.09, 0.12, 0.12, 0.17, 0.17, 0.22, 0.22, 0.27, 0.32];
 
 const COMBO_BONUS = [0, 0.03, 0.05, 0.10, 0.21, 0.40]; 
 const H5_TROPHY_BONUS = [0, 0.03, 0.05, 0.07, 0.10, 0.15, 0.20, 0.30]; 
@@ -28,7 +28,7 @@ const H13_SPAWN_RATE = [0, 0.03, 0.07, 0.10];
 const H14_CARNI_PRICE = [0, 0.05, 0.07, 0.10, 0.20, 0.30, 0.50]; 
 const H15_CATCH_RATE = [0, 0.12, 0.15, 0.17, 0.20, 0.25, 0.30]; 
 
-const CARNIVORE_BASE_AVG_VALUE = (22893 * 0.6) + (45785 * 0.3) + (98111 * 0.1); 
+const CARNIVORE_BASE_AVG_VALUE = (18314 * 0.6) + (36628 * 0.3) + (78489 * 0.1); 
 
 const IMPRINT_SWORD_LOOT_CHANCE = [0, 0.25, 0.50, 0.75, 1.00];
 const IMPRINT_SWORD_PIECE_CHANCE = [0, 0.01, 0.03, 0.05];
@@ -190,7 +190,7 @@ export default function HuntRevenueTab({ userStats, toolImprints }: HuntRevenueT
     
     const carniProfit = expectedCaught * boostedCarniPrice * finalHaggleMult;
 
-    const baseStoneChance = userStats.swordLv > 0 ? SWORD_STONE_CHANCE[userStats.swordLv - 1] : 0.01;
+    const baseStoneChance = userStats.swordLv > 0 ? SWORD_STONE_CHANCE[userStats.swordLv - 1] : 0.03;
     const pieceImprintLv = swordImprints['sword_piece'] || 0;
     const extraPieceChance = IMPRINT_SWORD_PIECE_CHANCE[pieceImprintLv];
     
@@ -250,9 +250,9 @@ export default function HuntRevenueTab({ userStats, toolImprints }: HuntRevenueT
     const finalHaggleMult = rcptIsHaggle ? haggleTotalMult : 1;
     
     return Math.floor(
-      ((rcptWeak || 0) * 22893 + 
-       (rcptNormal || 0) * 45785 + 
-       (rcptHealthy || 0) * 98111) * h14Bonus * finalHaggleMult
+      ((rcptWeak || 0) * 18314 + 
+       (rcptNormal || 0) * 36628 + 
+       (rcptHealthy || 0) * 78489) * h14Bonus * finalHaggleMult
     );
   }, [rcptWeak, rcptNormal, rcptHealthy, rcptIsHaggle, userStats.h14Lv]);
 
