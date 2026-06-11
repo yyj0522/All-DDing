@@ -12,6 +12,8 @@ import {
 import RecipeTab from '@/components/profession/RecipeTab';
 import MiningStatsTab from '@/components/profession/MiningStatsTab';
 import FarmingStatsTab from '@/components/profession/FarmingStatsTab';
+import FarmingRevenueTab from '@/components/profession/FarmingRevenueTab';
+import CookingRecommendTab from '@/components/profession/CookingRecommendTab';
 import OceanStatsTab from '@/components/profession/OceanStatsTab';
 import OceanRevenueTab from '@/components/profession/OceanRevenueTab';
 import BaristaTab from '@/components/profession/BaristaTab';
@@ -40,10 +42,11 @@ export default function ProfessionPage() {
   const [targetZone, setTargetZone] = useState<'코룸' | '리프톤' | '세렌트'>('코룸');
 
   const [userStats, setUserStats] = useState<any>({
-    stamina: 3000, pickaxeLv: 0, rodLv: 0, swordLv: 0, 
+    stamina: 3000, hoeLv: 0, pickaxeLv: 0, rodLv: 0, swordLv: 0, 
     luckyHitLv: 0, gemDropLv: 0, flamingPickLv: 0, ingotBuffLv: 0, gemBuffLv: 0, m16Lv: 0,
     o11Lv: 0, o12Lv: 0, o13Lv: 0, o14Lv: 0, o16Lv: 0, o17Lv: 0,
-    h2Lv: 0, h5Lv: 0, h6Lv: 0, h12Lv: 0, h13Lv: 0, h14Lv: 0, h15Lv: 0
+    h2Lv: 0, h5Lv: 0, h6Lv: 0, h12Lv: 0, h13Lv: 0, h14Lv: 0, h15Lv: 0,
+    f4Lv: 0, f5Lv: 0, f6Lv: 0, f8Lv: 0, f9Lv: 0, f12Lv: 0, f14Lv: 0, f15Lv: 0, f16Lv: 0, f18Lv: 0, f19Lv: 0, f20Lv: 0, f22Lv: 0, f23Lv: 0
   });
   
   const [toolImprints, setToolImprints] = useState<any>({});
@@ -55,10 +58,11 @@ export default function ProfessionPage() {
     const sMisc = localStorage.getItem('alldding_misc_settings');
     
     let parsedStamina = 3000;
-    let parsedPickaxe = 0, parsedRod = 0, parsedSword = 0;
+    let parsedHoe = 0, parsedPickaxe = 0, parsedRod = 0, parsedSword = 0;
     let parsedLuckyHit = 0, parsedGemDrop = 0, parsedFlaming = 0, parsedIngotBuff = 0, parsedGemBuff = 0, parsedM16 = 0;
     let parsedO11 = 0, parsedO12 = 0, parsedO13 = 0, parsedO14 = 0, parsedO16 = 0, parsedO17 = 0;
     let parsedH2 = 0, parsedH5 = 0, parsedH6 = 0, parsedH12 = 0, parsedH13 = 0, parsedH14 = 0, parsedH15 = 0;
+    let parsedF4 = 0, parsedF5 = 0, parsedF6 = 0, parsedF8 = 0, parsedF9 = 0, parsedF12 = 0, parsedF14 = 0, parsedF15 = 0, parsedF16 = 0, parsedF18 = 0, parsedF19 = 0, parsedF20 = 0, parsedF22 = 0, parsedF23 = 0;
 
     if (sLevels) {
       const p = JSON.parse(sLevels);
@@ -81,17 +85,33 @@ export default function ProfessionPage() {
       parsedH13 = p['h13'] || 0;
       parsedH14 = p['h14'] || 0;
       parsedH15 = p['h15'] || 0;
+      parsedF4 = p['f4'] || 0;
+      parsedF5 = p['f5'] || 0;
+      parsedF6 = p['f6'] || 0;
+      parsedF8 = p['f8'] || 0;
+      parsedF9 = p['f9'] || 0;
+      parsedF12 = p['f12'] || 0;
+      parsedF14 = p['f14'] || 0;
+      parsedF15 = p['f15'] || 0;
+      parsedF16 = p['f16'] || 0;
+      parsedF18 = p['f18'] || 0;
+      parsedF19 = p['f19'] || 0;
+      parsedF20 = p['f20'] || 0;
+      parsedF22 = p['f22'] || 0;
+      parsedF23 = p['f23'] || 0;
     }
 
     if (sTools) {
       try {
         const t = JSON.parse(sTools);
         if (t.levels) {
+          parsedHoe = t.levels['hoe'] || 0;
           parsedPickaxe = t.levels['pickaxe'] || 0;
           parsedRod = t.levels['rod'] || 0;
           parsedSword = t.levels['sword'] || 0;
           setToolImprints(t.imprints || {});
         } else {
+          parsedHoe = t['hoe'] || 0;
           parsedPickaxe = t['pickaxe'] || 0;
           parsedRod = t['rod'] || 0;
           parsedSword = t['sword'] || 0;
@@ -110,10 +130,11 @@ export default function ProfessionPage() {
     }
     
     setUserStats({
-      stamina: parsedStamina, pickaxeLv: parsedPickaxe, rodLv: parsedRod, swordLv: parsedSword,
+      stamina: parsedStamina, hoeLv: parsedHoe, pickaxeLv: parsedPickaxe, rodLv: parsedRod, swordLv: parsedSword,
       luckyHitLv: parsedLuckyHit, gemDropLv: parsedGemDrop, flamingPickLv: parsedFlaming, ingotBuffLv: parsedIngotBuff, gemBuffLv: parsedGemBuff, m16Lv: parsedM16,
       o11Lv: parsedO11, o12Lv: parsedO12, o13Lv: parsedO13, o14Lv: parsedO14, o16Lv: parsedO16, o17Lv: parsedO17,
-      h2Lv: parsedH2, h5Lv: parsedH5, h6Lv: parsedH6, h12Lv: parsedH12, h13Lv: parsedH13, h14Lv: parsedH14, h15Lv: parsedH15
+      h2Lv: parsedH2, h5Lv: parsedH5, h6Lv: parsedH6, h12Lv: parsedH12, h13Lv: parsedH13, h14Lv: parsedH14, h15Lv: parsedH15,
+      f4Lv: parsedF4, f5Lv: parsedF5, f6Lv: parsedF6, f8Lv: parsedF8, f9Lv: parsedF9, f12Lv: parsedF12, f14Lv: parsedF14, f15Lv: parsedF15, f16Lv: parsedF16, f18Lv: parsedF18, f19Lv: parsedF19, f20Lv: parsedF20, f22Lv: parsedF22, f23Lv: parsedF23
     });
 
     setIsLoaded(true);
@@ -201,7 +222,7 @@ export default function ProfessionPage() {
             제작 & 조합법
           </button>
           
-          {(activeTab === '채광' || activeTab === '사냥' || activeTab === '해양') && (
+          {(activeTab === '채광' || activeTab === '사냥' || activeTab === '해양' || activeTab === '재배') && (
             <button 
               onClick={() => setSubTab('시세수익')} 
               className={`px-4 md:px-6 py-2.5 rounded-full font-black text-[11px] sm:text-xs md:text-sm transition-all border ${
@@ -216,6 +237,16 @@ export default function ProfessionPage() {
 
           {activeTab === '재배' && (
             <>
+              <button 
+                onClick={() => setSubTab('요리추천')} 
+                className={`px-4 md:px-6 py-2.5 rounded-full font-black text-[11px] sm:text-xs md:text-sm transition-all border ${
+                  subTab === '요리추천' 
+                  ? 'bg-gray-900 text-white border-transparent dark:bg-white dark:text-black shadow-md' 
+                  : 'bg-white dark:bg-[#111113] border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                }`}
+              >
+                요리 추천(BETA)
+              </button>
               <button 
                 onClick={() => setSubTab('변동시세')} 
                 className={`px-4 md:px-6 py-2.5 rounded-full font-black text-[11px] sm:text-xs md:text-sm transition-all border ${
@@ -278,6 +309,8 @@ export default function ProfessionPage() {
           )}
           
           {activeTab === '재배' && subTab === '조합법' && <RecipeTab recipes={FARMING_RECIPES} />}
+          {activeTab === '재배' && subTab === '시세수익' && <FarmingRevenueTab userStats={userStats} toolImprints={toolImprints} />}
+          {activeTab === '재배' && subTab === '요리추천' && <CookingRecommendTab userStats={userStats} />}
           {activeTab === '재배' && subTab === '변동시세' && <FarmingStatsTab />}
           {activeTab === '재배' && subTab === '바리스타' && <BaristaTab />}
 

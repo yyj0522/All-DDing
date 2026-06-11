@@ -53,7 +53,6 @@ export default function Header() {
   const navLinks = [
     { name: '요리 효율', href: '/efficiency', color: 'text-indigo-600 dark:text-indigo-400' },
     { name: '전문가', href: '/profession', color: 'text-amber-600 dark:text-amber-400' },
-    { name: '스펙업 가이드', href: '/spec', color: 'text-violet-600 dark:text-violet-400' },
     { name: '확률형 아이템', href: '/gacha', color: 'text-fuchsia-600 dark:text-fuchsia-400' },
     { name: '아일랜드 지도', href: '/map', color: 'text-emerald-600 dark:text-emerald-400' },
     { name: '자료실', href: '/resources', color: 'text-cyan-600 dark:text-cyan-400' },

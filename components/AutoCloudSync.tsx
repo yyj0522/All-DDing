@@ -9,7 +9,9 @@ const SYNC_KEYS = [
   'alldding_sage_tools', 
   'alldding_prices', 
   'alldding_misc_settings', 
-  'alldding_skill'
+  'alldding_skill',
+  'alldding_cook_inventory',
+  'alldding_cook_settings'
 ];
 
 export default function AutoCloudSync() {
