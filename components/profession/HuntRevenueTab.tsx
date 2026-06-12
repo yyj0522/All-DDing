@@ -205,7 +205,7 @@ export default function HuntRevenueTab({ userStats, toolImprints }: HuntRevenueT
     const stoneAttempts = Math.floor(expectedStonePieces / avgPiecesPerAttempt);
     const expectedStones = stoneAttempts;
 
-    const stoneCost = stoneAttempts * 50000;
+    const stoneCost = stoneAttempts * 30000;
     const stoneSuccesses = stoneAttempts * idSuccessRate;
     const stoneFails = stoneAttempts * (1 - idSuccessRate);
 
