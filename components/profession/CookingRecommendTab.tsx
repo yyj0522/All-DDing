@@ -111,6 +111,8 @@ export default function CookingRecommendTab({ userStats }: Props) {
   const [actualCraftedA, setActualCraftedA] = useState<string>('');
   const [actualCraftedB, setActualCraftedB] = useState<string>('');
 
+  const [party, setParty] = useState<number[]>([]);
+
   const yieldMap = useMemo(() => {
     const f8Extra = F8_EXPECTED_EXTRA[userStats.f8Lv || 0] || 0;
     const f9Lv = userStats.f9Lv || 0;
@@ -152,6 +154,7 @@ export default function CookingRecommendTab({ userStats }: Props) {
         if (p.timeMins) setTimeMins(p.timeMins);
         if (p.maxPlots) setMaxPlotsInput(p.maxPlots);
         if (p.calcMode) setCalcMode(p.calcMode);
+        if (p.party) setParty(p.party);
       } catch (e) {}
     }
 
@@ -238,6 +241,29 @@ export default function CookingRecommendTab({ userStats }: Props) {
     const saveObj: Record<string, any> = {};
     Object.keys(cleared).forEach(k => saveObj[k] = { box: 0, set: 0, ea: 0 });
     localStorage.setItem('alldding_cook_inventory', JSON.stringify(saveObj));
+  };
+
+  const addPartyMember = () => {
+    if (party.length >= 14) return;
+    const newParty = [...party, 5];
+    setParty(newParty);
+    const savedSettings = JSON.parse(localStorage.getItem('alldding_cook_settings') || '{}');
+    localStorage.setItem('alldding_cook_settings', JSON.stringify({ ...savedSettings, party: newParty }));
+  };
+
+  const removePartyMember = (index: number) => {
+    const newParty = party.filter((_, i) => i !== index);
+    setParty(newParty);
+    const savedSettings = JSON.parse(localStorage.getItem('alldding_cook_settings') || '{}');
+    localStorage.setItem('alldding_cook_settings', JSON.stringify({ ...savedSettings, party: newParty }));
+  };
+
+  const updatePartyMember = (index: number, level: number) => {
+    const newParty = [...party];
+    newParty[index] = level;
+    setParty(newParty);
+    const savedSettings = JSON.parse(localStorage.getItem('alldding_cook_settings') || '{}');
+    localStorage.setItem('alldding_cook_settings', JSON.stringify({ ...savedSettings, party: newParty }));
   };
 
   const formatTimeStr = (totalMins: number) => {
@@ -334,7 +360,7 @@ export default function CookingRecommendTab({ userStats }: Props) {
     const safeMaxPlots = Math.max(70, Math.min(2000, Number(maxPlotsInput) || 70));
     setMaxPlotsInput(safeMaxPlots);
     
-    localStorage.setItem('alldding_cook_settings', JSON.stringify({ timeMins, maxPlots: safeMaxPlots, calcMode }));
+    localStorage.setItem('alldding_cook_settings', JSON.stringify({ timeMins, maxPlots: safeMaxPlots, calcMode, party }));
     setIsSimulating(true);
     setSimProgress(0);
     setActualCraftedA('');
@@ -356,7 +382,6 @@ export default function CookingRecommendTab({ userStats }: Props) {
   const calculateCombinationRoute = (safeMaxPlots: number) => {
     const availableSecs = timeMins * 60;
     
-    const f4Reduction = F4_TIME_REDUCTION[userStats.f4Lv || 0] || 0;
     const f15Lv = userStats.f15Lv || 0;
     const f15Bonus = F15_SALE_BONUS[f15Lv] || 0;
     const f5Lv = userStats.f5Lv || 0;
@@ -377,6 +402,11 @@ export default function CookingRecommendTab({ userStats }: Props) {
     const invSt = getInvTotal("토마토 씨앗");
     const invSo = getInvTotal("양파 씨앗");
     const invSg = getInvTotal("마늘 씨앗");
+
+    let totalSpeedFactor = 1 / (1 - (F4_TIME_REDUCTION[userStats.f4Lv || 0] || 0));
+    for (let pLv of party) {
+        totalSpeedFactor += 1 / (1 - (F4_TIME_REDUCTION[pLv] || 0));
+    }
 
     const MAX_SEARCH = 15000;
 
@@ -399,15 +429,15 @@ export default function CookingRecommendTab({ userStats }: Props) {
       const growCycles_a = totalSeeds_a === 0 ? 0 : Math.ceil(totalSeeds_a / safeMaxPlots);
       const growTimeSecs_a = growCycles_a * 15 * 60;
       
-      // 베이스 가공 시간: 동시 제작 없이 순차적으로 1개당 15초(스킬감소 적용)
-      const baseProcessTime_a = (netBt_a + netBo_a + netBg_a) * 15 * (1 - f4Reduction);
-      const availableBaseOverlap_a = Math.max(0, growCycles_a - 1) * 15 * 60;
-      const actualBaseProcessTime_a = baseProcessTime_a - Math.min(availableBaseOverlap_a, baseProcessTime_a);
+      const baseProcessTime_a = (netBt_a + netBo_a + netBg_a) * 15 / totalSpeedFactor;
+      const cookTimeA_a = a * recA.craftTime / totalSpeedFactor;
+      const totalProcTime_a = baseProcessTime_a + cookTimeA_a;
       
-      // 최종 요리 시간: 동시 제작 없이 순차적으로 1개당 기본시간(스킬감소 적용)
-      const cookTimeA_a = a * recA.craftTime * (1 - f4Reduction);
-      
-      if (growTimeSecs_a + actualBaseProcessTime_a + cookTimeA_a > availableSecs) break;
+      const availableOverlap_a = Math.max(0, growCycles_a - 1) * 15 * 60;
+      const finalBatchRatio_a = growCycles_a > 0 ? 1 / growCycles_a : 0;
+      const actualAddedTime_a = Math.max(totalProcTime_a - availableOverlap_a, totalProcTime_a * finalBatchRatio_a);
+
+      if (growTimeSecs_a + actualAddedTime_a > availableSecs) break;
 
       for (let b = 0; b <= MAX_SEARCH; b++) {
         if (a === 0 && b === 0) continue;
@@ -448,8 +478,6 @@ export default function CookingRecommendTab({ userStats }: Props) {
         let isStrictFailed = false;
         const flatReqs: Record<string, number> = {};
         const missingRaws: Record<string, { missing: number, price: number, total: number }> = {};
-        
-        let subProcTime = 0;
 
         const addReqs = (recipe: any, qty: number) => {
           for (const [ing, qtyPerCraft] of Object.entries(recipe.ingredients)) {
@@ -485,21 +513,16 @@ export default function CookingRecommendTab({ userStats }: Props) {
         const growCycles = totalSeeds === 0 ? 0 : Math.ceil(totalSeeds / safeMaxPlots);
         const growTimeSecs = growCycles * 15 * 60;
 
-        // 베이스 가공 시간 순차 제작 합산
-        const baseProcessTime = (netBt + netBo + netBg) * 15 * (1 - f4Reduction);
-        const availableBaseOverlap = Math.max(0, growCycles - 1) * 15 * 60;
-        const baseOverlap = Math.min(availableBaseOverlap, baseProcessTime);
-        const actualBaseProcessTime = baseProcessTime - baseOverlap; 
+        const baseProcessTime = (netBt + netBo + netBg) * 15 / totalSpeedFactor;
+        const cookTimeA = a * recA.craftTime / totalSpeedFactor;
+        const cookTimeB = recB ? b * recB.craftTime / totalSpeedFactor : 0;
+        const totalProcTime = baseProcessTime + cookTimeA + cookTimeB;
 
-        // 요리 제작 시간 순차 제작 합산
-        const cookTimeA = a * recA.craftTime * (1 - f4Reduction);
-        const cookTimeB = recB ? b * recB.craftTime * (1 - f4Reduction) : 0;
-        const cookingTime = cookTimeA + cookTimeB;
+        const availableOverlap = Math.max(0, growCycles - 1) * 15 * 60;
+        const finalBatchRatio = growCycles > 0 ? 1 / growCycles : 0;
+        const actualAddedTime = Math.max(totalProcTime - availableOverlap, totalProcTime * finalBatchRatio);
 
-        const subOverlap = Math.min(growTimeSecs, subProcTime);
-        const actualSubProcTime = subProcTime - subOverlap;
-
-        const totalTimeSecs = growTimeSecs + actualBaseProcessTime + actualSubProcTime + cookingTime;
+        const totalTimeSecs = growTimeSecs + actualAddedTime;
         
         if (totalTimeSecs > availableSecs) break; 
 
@@ -533,10 +556,22 @@ export default function CookingRecommendTab({ userStats }: Props) {
           const expectedExtraCrops = ((reqSeedT * 2.0) + (reqSeedO * 1.5) + (reqSeedG * 2.5)) * 6 * f9Rate;
           const expectedExtraBases = expectedExtraCrops / 8;
 
+          let timelineBase = baseProcessTime;
+          let timelineCook = cookTimeA + cookTimeB;
+          let timelineOverlap = availableOverlap;
+          let remainingBaseAfterOverlap = Math.max(0, timelineBase - timelineOverlap);
+          let diff = actualAddedTime - (remainingBaseAfterOverlap + timelineCook);
+          
+          timelineCook += diff;
+          if (timelineCook < 0) {
+              timelineBase += timelineCook;
+              timelineCook = 0;
+          }
+
           bestResult = {
-            a, b, recA, recB, profit, totalTimeSecs, reqSeedT, reqSeedO, reqSeedG, growCycles, overlapTime: baseOverlap + subOverlap,
+            a, b, recA, recB, profit, totalTimeSecs, reqSeedT, reqSeedO, reqSeedG, growCycles, overlapTime: availableOverlap,
             missingCost, requiredRaws: flatReqs, missingRaws, isBulkBonusApplied: isBulk,
-            baseProcessTime: actualBaseProcessTime, subProcTime: actualSubProcTime, cookingTime,
+            baseProcessTime: timelineBase, subProcTime: 0, cookingTime: timelineCook,
             reqBt: bT, reqBo: bO, reqBg: bG, invBt, invBo, invBg, netBt, netBo, netBg,
             bottleneckItem, currentPriceA, currentPriceB, revA, revB,
             isTimeExceeded: false, growTimeSecs,
@@ -754,7 +789,47 @@ export default function CookingRecommendTab({ userStats }: Props) {
       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[1.5rem] p-5 md:p-6 shadow-sm transition-colors mb-2">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-black text-amber-600 dark:text-amber-400 mb-1">3. 간편 재고 관리</h2>
+            <h2 className="text-lg md:text-xl font-black text-indigo-600 dark:text-indigo-400 mb-1">3. 파티 협동 설정 (선택)</h2>
+            <p className="text-[11px] text-gray-500 font-bold">마을원을 추가하여 가공/제작 소요 시간을 대폭 단축할 수 있습니다. (최대 14명)</p>
+          </div>
+          <button 
+            type="button"
+            onClick={addPartyMember}
+            disabled={party.length >= 14}
+            className="text-[11px] md:text-xs text-indigo-600 font-black bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 px-4 py-2 rounded-xl transition-colors shadow-sm disabled:opacity-50"
+          >
+            + 파티원 추가
+          </button>
+        </div>
+        
+        {party.length > 0 && (
+          <div className="flex flex-wrap gap-3">
+            {party.map((lv, i) => (
+              <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-[#111113] border border-gray-200 dark:border-white/5 rounded-xl p-2 pl-3 shadow-sm transition-colors">
+                <span className="text-[11px] font-black text-gray-700 dark:text-gray-300">마을원 {i+1}</span>
+                <div className="bg-white dark:bg-black rounded-lg border border-gray-200 dark:border-white/10 px-2 py-1 flex items-center gap-1 transition-colors">
+                  <span className="text-[10px] font-bold text-gray-500">불 더 올려!</span>
+                  <select 
+                    value={lv}
+                    onChange={(e) => updatePartyMember(i, Number(e.target.value))}
+                    className="bg-transparent text-[11px] font-black text-rose-500 outline-none cursor-pointer appearance-none"
+                  >
+                    {[0, 1, 2, 3, 4, 5].map(l => <option key={l} value={l} className="bg-white dark:bg-gray-800">Lv.{l}</option>)}
+                  </select>
+                </div>
+                <button type="button" onClick={() => removePartyMember(i)} className="text-gray-400 hover:text-rose-500 ml-1 px-1 transition-colors">
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[1.5rem] p-5 md:p-6 shadow-sm transition-colors mb-2">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-black text-amber-600 dark:text-amber-400 mb-1">4. 간편 재고 관리</h2>
             <p className="text-[11px] text-gray-500 font-bold">씨앗, 베이스, 부자재 등 창고 재고를 입력하세요.</p>
           </div>
           <button 
@@ -849,7 +924,7 @@ export default function CookingRecommendTab({ userStats }: Props) {
       </div>
 
       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[1.5rem] p-5 md:p-6 shadow-sm transition-colors">
-        <h4 className="text-sm font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 px-3 py-1.5 rounded-lg w-max border border-rose-200 dark:border-transparent mb-3">4. 제작 목표 요리 설정 (최대 2종)</h4>
+        <h4 className="text-sm font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 px-3 py-1.5 rounded-lg w-max border border-rose-200 dark:border-transparent mb-3">5. 제작 목표 요리 설정 (최대 2종)</h4>
         <p className="text-[11px] font-bold text-gray-500 mb-4 px-1">
           최근 주기 시세(<span className="text-indigo-500">{latestPeriod}</span> 기준), 1,000G 이상이면서 <span className="text-rose-500 font-black">최고가 대비 80% 이상</span>인 Top 5 요리입니다. (품목 최대 2개 선택)
         </p>
@@ -898,6 +973,13 @@ export default function CookingRecommendTab({ userStats }: Props) {
         <div className="bg-white dark:bg-[#0a0a0a] border border-gray-300 dark:border-transparent rounded-[2rem] p-6 md:p-8 shadow-md dark:shadow-2xl animate-fade-in-up transition-colors">
           <h3 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-6">분석 결과</h3>
           
+          <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/30 p-4 rounded-2xl mb-6 shadow-sm flex gap-3 items-start">
+            <span className="text-rose-500 text-lg"></span>
+            <p className="text-[11px] md:text-xs font-bold text-rose-700 dark:text-rose-300 leading-relaxed break-keep">
+                요리 추천은 작물을 수확하는 시간, 중간중간 휴식을 하거나 제작을 못하는 등의 돌발상황은 고려하지않고 순수하게 작물이 자라는 시간 15분만 반영된 이론상 스케줄 사이클입니다. 5~10%정도 시간이 추가 소요된다고 생각하고 진행하셔야합니다.
+            </p>
+          </div>
+
           {simResult.fail ? (
             <div className="py-16 flex flex-col items-center justify-center bg-gray-50 dark:bg-[#111113] rounded-2xl border border-dashed border-gray-300 dark:border-white/10">
               <span className="text-4xl mb-3 font-black text-gray-300">!</span>
@@ -937,7 +1019,7 @@ export default function CookingRecommendTab({ userStats }: Props) {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                 <div className="bg-white dark:bg-[#111113] border border-indigo-200 dark:border-indigo-500/30 rounded-2xl p-5 shadow-sm flex flex-col justify-center">
-                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mb-2 border-b border-indigo-100 dark:border-indigo-500/30 pb-2">듀얼 최적화 예상 수익명세서</span>
+                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mb-2 border-b border-indigo-100 dark:border-indigo-500/30 pb-2">최적화 예상 수익명세서</span>
                   
                   <div className="flex flex-col gap-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-3">
                     <div className="flex justify-between items-center text-gray-800 dark:text-gray-200">
@@ -995,7 +1077,6 @@ export default function CookingRecommendTab({ userStats }: Props) {
                     <span className="text-xs font-black text-indigo-800 dark:text-indigo-300">최종 순수익</span>
                     <div className="flex items-center gap-2">
                       <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{(simResult.profit || 0).toLocaleString()} G</span>
-                      {simResult.isBulkBonusApplied && <span className="text-[9px] font-black bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-1 rounded border border-amber-200 dark:border-amber-500/30">한솥가득 적용됨</span>}
                     </div>
                   </div>
                 </div>
@@ -1086,18 +1167,17 @@ export default function CookingRecommendTab({ userStats }: Props) {
                               </div>
                             )}
                           </div>
-                          <p className="text-[11px] font-bold text-gray-500 mt-1 bg-gray-50 dark:bg-black/30 p-2.5 rounded-lg border border-gray-200 dark:border-white/5">
-                            안내: 전문가 스킬 적용 중 확률 변수를 고려하여 추천 수량보다 5칸 정도 여유 있게 더 심는 것을 권장합니다.
-                          </p>
-
-                          <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 rounded-xl p-3 mt-3 shadow-sm text-[11px] space-y-1.5">
-                            <p className="font-black text-emerald-800 dark:text-emerald-400 border-b border-emerald-200/50 dark:border-emerald-800/50 pb-1 mb-1.5">전문가 스킬 효율 예상치</p>
-                            <p className="text-emerald-700 dark:text-emerald-300 font-bold">
-                              • 씨앗 돌려받기 (Lv.{simResult.f12Lv}, {((F12_SEED_RETURN[simResult.f12Lv] || 0) * 100).toFixed(0)}%): 약 {(simResult.expectedSeedReturn || 0).toFixed(1)}개 회수 예상
-                            </p>
-                            <p className="text-emerald-700 dark:text-emerald-300 font-bold">
-                              • 대왕 작물 (Lv.{simResult.f9Lv}, {((simResult.f9Rate || 0.0002) * 100).toFixed(2)}%): 추가 수확 작물 약 {(simResult.expectedExtraCrops || 0).toFixed(1)}개 -&gt; 베이스 약 {(simResult.expectedExtraBases || 0).toFixed(2)}개 예상
-                            </p>
+                          
+                          <div className="bg-emerald-50 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/50 mt-3 flex flex-col gap-1.5">
+                             <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 border-b border-emerald-200 dark:border-emerald-800/50 pb-1 mb-0.5">전문가 스킬 효율 분석</span>
+                             <div className="flex justify-between items-center text-[10px] font-bold text-emerald-600 dark:text-emerald-300">
+                                 <span>씨앗은 덤이야 (Lv.{userStats.f12Lv || 0}, {((F12_SEED_RETURN[userStats.f12Lv || 0] || 0)*100).toFixed(0)}%)</span>
+                                 <span>약 {(simResult.expectedSeedReturn || 0).toFixed(1)}개 회수 예상</span>
+                             </div>
+                             <div className="flex justify-between items-center text-[10px] font-bold text-emerald-600 dark:text-emerald-300">
+                                 <span>왕 크니까 왕 좋아 (Lv.{userStats.f9Lv || 0}, {((F9_GIANT_CHANCE[userStats.f9Lv || 0] || 0)*100).toFixed(1)}%)</span>
+                                 <span>추가 수확 작물 약 {(simResult.expectedExtraCrops || 0).toFixed(1)}개 -&gt; 베이스 약 {((simResult.expectedExtraCrops || 0) / 8).toFixed(2)}개 예상</span>
+                             </div>
                           </div>
                         </>
                       ) : (
@@ -1158,7 +1238,7 @@ export default function CookingRecommendTab({ userStats }: Props) {
                     </div>
                     <div className="flex flex-col gap-3 w-full">
                       <div className="flex items-center justify-between">
-                        <h5 className="text-sm font-black text-gray-800 dark:text-gray-200">최종요리 제작 완료</h5>
+                        <h5 className="text-sm font-black text-gray-800 dark:text-gray-200">최종 요리 제작 완료</h5>
                       </div>
                       <div className="flex flex-wrap gap-3 mt-1">
                         <div className="flex items-center gap-3 bg-rose-50 dark:bg-rose-950/20 p-4 rounded-2xl border border-rose-200 dark:border-rose-500/30 w-full sm:w-auto shadow-sm">
@@ -1175,30 +1255,6 @@ export default function CookingRecommendTab({ userStats }: Props) {
                     </div>
                   </div>
                 </div>
-
-                {calcMode === 'buy' && Object.keys(simResult.missingRaws || {}).length > 0 && (
-                  <div className="mt-6 p-5 border border-dashed border-indigo-200 dark:border-indigo-500/30 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/10">
-                    <span className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 mb-3 block">
-                      상점 추가 구매 필요 목록 (총 차감액: -{Math.floor(simResult.missingCost || 0).toLocaleString()} G)
-                    </span>
-                    <div className="flex flex-wrap gap-2.5">
-                      {Object.entries(simResult.missingRaws).map(([m, q]: [string, any]) => (
-                        <div key={m} className="flex flex-col bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 px-4 py-2.5 rounded-xl shadow-sm">
-                          <div className="flex items-center justify-between gap-4 mb-1">
-                            <div className="flex items-center gap-2">
-                              <img src={getIngImage(m)} className="w-4 h-4 object-contain" style={{imageRendering:'pixelated'}} alt=""/>
-                              <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">{m}</span>
-                            </div>
-                            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black">{q.missing}개 부족</span>
-                          </div>
-                          <div className="text-[9px] text-gray-500 text-right mt-1 pt-1 border-t border-gray-100 dark:border-white/5">
-                            단가 {q.price}G x {q.missing}개 = -{Math.floor(q.total || 0).toLocaleString()}G
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 <div className="bg-gray-100 dark:bg-[#0f0f13] border border-gray-300 dark:border-white/10 rounded-2xl p-6 mt-6 shadow-inner">
                   <div className="mb-4 border-b border-gray-200 dark:border-white/5 pb-3">
