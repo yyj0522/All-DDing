@@ -84,7 +84,7 @@ export default function WelcomePopup() {
             <div className="flex gap-3 items-center bg-blue-50 dark:bg-blue-950/30 border border-blue-300 dark:border-blue-700 rounded-none p-3 shadow-sm mt-1 transition-colors">
               <div className="bg-blue-600 text-white w-8 h-8 flex items-center justify-center shrink-0 font-black rounded-none text-[12px] border border-blue-700 dark:border-blue-500 shadow-inner">N</div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] sm:text-[12px] font-black text-blue-900 dark:text-blue-100 mb-0.5 transition-colors">06-12 업데이트 적용 완료</p>
+                <p className="text-[11px] sm:text-[12px] font-black text-blue-900 dark:text-blue-100 mb-0.5 transition-colors">06-14 업데이트 적용 완료</p>
                 <p className="text-[9px] sm:text-[10px] font-bold text-blue-700/80 dark:text-blue-300/80 leading-tight break-keep mb-1.5 transition-colors">새로운 기능과 변경점들을 확인하세요!</p>
                 <Link href="/note" onClick={handleCloseMain} className="inline-block bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-none active:scale-95 transition-all shadow-sm">패치노트 보기</Link>
               </div>

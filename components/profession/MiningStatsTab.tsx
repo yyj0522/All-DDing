@@ -584,7 +584,7 @@ export default function MiningStatsTab({ userStats, targetZone, setTargetZone, r
             <div>
               <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div> 보석 획득량 계산</h4>
               <p className="text-xs text-gray-600 dark:text-gray-400 font-bold leading-relaxed break-keep">
-                [반짝임의 시작] 확률 및 고정 드롭 수량, 그리고 각인석(보석 코비) 효과를 합산하여 최종 보석 획득 기댓값을 산출합니다.
+                [반짝임의 시작] 확률 및 고정 드롭 수량, 그리고 각인석(보석 코비) 효과를 합산하여 최종 정동석 획득 기댓값을 산출합니다.
               </p>
             </div>
             <div>

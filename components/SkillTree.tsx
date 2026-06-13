@@ -200,7 +200,11 @@ export default function SkillTree({ profTab, levels, onLevelChange, selectedSkil
                         <ul>
                           <li><SkillBox id="m16" />
                             <ul>
-                              <li><SkillBox id="m17" /></li>
+                              <li><SkillBox id="m17" />
+                                <ul>
+                                  <li><SkillBox id="m18" /></li>
+                                </ul>
+                              </li>
                             </ul>
                           </li>
                         </ul>
