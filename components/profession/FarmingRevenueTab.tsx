@@ -15,6 +15,8 @@ const HOE_BASE_DROPS = [2, 3, 3, 3, 4, 4, 4, 5, 5, 8, 10, 10, 12, 12, 17];
 const F14_SEED_EXTRA = [0, 0.01, 0.02, 0.03, 0.04, 0.10, 0.12, 0.21, 0.32, 0.45, 0.80];
 const F16_BASE_EXTRA = [0, 0.01, 0.02, 0.06, 0.08, 0.10, 0.18, 0.21, 0.40, 0.45, 1.05];
 const BASE_MOLE_CHANCE = [0, 0, 0, 0, 0, 0, 0.01, 0.01, 0.03, 0.03, 0.04, 0.04, 0.08, 0.08, 0.10];
+const F9_GIANT_CHANCE = [0, 0.005, 0.01, 0.03, 0.05];
+const F8_EXPECTED_EXTRA = [0, 0.01, 0.02, 0.03, 0.04, 0.10, 0.14, 0.30];
 
 const IMPRINT_HOE_BOX = [0, 0.01, 0.02, 0.03, 0.04, 0.05];
 const IMPRINT_HOE_ROULETTE = [0, 0.01, 0.02, 0.03, 0.04, 0.05];
@@ -30,6 +32,24 @@ const HOE_IMPRINTS_MAP: Record<string, string> = {
   'hoe_roulette': '농부 룰렛'
 };
 
+const RECIPES = [
+  { id: "tomato_spaghetti", name: "토마토 스파게티", ingredients: { "토마토 베이스": 1, "호박 묶음": 1 } },
+  { id: "onion_ring", name: "어니언 링", ingredients: { "양파 베이스": 1, "감자 묶음": 1 } },
+  { id: "garlic_cake", name: "갈릭 케이크", ingredients: { "마늘 베이스": 1, "당근 묶음": 1 } },
+  { id: "pork_tomato_stew", name: "삼겹살 토마토 찌개", ingredients: { "토마토 베이스": 2, "비트 묶음": 1, "요리용 소금": 1, "익힌 돼지고기": 1, "익힌 돼지 삼겹살": 1 } },
+  { id: "tricolor_ice_cream", name: "삼색 아이스크림", ingredients: { "양파 베이스": 2, "수박 묶음": 1, "코코넛": 1, "설탕 큐브": 1, "요리용 우유": 1 } },
+  { id: "garlic_mutton_hotdog", name: "마늘 양갈비 핫도그", ingredients: { "마늘 베이스": 2, "감자 묶음": 1, "오일": 1, "익힌 양고기": 1, "익힌 양 갈비살": 1 } },
+  { id: "sweet_cereal", name: "달콤 시리얼", ingredients: { "토마토 베이스": 2, "달콤한 열매 묶음": 1, "파인애플": 1, "밀가루 반죽": 1, "오일": 1 } },
+  { id: "roast_chicken_pie", name: "로스트 치킨 파이", ingredients: { "마늘 베이스": 2, "당근 묶음": 1, "버터 조각": 1, "익힌 닭고기": 1, "익힌 닭 다리살": 1 } },
+  { id: "sweet_chicken_burger", name: "스윗 치킨 햄버거", ingredients: { "토마토 베이스": 1, "양파 베이스": 1, "비트 묶음": 1, "달콤한 열매 묶음": 1, "익힌 닭 가슴살": 1, "익힌 닭 다리살": 1 } },
+  { id: "tomato_pineapple_pizza", name: "토마토 파인애플 피자", ingredients: { "토마토 베이스": 2, "마늘 베이스": 1, "파인애플": 1, "치즈 조각": 1, "스테이크": 1, "익힌 소 등심": 1 } },
+  { id: "onion_soup", name: "양파 수프", ingredients: { "양파 베이스": 2, "마늘 베이스": 1, "감자 묶음": 1, "코코넛": 1, "버터 조각": 1, "익힌 돼지 앞다리살": 1 } },
+  { id: "herb_pork_belly_steam", name: "허브 삼겹살 찜", ingredients: { "마늘 베이스": 2, "양파 베이스": 1, "호박 묶음": 1, "감자 묶음": 1, "익힌 돼지고기": 1, "익힌 돼지 삼겹살": 1 } },
+  { id: "tomato_lasagna", name: "토마토 라자냐", ingredients: { "토마토 베이스": 1, "양파 베이스": 1, "마늘 베이스": 1, "당근 묶음": 1, "호박 묶음": 1, "밀가루 반죽": 1, "익힌 양 다리살": 1 } },
+  { id: "deep_cream_pane", name: "딥 크림 빠네", ingredients: { "토마토 베이스": 1, "양파 베이스": 1, "마늘 베이스": 1, "수박 묶음": 1, "감자 묶음": 1, "치즈 조각": 1, "요리용 우유": 1 } },
+  { id: "triple_beef_rib_skewer", name: "트리플 소갈비 꼬치", ingredients: { "토마토 베이스": 1, "양파 베이스": 1, "마늘 베이스": 1, "당근 묶음": 1, "비트 묶음": 1, "설탕 큐브": 1, "익힌 소 갈비살": 1 } }
+];
+
 export default function FarmingRevenueTab({ userStats, toolImprints }: Props) {
   const [marketPrices, setMarketPrices] = useState({
     tomatoSeed: 15000, onionSeed: 15000, garlicSeed: 15000
@@ -37,6 +57,7 @@ export default function FarmingRevenueTab({ userStats, toolImprints }: Props) {
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [staminaAlloc, setStaminaAlloc] = useState({ tomato: 0, onion: 0, garlic: 0 });
+  const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
 
   const usableStamina = useMemo(() => Math.floor((userStats.stamina || 0) / 5) * 5, [userStats.stamina]);
 
@@ -78,6 +99,7 @@ export default function FarmingRevenueTab({ userStats, toolImprints }: Props) {
   };
 
   const handleAllocChange = (crop: 'tomato' | 'onion' | 'garlic', val: string, shouldRound: boolean = false) => {
+    setSelectedRecipe(null);
     let num = parseInt(val, 10);
     if (isNaN(num)) num = 0;
     
@@ -91,21 +113,100 @@ export default function FarmingRevenueTab({ userStats, toolImprints }: Props) {
     let next = { ...staminaAlloc, [crop]: num };
     let remain = usableStamina - num;
 
+    let other1: 'tomato' | 'onion' | 'garlic';
+    let other2: 'tomato' | 'onion' | 'garlic';
+
     if (crop === 'tomato') {
-      next.onion = shouldRound ? Math.floor((remain / 2) / 5) * 5 : Math.floor(remain / 2);
-      next.garlic = remain - next.onion;
+      other1 = 'onion';
+      other2 = 'garlic';
     } else if (crop === 'onion') {
-      next.garlic = shouldRound ? Math.floor((remain / 2) / 5) * 5 : Math.floor(remain / 2);
-      next.tomato = remain - next.garlic;
-    } else if (crop === 'garlic') {
-      next.tomato = shouldRound ? Math.floor((remain / 2) / 5) * 5 : Math.floor(remain / 2);
-      next.onion = remain - next.tomato;
+      other1 = 'tomato';
+      other2 = 'garlic';
+    } else {
+      other1 = 'tomato';
+      other2 = 'onion';
+    }
+
+    let newOther1 = Math.min(staminaAlloc[other1], remain);
+    if (shouldRound) {
+      newOther1 = Math.floor(newOther1 / 5) * 5;
+    }
+    next[other1] = newOther1;
+
+    let newOther2 = remain - newOther1;
+    if (shouldRound) {
+      newOther2 = Math.floor(newOther2 / 5) * 5;
+    }
+    next[other2] = newOther2;
+
+    if (shouldRound) {
+      const currentSum = next.tomato + next.onion + next.garlic;
+      const diff = usableStamina - currentSum;
+      next[other2] += diff;
     }
 
     setStaminaAlloc(next);
     if (shouldRound) {
       localStorage.setItem('alldding_farm_alloc', JSON.stringify(next));
     }
+  };
+
+  const handleRecipeClick = (recipeId: string) => {
+    if (selectedRecipe === recipeId) {
+      setSelectedRecipe(null);
+      return;
+    }
+    setSelectedRecipe(recipeId);
+    const recipe = RECIPES.find(r => r.id === recipeId);
+    if (!recipe) return;
+
+    const rT = (recipe.ingredients as any)["토마토 베이스"] || 0;
+    const rO = (recipe.ingredients as any)["양파 베이스"] || 0;
+    const rG = (recipe.ingredients as any)["마늘 베이스"] || 0;
+
+    const f8Extra = F8_EXPECTED_EXTRA[userStats.f8Lv || 0] || 0;
+    const f9Giant = F9_GIANT_CHANCE[userStats.f9Lv || 0] || 0;
+    const f16Extra = F16_BASE_EXTRA[userStats.f16Lv || 0] || 0;
+
+    const yieldT = 2.0 * (1 + 6 * f9Giant) + f8Extra + f16Extra * 8;
+    const yieldO = 1.5 * (1 + 6 * f9Giant) + f8Extra + f16Extra * 8;
+    const yieldG = 2.5 * (1 + 6 * f9Giant) + f8Extra + f16Extra * 8;
+
+    const ratioT = rT > 0 ? rT / yieldT : 0;
+    const ratioO = rO > 0 ? rO / yieldO : 0;
+    const ratioG = rG > 0 ? rG / yieldG : 0;
+
+    const totalRatio = ratioT + ratioO + ratioG;
+
+    if (totalRatio === 0) return;
+
+    let exactT = (ratioT / totalRatio) * usableStamina;
+    let exactO = (ratioO / totalRatio) * usableStamina;
+    let exactG = (ratioG / totalRatio) * usableStamina;
+
+    let roundT = Math.round(exactT / 5) * 5;
+    let roundO = Math.round(exactO / 5) * 5;
+    let roundG = Math.round(exactG / 5) * 5;
+
+    let diff = usableStamina - (roundT + roundO + roundG);
+
+    if (diff !== 0) {
+      if (ratioT >= ratioO && ratioT >= ratioG && ratioT > 0) {
+        roundT += diff;
+      } else if (ratioO >= ratioT && ratioO >= ratioG && ratioO > 0) {
+        roundO += diff;
+      } else if (ratioG > 0) {
+        roundG += diff;
+      }
+    }
+
+    if (roundT < 0) roundT = 0;
+    if (roundO < 0) roundO = 0;
+    if (roundG < 0) roundG = 0;
+
+    const nextAlloc = { tomato: roundT, onion: roundO, garlic: roundG };
+    setStaminaAlloc(nextAlloc);
+    localStorage.setItem('alldding_farm_alloc', JSON.stringify(nextAlloc));
   };
 
   const results = useMemo(() => {
@@ -205,13 +306,42 @@ export default function FarmingRevenueTab({ userStats, toolImprints }: Props) {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-gray-200 dark:border-white/5 pb-5">
           <div>
             <h3 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-              채집 스태미나 분배
+              채집 스태미나 분배 (직접 요리하는 경우 버튼 클릭)
             </h3>
             <p className="text-xs font-bold text-gray-500 mt-2">보유하신 스태미나({usableStamina.toLocaleString()})를 각 작물에 어떻게 분배하여 채집할지 설정하세요. (5단위 조절)</p>
           </div>
         </div>
 
         <div className="flex flex-col gap-8">
+          
+          <div className="bg-gray-50 dark:bg-black/30 p-4 rounded-2xl border border-gray-200 dark:border-white/5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h4 className="text-[13px] font-black text-gray-900 dark:text-white">목표 요리 맞춤 스태미나 자동 분배</h4>
+                <p className="text-[10px] font-bold text-gray-500 mt-0.5">선택한 요리의 베이스 요구량과 내 전문가 스킬 효율을 정확하게 계산하여 최적의 비율로 스태미나를 자동 분배합니다.</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {RECIPES.map(r => {
+                 const isSelected = selectedRecipe === r.id;
+                 return (
+                   <button
+                     key={r.id}
+                     onClick={() => handleRecipeClick(r.id)}
+                     className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl border whitespace-nowrap transition-all ${
+                        isSelected 
+                        ? 'bg-rose-50 border-rose-400 text-rose-700 dark:bg-rose-950/20 dark:border-rose-500/50 dark:text-rose-300 shadow-sm ring-1 ring-rose-300 dark:ring-rose-500' 
+                        : 'bg-white dark:bg-[#111113] border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-600'
+                     }`}
+                   >
+                     <img src={`${STORAGE_BASE_URL}/foods/${r.id}.png`} className="w-5 h-5 object-contain" style={{imageRendering:'pixelated'}} alt="" />
+                     <span className="text-[11px] font-black">{r.name}</span>
+                   </button>
+                 )
+              })}
+            </div>
+          </div>
+
           <div className="flex w-full h-8 rounded-full overflow-hidden shadow-inner border border-gray-200 dark:border-white/10">
             <div className="bg-rose-500 flex items-center justify-center text-white text-[10px] sm:text-xs font-black transition-all overflow-hidden whitespace-nowrap" style={{ width: `${usableStamina > 0 ? (staminaAlloc.tomato / usableStamina) * 100 : 0}%` }}>
               {staminaAlloc.tomato > 0 ? `${staminaAlloc.tomato} (${Math.round((staminaAlloc.tomato / usableStamina) * 100)}%)` : ''}
